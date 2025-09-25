@@ -69,6 +69,436 @@
       width: 100%;
       outline: none;
     }
+
+    /* Remove old theme switch styles */
+    .theme-switch-wrapper,
+    .theme-switch,
+    .theme-switch input,
+    .slider,
+    .slider.round,
+    em {
+      display: none !important;
+    }
+
+    /* New theme toggle button styles */
+    .theme-toggle-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+    }
+
+    .theme-checkbox {
+      display: none;
+    }
+
+    .theme-label {
+      cursor: pointer;
+      display: block;
+      width: 24px;
+      height: 24px;
+      position: relative;
+    }
+
+    .theme-label svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .theme-label .sun {
+      opacity: 1;
+      color: #f39c12; /* Sun color */
+    }
+
+    .theme-label .moon {
+      opacity: 0;
+      color: #f1c40f; /* Moon color */
+    }
+
+    body.dark-mode .theme-label .sun {
+      opacity: 0;
+    }
+
+    body.dark-mode .theme-label .moon {
+      opacity: 1;
+    }
+
+    /* Dark mode variables */
+    :root {
+      /* Light theme variables */
+      :root {
+        --bg-color: #f0f2f5;
+        --card-bg-color: #ffffff;
+        --text-color: #333333;
+        --label-color: #555555;
+        --input-border-color: #cccccc;
+        --input-bg-color: #ffffff;
+        --button-bg-color: #007bff;
+        --button-hover-bg-color: #0056b3;
+        --button-active-bg-color: #004085;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+        --icon-color: #6c757d;
+        --icon-hover-color: #007bff;
+        --primary-color: #007bff;
+        --primary-shadow-color: rgba(0, 123, 255, 0.2);
+      }
+
+      /* Dark theme variables */
+      body.dark-mode {
+        --bg-color: #2c2c2c;
+        --card-bg-color: #3a3a3a;
+        --text-color: #e0e0e0;
+        --label-color: #bbbbbb;
+        --input-border-color: #555555;
+        --input-bg-color: #4a4a4a;
+        --button-bg-color: #0056b3;
+        --button-hover-bg-color: #004085;
+        --button-active-bg-color: #002a60;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+        --icon-color: #bbbbbb;
+        --icon-hover-color: #007bff;
+        --primary-color: #007bff;
+        --primary-shadow-color: rgba(0, 123, 255, 0.2);
+      }
+      --card-bg-color: #fff;
+      --text-color: #333;
+      --input-border-color: #ccc;
+      --button-bg-color: #4a90e2;
+      --button-hover-bg-color: #357ab8;
+      --button-active-bg-color: #2f6ea2;
+      --shadow-color: rgba(0, 0, 0, 0.08);
+      --label-color: #333;
+    }
+
+    body.dark-mode {
+      --bg-color: #2c2c2c;
+      --card-bg-color: #3c3c3c;
+      --text-color: #f5f5f5;
+      --input-border-color: #555;
+      --button-bg-color: #6a6a6a;
+      --button-hover-bg-color: #5a5a5a;
+      --button-active-bg-color: #4a4a4a;
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --label-color: #f5f5f5;
+    }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg-color);
+      margin: 0;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center; /* Center content vertically */
+      min-height: 100vh; /* Ensure full viewport height */
+      color: var(--text-color);
+    }
+    .card {
+      background: var(--card-bg-color);
+      padding: 2.5rem 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px var(--shadow-color);
+      max-width: 450px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 2rem auto; /* Center the card and add vertical margin */
+      min-height: 400px; /* Ensure a minimum height for better visual balance */
+    }
+    /* Responsive adjustments */
+    @media (max-width: 500px) {
+      .card {
+        margin: 1rem;
+        padding: 1.5rem;
+        min-height: auto; /* Remove min-height on smaller screens */
+      }
+      h2 {
+        font-size: 1.5rem;
+      }
+      button {
+        font-size: 1rem;
+        padding: 0.8rem 1rem;
+      }
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      color: var(--text-color);
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    label {
+      font-weight: 500;
+      display: block;
+      margin: 1.2rem 0 0.5rem;
+      color: var(--label-color);
+      font-size: 0.95rem;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--input-border-color);
+      box-sizing: border-box;
+      background-color: var(--input-bg-color); /* Use a specific variable for input background */
+      color: var(--text-color);
+      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s; /* Add background-color to transition */
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--primary-color); /* Use a primary color for focus */
+      box-shadow: 0 0 0 3px var(--primary-shadow-color); /* Use a primary shadow color for focus */
+      outline: none;
+    }
+    button {
+      width: 100%;
+      margin-top: 1.8rem;
+      padding: 0.9rem 1.5rem;
+      font-size: 1.05rem;
+      border: none;
+      border-radius: 10px;
+      background-color: var(--button-bg-color);
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      font-weight: 600;
+      letter-spacing: 0.5px; /* Add letter spacing for better readability */
+    }
+    button:hover {
+      background-color: var(--button-hover-bg-color);
+      transform: translateY(-2px); /* More pronounced hover effect */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
+    }
+    button:active {
+      background-color: var(--button-active-bg-color);
+      transform: translateY(0);
+      box-shadow: none; /* Remove shadow on active */
+    }
+    input[type="checkbox"] {
+      margin-right: 0.6rem;
+      transform: scale(1.1);
+    }
+    .checkbox-container {
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+    }
+    button {
+      width: 100%;
+      margin-top: 1.8rem;
+      padding: 0.9rem 1.5rem;
+      font-size: 1.05rem;
+      border: none;
+      border-radius: 10px;
+      background-color: var(--button-bg-color);
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      font-weight: 600;
+    }
+    button:hover {
+      background-color: var(--button-hover-bg-color);
+      transform: translateY(-1px);
+    }
+    button:active {
+      background-color: var(--button-active-bg-color);
+      transform: translateY(0);
+    }
+    audio {
+      margin-top: 2rem;
+      width: 100%; /* Set width to 100% to match card width */
+      height: 40px; /* Reduced height */
+      outline: none;
+      border-radius: 8px;
+      background-color: var(--card-bg-color); /* Use card background color */
+      filter: invert(var(--audio-invert-filter, 0)); /* Invert controls for dark mode */
+      display: block; /* Ensure it takes up its own line */
+      margin-left: auto; /* Center the audio player */
+      margin-right: auto; /* Center the audio player */
+    }
+
+    :root {
+      --audio-invert-filter: 0; /* No invert for light mode */
+      /* Light theme variables */
+      :root {
+        --bg-color: #f0f2f5;
+        --card-bg-color: #ffffff;
+        --text-color: #333333;
+        --label-color: #555555;
+        --input-border-color: #cccccc;
+        --input-bg-color: #ffffff;
+        --button-bg-color: #007bff;
+        --button-hover-bg-color: #0056b3;
+        --button-active-bg-color: #004085;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+        --icon-color: #6c757d;
+        --icon-hover-color: #007bff;
+        --primary-color: #007bff;
+        --primary-shadow-color: rgba(0, 123, 255, 0.2);
+      }
+
+      /* Dark theme variables */
+      body.dark-mode {
+        --bg-color: #2c2c2c;
+        --card-bg-color: #3a3a3a;
+        --text-color: #e0e0e0;
+        --label-color: #bbbbbb;
+        --input-border-color: #555555;
+        --input-bg-color: #4a4a4a;
+        --button-bg-color: #0056b3;
+        --button-hover-bg-color: #004085;
+        --button-active-bg-color: #002a60;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+        --icon-color: #bbbbbb;
+        --icon-hover-color: #007bff;
+        --primary-color: #007bff;
+        --primary-shadow-color: rgba(0, 123, 255, 0.2);
+      }
+      --card-bg-color: #fff;
+      --text-color: #333;
+      --input-border-color: #ccc;
+      --button-bg-color: #4a90e2;
+      --button-hover-bg-color: #357ab8;
+      --button-active-bg-color: #2f6ea2;
+      --shadow-color: rgba(0, 0, 0, 0.08);
+      --label-color: #333;
+    }
+
+    body.dark-mode {
+      --bg-color: #2c2c2c;
+      --card-bg-color: #3c3c3c;
+      --text-color: #f5f5f5;
+      --input-border-color: #555;
+      --button-bg-color: #6a6a6a;
+      --button-hover-bg-color: #5a5a5a;
+      --button-active-bg-color: #4a4a4a;
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --label-color: #f5f5f5;
+    }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg-color);
+      margin: 0;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center; /* Center content vertically */
+      min-height: 100vh; /* Ensure full viewport height */
+      color: var(--text-color);
+    }
+    .card {
+      background: var(--card-bg-color);
+      padding: 2.5rem 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px var(--shadow-color);
+      max-width: 450px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 2rem auto; /* Center the card and add vertical margin */
+      min-height: 400px; /* Ensure a minimum height for better visual balance */
+    }
+    /* Responsive adjustments */
+    @media (max-width: 500px) {
+      .card {
+        margin: 1rem;
+        padding: 1.5rem;
+        min-height: auto; /* Remove min-height on smaller screens */
+      }
+      h2 {
+        font-size: 1.5rem;
+      }
+      button {
+        font-size: 1rem;
+        padding: 0.8rem 1rem;
+      }
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      color: var(--text-color);
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    label {
+      font-weight: 500;
+      display: block;
+      margin: 1.2rem 0 0.5rem;
+      color: var(--label-color);
+      font-size: 0.95rem;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--input-border-color);
+      box-sizing: border-box;
+      background-color: var(--input-bg-color); /* Use a specific variable for input background */
+      color: var(--text-color);
+      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s; /* Add background-color to transition */
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--primary-color); /* Use a primary color for focus */
+      box-shadow: 0 0 0 3px var(--primary-shadow-color); /* Use a primary shadow color for focus */
+      outline: none;
+    }
+    button {
+      width: 100%;
+      margin-top: 1.8rem;
+      padding: 0.9rem 1.5rem;
+      font-size: 1.05rem;
+      border: none;
+      border-radius: 10px;
+      background-color: var(--button-bg-color);
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      font-weight: 600;
+    }
+    button:hover {
+      background-color: var(--button-hover-bg-color);
+      transform: translateY(-1px);
+    }
+    button:active {
+      background-color: var(--button-active-bg-color);
+      transform: translateY(0);
+    }
+    audio {
+      margin-top: 2rem;
+      width: 100%; /* Set width to 100% to match card width */
+      height: 40px; /* Reduced height */
+      outline: none;
+      border-radius: 8px;
+      /* Removed background-color: var(--input-border-color); */
+      display: block; /* Ensure it takes up its own line */
+      margin-left: auto; /* Center the audio player */
+      margin-right: auto; /* Center the audio player */
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 500px) {
+      .card {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+      }
+      button {
+        font-size: 1rem;
+        padding: 0.8rem 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -82,6 +512,26 @@
 
     <div class="checkbox-container">
       <label><input type="checkbox" id="loopCheck" checked /> Automatically loop sonic wave / Tự động lặp lại sóng âm</label>
+    </div>
+
+    <div class="theme-toggle-button">
+      <input type="checkbox" id="theme-checkbox" class="theme-checkbox">
+      <label for="theme-checkbox" class="theme-label">
+        <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </label>
     </div>
 
     <button onclick="generate()">🎵 Generate and Play Sonic Wave / Tạo và phát sóng âm</button>
@@ -204,6 +654,29 @@
       audio.pause();
       audio.onended = null;  // Clear event listener / Xóa trình nghe sự kiện
     }
+
+    // Theme switch logic
+    const toggleSwitch = document.getElementById('theme-checkbox');
+    const currentTheme = localStorage.getItem('theme');
+
+    if (currentTheme) {
+      document.body.classList.add(currentTheme);
+      if (currentTheme === 'dark-mode') {
+        toggleSwitch.checked = true;
+      }
+    }
+
+    function switchTheme(e) {
+      if (e.target.checked) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('theme', 'dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('theme', 'light-mode');
+      }
+    }
+
+    toggleSwitch.addEventListener('change', switchTheme, false);
   </script>
 </body>
 </html>
