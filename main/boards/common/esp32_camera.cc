@@ -14,15 +14,15 @@
 
 Esp32Camera::Esp32Camera(const camera_config_t& config) {
     // camera init
-    esp_err_t err = esp_camera_init(&config); // 配置上面定义的参数
+    esp_err_t err = esp_camera_init(&config); // Định cấu hình các tham số đã xác định ở trên
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Camera init failed with error 0x%x", err);
         return;
     }
 
-    sensor_t *s = esp_camera_sensor_get(); // 获取摄像头型号
+    sensor_t *s = esp_camera_sensor_get(); // Lấy mẫu camera
     if (s->id.PID == GC0308_PID) {
-        s->set_hmirror(s, 0);  // 这里控制摄像头镜像 写1镜像 写0不镜像
+        s->set_hmirror(s, 0);  // Tại đây điều khiển gương camera ghi 1 gương ghi 0 không gương
     }
 }
 
@@ -60,7 +60,7 @@ bool Esp32Camera::Capture() {
     auto end_time = esp_timer_get_time();
     ESP_LOGI(TAG, "Camera captured %d frames in %d ms", frames_to_get, int((end_time - start_time) / 1000));
 
-    // 显示预览图片
+    // Hiển thị hình ảnh xem trước
     auto display = dynamic_cast<LvglDisplay*>(Board::GetInstance().GetDisplay());
     if (display != nullptr) {
         auto data = (uint8_t*)heap_caps_malloc(fb_->len, MALLOC_CAP_SPIRAM);
@@ -73,7 +73,7 @@ bool Esp32Camera::Capture() {
         auto dst = (uint16_t*)data;
         size_t pixel_count = fb_->len / 2;
         for (size_t i = 0; i < pixel_count; i++) {
-            // 交换每个16位字内的字节
+            // Hoán đổi byte trong mỗi từ 16 bit
             dst[i] = __builtin_bswap16(src[i]);
         }
 
@@ -118,34 +118,34 @@ bool Esp32Camera::SetVFlip(bool enabled) {
 }
 
 /**
- * @brief 将摄像头捕获的图像发送到远程服务器进行AI分析和解释
+ * @brief Gửi hình ảnh được chụp bởi camera đến một máy chủ từ xa để phân tích và giải thích bằng AI
  * 
- * 该函数将当前摄像头缓冲区中的图像编码为JPEG格式，并通过HTTP POST请求
- * 以multipart/form-data的形式发送到指定的解释服务器。服务器将根据提供的
- * 问题对图像进行AI分析并返回结果。
+ * Chức năng này mã hóa hình ảnh trong bộ đệm camera hiện tại sang định dạng JPEG và gửi nó qua yêu cầu HTTP POST
+ * ở định dạng multipart/form-data đến máy chủ giải thích được chỉ định. Máy chủ sẽ thực hiện phân tích AI trên hình ảnh
+ * dựa trên câu hỏi được cung cấp và trả về kết quả.
  * 
- * 实现特点：
- * - 使用独立线程编码JPEG，与主线程分离
- * - 采用分块传输编码(chunked transfer encoding)优化内存使用
- * - 通过队列机制实现编码线程和发送线程的数据同步
- * - 支持设备ID、客户端ID和认证令牌的HTTP头部配置
+ * Các tính năng triển khai:
+ * - Sử dụng một luồng riêng để mã hóa JPEG, tách biệt khỏi luồng chính
+ * - Sử dụng mã hóa truyền tải theo khối (chunked transfer encoding) để tối ưu hóa việc sử dụng bộ nhớ
+ * - Đạt được đồng bộ hóa dữ liệu giữa luồng mã hóa và luồng gửi thông qua cơ chế hàng đợi
+ * - Hỗ trợ cấu hình tiêu đề HTTP cho ID thiết bị, ID máy khách và mã thông báo xác thực
  * 
- * @param question 要向AI提出的关于图像的问题，将作为表单字段发送
- * @return std::string 服务器返回的JSON格式响应字符串
- *         成功时包含AI分析结果，失败时包含错误信息
- *         格式示例：{"success": true, "result": "分析结果"}
- *                  {"success": false, "message": "错误信息"}
+ * @param question Câu hỏi sẽ được hỏi AI về hình ảnh, sẽ được gửi dưới dạng trường biểu mẫu
+ * @return std::string Chuỗi phản hồi định dạng JSON được trả về bởi máy chủ
+ *         Chứa kết quả phân tích AI khi thành công, thông tin lỗi khi thất bại
+ *         Ví dụ định dạng: {"success": true, "result": "Kết quả phân tích"}
+ *                          {"success": false, "message": "Thông báo lỗi"}
  * 
- * @note 调用此函数前必须先调用SetExplainUrl()设置服务器URL
- * @note 函数会等待之前的编码线程完成后再开始新的处理
- * @warning 如果摄像头缓冲区为空或网络连接失败，将返回错误信息
+ * @note Phải gọi SetExplainUrl() để đặt URL máy chủ trước khi gọi chức năng này
+ * @note Chức năng sẽ đợi luồng mã hóa trước đó hoàn thành trước khi bắt đầu xử lý mới
+ * @warning Nếu bộ đệm camera trống hoặc kết nối mạng thất bại, một thông báo lỗi sẽ được trả về
  */
 std::string Esp32Camera::Explain(const std::string& question) {
     if (explain_url_.empty()) {
         throw std::runtime_error("Image explain URL or token is not set");
     }
 
-    // 创建局部的 JPEG 队列, 40 entries is about to store 512 * 40 = 20480 bytes of JPEG data
+    // Tạo một hàng đợi JPEG cục bộ, 40 mục nhập có thể lưu trữ khoảng 512 * 40 = 20480 byte dữ liệu JPEG
     QueueHandle_t jpeg_queue = xQueueCreate(40, sizeof(JpegChunk));
     if (jpeg_queue == nullptr) {
         ESP_LOGE(TAG, "Failed to create JPEG queue");
@@ -172,7 +172,7 @@ std::string Esp32Camera::Explain(const std::string& question) {
     // 构造multipart/form-data请求体
     std::string boundary = "----ESP32_CAMERA_BOUNDARY";
 
-    // 配置HTTP客户端，使用分块传输编码
+    // Cấu hình máy khách HTTP, sử dụng mã hóa truyền tải theo khối
     http->SetHeader("Device-Id", SystemInfo::GetMacAddress().c_str());
     http->SetHeader("Client-Id", Board::GetInstance().GetUuid().c_str());
     if (!explain_token_.empty()) {
@@ -197,7 +197,7 @@ std::string Esp32Camera::Explain(const std::string& question) {
     }
     
     {
-        // 第一块：question字段
+        // Khối đầu tiên: trường câu hỏi
         std::string question_field;
         question_field += "--" + boundary + "\r\n";
         question_field += "Content-Disposition: form-data; name=\"question\"\r\n";
@@ -206,7 +206,7 @@ std::string Esp32Camera::Explain(const std::string& question) {
         http->Write(question_field.c_str(), question_field.size());
     }
     {
-        // 第二块：文件字段头部
+        // Khối thứ hai: tiêu đề trường tệp
         std::string file_header;
         file_header += "--" + boundary + "\r\n";
         file_header += "Content-Disposition: form-data; name=\"file\"; filename=\"camera.jpg\"\r\n";
@@ -215,7 +215,7 @@ std::string Esp32Camera::Explain(const std::string& question) {
         http->Write(file_header.c_str(), file_header.size());
     }
 
-    // 第三块：JPEG数据
+    // Khối thứ ba: dữ liệu JPEG
     size_t total_sent = 0;
     while (true) {
         JpegChunk chunk;

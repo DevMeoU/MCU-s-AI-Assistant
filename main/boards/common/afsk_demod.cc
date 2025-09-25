@@ -26,21 +26,21 @@ namespace audio_wifi_config
 
         while (true)
         {
-            // 检查Application状态，只有在WiFi配置模式下才处理音频
+            // Check Application status, only process audio in WiFi configuration mode
             if (app->GetDeviceState() != kDeviceStateWifiConfiguring) {
-                // 不在WiFi配置状态，休眠100ms后再检查
+                // Not in WiFi configuration state, sleep for 100ms then check again
                 vTaskDelay(pdMS_TO_TICKS(100));
                 continue;
             }
             
             if (!app->GetAudioService().ReadAudioData(audio_data, 16000, 480)) { // 16kHz, 480 samples corresponds to 30ms data
-                // 读取音频失败，短暂延迟后重试
+                // Failed to read audio data, retry after a short delay.
                 ESP_LOGI(kLogTag, "Failed to read audio data, retrying.");
                 vTaskDelay(pdMS_TO_TICKS(10));
                 continue;
             }
 
-            if (input_channels == 2) { // 如果是双声道输入，转换为单声道
+            if (input_channels == 2) { // If it's a dual-channel input, convert to mono
                 auto mono_data = std::vector<int16_t>(audio_data.size() / 2);
                 for (size_t i = 0, j = 0; i < mono_data.size(); ++i, j += 2) {
                     mono_data[i] = audio_data[j];
@@ -74,23 +74,23 @@ namespace audio_wifi_config
             // Feed probability data to the data buffer
             if (data_buffer.ProcessProbabilityData(probabilities, 0.5f)) {
                 // If complete data was received, extract WiFi credentials
-                if (data_buffer.decoded_text.has_value()) {
-                    ESP_LOGI(kLogTag, "Received text data: %s", data_buffer.decoded_text->c_str());
-                    display->SetChatMessage("system", data_buffer.decoded_text->c_str());
-                    
-                    // Split SSID and password by newline character
-                    std::string wifi_ssid, wifi_password;
-                    size_t newline_position = data_buffer.decoded_text->find('\n');
-                    if (newline_position != std::string::npos) {
-                        wifi_ssid = data_buffer.decoded_text->substr(0, newline_position);
-                        wifi_password = data_buffer.decoded_text->substr(newline_position + 1);
-                        ESP_LOGI(kLogTag, "WiFi SSID: %s, Password: %s", wifi_ssid.c_str(), wifi_password.c_str());
-                    } else {
-                        ESP_LOGE(kLogTag, "Invalid data format, no newline character found");
-                        continue;
-                    }
-                    
-                    if (wifi_ap->ConnectToWifi(wifi_ssid, wifi_password)) {
+                    if (data_buffer.decoded_text.has_value()) {
+                        ESP_LOGI(kLogTag, "Received text data: %s", data_buffer.decoded_text->c_str());
+                        display->SetChatMessage("system", data_buffer.decoded_text->c_str());
+                        
+                        // Split SSID and password by newline character
+                        std::string wifi_ssid, wifi_password;
+                        size_t newline_position = data_buffer.decoded_text->find('\n');
+                        if (newline_position != std::string::npos) {
+                            wifi_ssid = data_buffer.decoded_text->substr(0, newline_position);
+                            wifi_password = data_buffer.decoded_text->substr(newline_position + 1);
+                            ESP_LOGI(kLogTag, "WiFi SSID: %s, Password: %s", wifi_ssid.c_str(), wifi_password.c_str());
+                        } else {
+                            ESP_LOGE(kLogTag, "Invalid data format, no newline character found");
+                            continue;
+                        }
+                        
+                        if (wifi_ap->ConnectToWifi(wifi_ssid, wifi_password)) {
                         wifi_ap->Save(wifi_ssid, wifi_password);  // Save WiFi credentials
                         esp_restart();                            // Restart device to apply new WiFi configuration
                     } else {
