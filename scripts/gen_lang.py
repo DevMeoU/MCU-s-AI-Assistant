@@ -18,15 +18,15 @@ namespace Lang {
     constexpr const char* CODE = "{lang_code}";
 
     // String resources (en-US as fallback for missing keys)
-    namespace Strings {{
+    namespace Strings {
 {strings}
-    }}
+    }
 
     // Sound resources (en-US as fallback for missing audio files)
-    namespace Sounds {{
+    namespace Sounds {
 {sounds}
-    }}
-}}
+    }
+}
 """
 
 def load_base_language(assets_dir):
@@ -103,7 +103,8 @@ def generate_header(lang_code, output_path):
     sounds = []
     for key, value in merged_strings.items():
         value = value.replace('"', '\"')
-        strings.append(f'        constexpr const char* {key.upper()} = "{value}";')
+        # Build the string constant using string concatenation to avoid format issues
+        strings.append('        constexpr const char* ' + key.upper() + ' = "' + value + '";')
 
     # Collect sound files: user language overrides base language (en-US)
     current_lang_dir = os.path.join(assets_dir, 'locales', lang_code)
@@ -160,13 +161,13 @@ def generate_header(lang_code, output_path):
         static_cast<size_t>(ogg_{base_name}_end - ogg_{base_name}_start)
         }};''')
 
-    # Fill template
-    content = HEADER_TEMPLATE.format(
-        lang_code=lang_code,
-        lang_code_for_font=lang_code.replace('-', '_').lower(),
-        strings="\n".join(sorted(strings)),
-        sounds="\n".join(sorted(sounds))
-    )
+    # Fill template using string concatenation to avoid format issues
+    lang_code_for_font = lang_code.replace('-', '_').lower()
+    content = HEADER_TEMPLATE
+    content = content.replace('{lang_code}', lang_code)
+    content = content.replace('{lang_code_for_font}', lang_code_for_font)
+    content = content.replace('{strings}', "\n".join(sorted(strings)))
+    content = content.replace('{sounds}', "\n".join(sorted(sounds)))
 
     # Write to file
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
