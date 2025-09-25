@@ -475,6 +475,7 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
                                                                                     progress, total_written, content_length, speed, current_sector);
                                                                             if (progress_callback) {
                 progress_callback(progress, speed);
+            }
             last_calc_time = esp_timer_get_time();
             recent_written = 0; // Reset recently written bytes
         }

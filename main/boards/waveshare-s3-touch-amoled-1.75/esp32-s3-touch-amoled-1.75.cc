@@ -78,7 +78,7 @@ static const sh8601_lcd_init_cmd_t vendor_specific_init[] = {
     {0x29, NULL, 0, 0},
 };
 
-// 在waveshare_amoled_1_75类之前添加新的显示类
+// Add a new display class before waveshare_amoled_1_75 class (在waveshare_amoled_1_75类之前添加新的显示类)
 class CustomLcdDisplay : public SpiLcdDisplay {
 public:
     static void rounder_event_cb(lv_event_t* e) {
@@ -219,7 +219,7 @@ private:
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         esp_lcd_panel_handle_t panel = nullptr;
 
-        // 液晶屏控制IO初始化
+        // LCD screen control IO initialization (液晶屏控制IO初始化)
         ESP_LOGD(TAG, "Install panel IO");
         esp_lcd_panel_io_spi_config_t io_config = SH8601_PANEL_IO_QSPI_CONFIG(
             EXAMPLE_PIN_NUM_LCD_CS,
