@@ -4,12 +4,11 @@ import json
 import zipfile
 import argparse
 
-# 切换到项目根目录
+# Change to project root directory # Chuyển đến thư mục gốc của dự án
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def get_board_type():
     with open("build/compile_commands.json") as f:
-        data = json.load(f)
         for item in data:
             if not item["file"].endswith("main.cc"):
                 continue
@@ -55,10 +54,10 @@ def get_all_board_types():
     with open("main/CMakeLists.txt", encoding='utf-8') as f:
         lines = f.readlines()
         for i, line in enumerate(lines):
-            # 查找 if(CONFIG_BOARD_TYPE_*) 行
+            # Find if(CONFIG_BOARD_TYPE_*) line # Tìm dòng if(CONFIG_BOARD_TYPE_*)
             if "if(CONFIG_BOARD_TYPE_" in line:
                 config_name = line.strip().split("if(")[1].split(")")[0]
-                # 查找下一行的 set(BOARD_TYPE "xxx") 
+                # Find the next line set(BOARD_TYPE "xxx") # Tìm dòng tiếp theo set(BOARD_TYPE "xxx")
                 next_line = lines[i + 1].strip()
                 if next_line.startswith("set(BOARD_TYPE"):
                     board_type = next_line.split('"')[1]
@@ -68,7 +67,7 @@ def get_all_board_types():
 def release(board_type, board_config, config_filename="config.json"):
     config_path = f"main/boards/{board_type}/{config_filename}"
     if not os.path.exists(config_path):
-        print(f"跳过 {board_type} 因为 {config_filename} 不存在")
+        print(f"Skip {board_type} because {config_filename} does not exist") # Bỏ qua {board_type} vì {config_filename} không tồn tại
         return
 
     # Print Project Version
@@ -83,10 +82,10 @@ def release(board_type, board_config, config_filename="config.json"):
     for build in builds:
         name = build["name"]
         if not name.startswith(board_type):
-            raise ValueError(f"name {name} 必须以 {board_type} 开头")
+            raise ValueError(f"name {name} must start with {board_type}") # tên {name} phải bắt đầu bằng {board_type}
         output_path = f"releases/v{project_version}_{name}.zip"
         if os.path.exists(output_path):
-            print(f"跳过 {board_type} 因为 {output_path} 已存在")
+            print(f"Skip {board_type} because {output_path} already exists") # Bỏ qua {board_type} vì {output_path} đã tồn tại
             continue
 
         sdkconfig_append = [f"{board_config}=y"]
@@ -113,7 +112,7 @@ def release(board_type, board_config, config_filename="config.json"):
             print("build failed")
             sys.exit(1)
         # Call merge-bin
-        if os.system("idf.py merge-bin") != 0:
+        if os.system(f"idf.py merge-bin") != 0:
             print("merge-bin failed")
             sys.exit(1)
         # Zip bin
@@ -122,10 +121,10 @@ def release(board_type, board_config, config_filename="config.json"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("board", nargs="?", default=None, help="板子类型或 all")
-    parser.add_argument("-c", "--config", default="config.json", help="指定 config 文件名，默认 config.json")
-    parser.add_argument("--list-boards", action="store_true", help="列出所有支持的 board 列表")
-    parser.add_argument("--json", action="store_true", help="配合 --list-boards，JSON 格式输出")
+    parser.add_argument("board", nargs="?", default=None, help="Board type or all") # Loại bảng hoặc tất cả
+    parser.add_argument("-c", "--config", default="config.json", help="Specify config filename, default config.json") # Chỉ định tên tệp cấu hình, mặc định config.json
+    parser.add_argument("--list-boards", action="store_true", help="List all supported boards") # Liệt kê tất cả các bảng được hỗ trợ
+    parser.add_argument("--json", action="store_true", help="Output in JSON format with --list-boards") # Xuất ở định dạng JSON với --list-boards
     args = parser.parse_args()
 
     if args.list_boards:
@@ -146,8 +145,8 @@ if __name__ == "__main__":
                 release(board_type, board_config, config_filename=args.config)
                 found = True
         if not found:
-            print(f"未找到板子类型: {args.board}")
-            print("可用的板子类型:")
+            print(f"Board type not found: {args.board}") # Không tìm thấy loại bảng
+            print("Available board types:") # Các loại bảng có sẵn
             for board_type in board_configs.values():
                 print(f"  {board_type}")
     else:

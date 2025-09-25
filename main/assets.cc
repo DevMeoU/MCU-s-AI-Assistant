@@ -470,14 +470,13 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
         // 计算进度和速度
         if (esp_timer_get_time() - last_calc_time >= 1000000 || total_written == content_length || ret == 0) {
             size_t progress = total_written * 100 / content_length;
-            size_t speed = recent_written; // 每秒的字节数
-            ESP_LOGI(TAG, "Progress: %u%% (%u/%u), Speed: %u B/s, Sectors erased: %u", 
-                     progress, total_written, content_length, speed, current_sector);
-            if (progress_callback) {
+            size_t speed = recent_written; // Bytes per second
+            ESP_LOGI(TAG, "Progress: %u%% (%u/%u), Speed: %u B/s, Sectors erased: %u",
+                                                                                    progress, total_written, content_length, speed, current_sector);
+                                                                            if (progress_callback) {
                 progress_callback(progress, speed);
-            }
             last_calc_time = esp_timer_get_time();
-            recent_written = 0; // 重置最近写入的字节数
+            recent_written = 0; // Reset recently written bytes
         }
     }
     

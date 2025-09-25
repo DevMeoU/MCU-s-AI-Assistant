@@ -565,6 +565,8 @@ elseif(CONFIG_LANGUAGE_UK_UA)
     set(LANG_DIR "uk-UA")
 elseif(CONFIG_LANGUAGE_RO_RO)
     set(LANG_DIR "ro-RO")
+elseif(CONFIG_LANGUAGE_VI)
+    set(LANG_DIR "vi-VN")
 endif()
 
 # Define generation path

@@ -1,23 +1,23 @@
 # SPIFFS Assets Builder
 
-这个脚本用于构建 ESP32 项目的 SPIFFS 资源分区，将各种资源文件打包成可在设备上使用的格式。
+This script is used to build the SPIFFS resource partition for ESP32 projects, packaging various resource files into a format that can be used on the device.
 
-## 功能特性
+## Features / Tính năng
 
-- 处理唤醒网络模型 (WakeNet Model)
-- 集成文本字体文件
-- 处理表情符号图片集合
-- 自动生成资源索引文件
-- 打包生成最终的 `assets.bin` 文件
+- Process WakeNet Model / Xử lý mô hình WakeNet
+- Integrate text font files / Tích hợp tệp phông chữ văn bản
+- Process emoji image collections / Xử lý bộ sưu tập hình ảnh biểu tượng cảm xúc
+- Automatically generate resource index files / Tự động tạo tệp chỉ mục tài nguyên
+- Package and generate the final `assets.bin` file / Đóng gói và tạo tệp `assets.bin` cuối cùng
 
-## 依赖要求
+## Dependencies / Yêu cầu phụ thuộc
 
 - Python 3.6+
-- 相关资源文件
+- Related resource files / Các tệp tài nguyên liên quan
 
-## 使用方法
+## Usage / Cách sử dụng
 
-### 基本语法
+### Basic Syntax / Cú pháp cơ bản
 
 ```bash
 ./build.py --wakenet_model <wakenet_model_dir> \
@@ -25,86 +25,88 @@
     --emoji_collection <emoji_collection_dir>
 ```
 
-### 参数说明
+### Parameter Description / Mô tả tham số
 
-| 参数 | 类型 | 必需 | 说明 |
+| Parameter / Tham số | Type / Kiểu | Required / Bắt buộc | Description / Mô tả |
 |------|------|------|------|
-| `--wakenet_model` | 目录路径 | 否 | 唤醒网络模型目录路径 |
-| `--text_font` | 文件路径 | 否 | 文本字体文件路径 |
-| `--emoji_collection` | 目录路径 | 否 | 表情符号图片集合目录路径 |
+| `--wakenet_model` | Directory Path / Đường dẫn thư mục | No / Không | WakeNet model directory path / Đường dẫn thư mục mô hình WakeNet |
+| `--text_font` | File Path / Đường dẫn tệp | No / Không | Text font file path / Đường dẫn tệp phông chữ văn bản |
+| `--emoji_collection` | Directory Path / Đường dẫn thư mục | No / Không | Emoji image collection directory path / Đường dẫn thư mục bộ sưu tập hình ảnh biểu tượng cảm xúc |
 
-### 使用示例
+### Usage Example / Ví dụ sử dụng
 
 ```bash
-# 完整参数示例
+# Full parameter example / Ví dụ tham số đầy đủ
 ./build.py \
     --wakenet_model ../../managed_components/espressif__esp-sr/model/wakenet_model/wn9_nihaoxiaozhi_tts \
     --text_font ../../components/xiaozhi-fonts/build/font_puhui_common_20_4.bin \
     --emoji_collection ../../components/xiaozhi-fonts/build/emojis_64/
 
-# 仅处理字体文件
+# Only process font files / Chỉ xử lý tệp phông chữ
 ./build.py --text_font ../../components/xiaozhi-fonts/build/font_puhui_common_20_4.bin
 
-# 仅处理表情符号
+# Only process emojis / Chỉ xử lý biểu tượng cảm xúc
 ./build.py --emoji_collection ../../components/xiaozhi-fonts/build/emojis_64/
 ```
 
-## 工作流程
+## Workflow / Quy trình làm việc
 
-1. **创建构建目录结构**
-   - `build/` - 主构建目录
-   - `build/assets/` - 资源文件目录
-   - `build/output/` - 输出文件目录
+1. **Create build directory structure** / **Tạo cấu trúc thư mục xây dựng**
+   - `build/` - Main build directory / Thư mục xây dựng chính
+   - `build/assets/` - Resource file directory / Thư mục tệp tài nguyên
+   - `build/output/` - Output file directory / Thư mục tệp đầu ra
 
-2. **处理唤醒网络模型**
-   - 复制模型文件到构建目录
-   - 使用 `pack_model.py` 生成 `srmodels.bin`
-   - 将生成的模型文件复制到资源目录
+2. **Process WakeNet Model** / **Xử lý mô hình WakeNet**
+   - Copy model files to build directory / Sao chép tệp mô hình vào thư mục xây dựng
+   - Use `pack_model.py` to generate `srmodels.bin` / Sử dụng `pack_model.py` để tạo `srmodels.bin`
+   - Copy generated model files to resource directory / Sao chép tệp mô hình đã tạo vào thư mục tài nguyên
 
-3. **处理文本字体**
-   - 复制字体文件到资源目录
-   - 支持 `.bin` 格式的字体文件
+3. **Process text fonts** / **Xử lý phông chữ văn bản**
+   - Copy font files to resource directory / Sao chép tệp phông chữ vào thư mục tài nguyên
+   - Supports `.bin` format font files / Hỗ trợ tệp phông chữ định dạng `.bin`
 
-4. **处理表情符号集合**
-   - 扫描指定目录中的图片文件
-   - 支持 `.png` 和 `.gif` 格式
-   - 自动生成表情符号索引
+4. **Process emoji collection** / **Xử lý bộ sưu tập biểu tượng cảm xúc**
+   - Scan image files in the specified directory / Quét các tệp hình ảnh trong thư mục được chỉ định
+   - Supports `.png` and `.gif` formats / Hỗ trợ định dạng `.png` và `.gif`
+   - Automatically generate emoji index / Tự động tạo chỉ mục biểu tượng cảm xúc
 
-5. **生成配置文件**
-   - `index.json` - 资源索引文件
-   - `config.json` - 构建配置文件
+5. **Generate configuration files** / **Tạo tệp cấu hình**
+   - `index.json` - Resource index file / Tệp chỉ mục tài nguyên
+   - `config.json` - Build configuration file / Tệp cấu hình xây dựng
 
-6. **打包最终资源**
-   - 使用 `spiffs_assets_gen.py` 生成 `assets.bin`
-   - 复制到构建根目录
+6. **Package final resources** / **Đóng gói tài nguyên cuối cùng**
+   - Use `spiffs_assets_gen.py` to generate `assets.bin` / Sử dụng `spiffs_assets_gen.py` để tạo `assets.bin`
+   - Copy to build root directory / Sao chép vào thư mục gốc xây dựng
 
-## 输出文件
+## Output Files / Tệp đầu ra
 
-构建完成后，会在 `build/` 目录下生成以下文件：
+After building, the following files will be generated in the `build/` directory:
+Sau khi xây dựng, các tệp sau sẽ được tạo trong thư mục `build/`:
 
-- `assets/` - 所有资源文件
-- `assets.bin` - 最终的 SPIFFS 资源文件
-- `config.json` - 构建配置
-- `output/` - 中间输出文件
+- `assets/` - All resource files / Tất cả các tệp tài nguyên
+- `assets.bin` - Final SPIFFS resource file / Tệp tài nguyên SPIFFS cuối cùng
+- `config.json` - Build configuration / Cấu hình xây dựng
+- `output/` - Intermediate output files / Tệp đầu ra trung gian
 
-## 支持的资源格式
+## Supported Resource Formats / Định dạng tài nguyên được hỗ trợ
 
-- **模型文件**: `.bin` (通过 pack_model.py 处理)
-- **字体文件**: `.bin`
-- **图片文件**: `.png`, `.gif`
-- **配置文件**: `.json`
+- **Model files**: `.bin` (processed by pack_model.py) / Tệp mô hình: `.bin` (được xử lý bởi pack_model.py)
+- **Font files**: `.bin` / Tệp phông chữ: `.bin`
+- **Image files**: `.png`, `.gif` / Tệp hình ảnh: `.png`, `.gif`
+- **Configuration files**: `.json` / Tệp cấu hình: `.json`
 
-## 错误处理
+## Error Handling / Xử lý lỗi
 
-脚本包含完善的错误处理机制：
+The script includes a comprehensive error handling mechanism:
+Script bao gồm một cơ chế xử lý lỗi toàn diện:
 
-- 检查源文件/目录是否存在
-- 验证子进程执行结果
-- 提供详细的错误信息和警告
+- Check if source files/directories exist / Kiểm tra xem tệp/thư mục nguồn có tồn tại không
+- Validate subprocess execution results / Xác thực kết quả thực thi của tiến trình con
+- Provide detailed error messages and warnings / Cung cấp thông báo lỗi và cảnh báo chi tiết
 
-## 注意事项
+## Notes / Lưu ý
 
-1. 确保所有依赖的 Python 脚本都在同一目录下
-2. 资源文件路径使用绝对路径或相对于脚本目录的路径
-3. 构建过程会清理之前的构建文件
-4. 生成的 `assets.bin` 文件大小受 SPIFFS 分区大小限制
+1. Ensure all dependent Python scripts are in the same directory / Đảm bảo tất cả các script Python phụ thuộc đều nằm trong cùng một thư mục
+2. Resource file paths use absolute paths or paths relative to the script directory / Đường dẫn tệp tài nguyên sử dụng đường dẫn tuyệt đối hoặc đường dẫn tương đối so với thư mục script
+3. The build process will clean up previous build files / Quá trình xây dựng sẽ dọn dẹp các tệp xây dựng trước đó
+4. The size of the generated `assets.bin` file is limited by the SPIFFS partition size / Kích thước của tệp `assets.bin` được tạo ra bị giới hạn bởi kích thước phân vùng SPIFFS

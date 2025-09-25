@@ -1,34 +1,34 @@
 # ESP-Hi
 
-## 简介
+## Introduction
 
 <div align="center">
-    <a href="https://oshwhub.com/esp-college/esp-hi"><b> 立创开源平台 </b></a>
+    <a href="https://oshwhub.com/esp-college/esp-hi"><b> LCSC Open Source Platform </b></a>
     |
     <a href="https://www.bilibili.com/video/BV1BHJtz6E2S"><b> Bilibili </b></a>
 </div>
 
-ESP-Hi 是 ESP Friends 开源的一款基于 ESP32C3 的超**低成本** AI 对话机器人。ESP-Hi 集成了一个0.96寸的彩屏，用于显示表情，**机器狗已实现数十种动作**。通过对 ESP32-C3 外设的充分挖掘，仅需最少的板级硬件即可实现拾音和发声，同步优化了软件，降低内存与 Flash 占用，在资源受限的情况下同时实现了**唤醒词检测**与多种外设驱动。硬件详情等可查看[立创开源项目](https://oshwhub.com/esp-college/esp-hi)。
+ESP-Hi is an ultra-**low-cost** AI conversational robot based on ESP32C3, open-sourced by ESP Friends. ESP-Hi integrates a 0.96-inch color screen for displaying expressions, and the **robot dog has implemented dozens of actions**. By fully utilizing the peripherals of ESP32-C3, only minimal board-level hardware is required to achieve sound pickup and vocalization. The software has been synchronously optimized to reduce memory and Flash usage, achieving **wake word detection** and various peripheral drives under resource-constrained conditions. For hardware details, please refer to the [LCSC Open Source Project](https://oshwhub.com/esp-college/esp-hi).
 
 ## WebUI
 
-ESP-Hi x 小智内置了一个控制身体运动的 WebUI，请将手机与 ESP-Hi 连接到同一个 Wi-Fi 下，手机访问 `http://esp-hi.local/` 以使用。
+ESP-Hi x XiaoZhi has a built-in WebUI for controlling body movements. Please connect your mobile phone and ESP-Hi to the same Wi-Fi network, and access `http://esp-hi.local/` on your phone to use it.
 
-如需禁用，请取消 `ESP_HI_WEB_CONTROL_ENABLED`，即取消勾选 `Component config` → `Servo Dog Configuration` → `Web Control` → `Enable ESP-HI Web Control`。
+To disable it, uncheck `ESP_HI_WEB_CONTROL_ENABLED`, i.e., uncheck `Component config` → `Servo Dog Configuration` → `Web Control` → `Enable ESP-HI Web Control`.
 
-## 配置、编译命令
+## Configuration and Compilation Commands
 
-由于 ESP-Hi 需要配置较多的 sdkconfig 选项，推荐使用编译脚本编译。
+Since ESP-Hi requires configuring many sdkconfig options, it is recommended to use a compilation script.
 
-**编译**
+**Compile**
 
 ```bash
 python ./scripts/release.py esp-hi
 ```
 
-如需手动编译，请参考 `esp-hi/config.json` 修改 menuconfig 对应选项。
+If you need to compile manually, please refer to `esp-hi/config.json` to modify the corresponding options in menuconfig.
 
-**烧录**
+**Flash**
 
 ```bash
 idf.py flash
@@ -37,15 +37,70 @@ idf.py flash
 
 > [!TIP]
 >
-> **舵机控制会占用 ESP-Hi 的 USB Type-C 接口**，导致无法连接电脑（无法烧录/查看运行日志）。如遇此情况，请按以下提示操作：
+> **Servo control occupies the USB Type-C interface of ESP-Hi**, making it impossible to connect to a computer (cannot flash/view running logs). If this happens, please follow the tips below:
 >
-> **烧录**
+> **Flashing**
 >
-> 1. 断开 ESP-Hi 的电源，只留头部，不要连接身体。
-> 2. 按住 ESP-Hi 的按钮并连接电脑。
+> 1. Disconnect the power of ESP-Hi, leaving only the head, do not connect the body.
+> 2. Press and hold the button on ESP-Hi and connect it to the computer.
 > 
-> 此时，ESP-Hi (ESP32C3) 应当处于烧录模式，可以使用电脑烧录程序。烧录完成后，可能需要重新插拔电源。
+> At this point, ESP-Hi (ESP32C3) should be in flashing mode, and you can use a computer to flash the program. After flashing, you may need to re-plug the power.
 >
-> **查看 log**
+> **Viewing logs**
 >
-> 请设置 `CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y`，即 `Component config` → `ESP System Settings` → `Channel for console output` 选择 `USB Serial/JTAG Controller`。这同时会禁用舵机控制功能。
+> Please set `CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y`, i.e., `Component config` → `ESP System Settings` → `Channel for console output` select `USB Serial/JTAG Controller`. This will also disable the servo control function.
+
+---
+
+# ESP-Hi
+
+## Giới thiệu
+
+<div align="center">
+    <a href="https://oshwhub.com/esp-college/esp-hi"><b> Nền tảng mã nguồn mở LCSC </b></a>
+    |
+    <a href="https://www.bilibili.com/video/BV1BHJtz6E2S"><b> Bilibili </b></a>
+</div>
+
+ESP-Hi là một robot đàm thoại AI siêu **chi phí thấp** dựa trên ESP32C3, được ESP Friends phát hành mã nguồn mở. ESP-Hi tích hợp màn hình màu 0.96 inch để hiển thị biểu cảm, và **chú chó robot đã thực hiện hàng chục hành động**. Bằng cách khai thác tối đa các thiết bị ngoại vi của ESP32-C3, chỉ cần phần cứng cấp bo mạch tối thiểu để thu âm và phát âm. Phần mềm đã được tối ưu hóa đồng bộ để giảm mức sử dụng bộ nhớ và Flash, đồng thời đạt được **phát hiện từ khóa đánh thức** và nhiều trình điều khiển thiết bị ngoại vi trong điều kiện tài nguyên hạn chế. Để biết chi tiết phần cứng, vui lòng tham khảo [Dự án mã nguồn mở LCSC](https://oshwhub.com/esp-college/esp-hi).
+
+## WebUI
+
+ESP-Hi x XiaoZhi có một WebUI tích hợp để điều khiển các chuyển động cơ thể. Vui lòng kết nối điện thoại di động của bạn và ESP-Hi vào cùng một mạng Wi-Fi, và truy cập `http://esp-hi.local/` trên điện thoại của bạn để sử dụng.
+
+Để tắt nó, bỏ chọn `ESP_HI_WEB_CONTROL_ENABLED`, tức là bỏ chọn `Component config` → `Servo Dog Configuration` → `Web Control` → `Enable ESP-HI Web Control`.
+
+## Cấu hình và lệnh biên dịch
+
+Vì ESP-Hi yêu cầu cấu hình nhiều tùy chọn sdkconfig, nên khuyến nghị sử dụng tập lệnh biên dịch.
+
+**Biên dịch**
+
+```bash
+python ./scripts/release.py esp-hi
+```
+
+Nếu bạn cần biên dịch thủ công, vui lòng tham khảo `esp-hi/config.json` để sửa đổi các tùy chọn tương ứng trong menuconfig.
+
+**Nạp chương trình**
+
+```bash
+idf.py flash
+```
+
+
+> [!TIP]
+>
+> **Điều khiển servo chiếm giao diện USB Type-C của ESP-Hi**, khiến không thể kết nối với máy tính (không thể nạp chương trình/xem nhật ký chạy). Nếu điều này xảy ra, vui lòng làm theo các mẹo dưới đây:
+>
+> **Nạp chương trình**
+>
+> 1. Ngắt nguồn của ESP-Hi, chỉ để lại phần đầu, không kết nối thân.
+> 2. Nhấn và giữ nút trên ESP-Hi và kết nối nó với máy tính.
+> 
+> Tại thời điểm này, ESP-Hi (ESP32C3) sẽ ở chế độ nạp chương trình, và bạn có thể sử dụng máy tính để nạp chương trình. Sau khi nạp chương trình, bạn có thể cần cắm lại nguồn.
+>
+>
+> **Xem nhật ký**
+>
+> Vui lòng đặt `CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y`, tức là `Component config` → `ESP System Settings` → `Channel for console output` chọn `USB Serial/JTAG Controller`. Điều này cũng sẽ tắt chức năng điều khiển servo.

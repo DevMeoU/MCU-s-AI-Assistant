@@ -1,36 +1,76 @@
-# DFRobot 行空板 K10
+# DFRobot K10 Board
 
-## 按键配置
-* A：短按-打断/唤醒，长按1s-音量调大
-* B：短按-打断/唤醒，长按1s-音量调小
+## Button Configuration
+* A: Short press - interrupt/wake up, long press 1s - increase volume
+* B: Short press - interrupt/wake up, long press 1s - decrease volume
 
-## 编译配置命令
+## Compilation Configuration Commands
 
-**配置编译目标为 ESP32S3：**
+**Configure the compilation target to ESP32S3:**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig：**
+**Open menuconfig:**
 
 ```bash
 idf.py menuconfig
 ```
 
-**选择板子：**
+**Select Board:**
 
 ```
-Xiaozhi Assistant -> Board Type -> DFRobot 行空板 K10
+Xiaozhi Assistant -> Board Type -> DFRobot K10 Board
 ```
 
-**修改 psram 配置：**
+**Modify psram configuration:**
 
 ```
 Component config -> ESP PSRAM -> SPI RAM config -> Mode (QUAD/OCT) -> Octal Mode PSRAM
 ```
 
-**编译：**
+**Compile:**
+
+```bash
+idf.py build
+```
+
+---
+
+# Bo mạch DFRobot K10
+
+## Cấu hình nút
+* A: Nhấn nhanh - ngắt/đánh thức, nhấn giữ 1s - tăng âm lượng
+* B: Nhấn nhanh - ngắt/đánh thức, nhấn giữ 1s - giảm âm lượng
+
+## Lệnh cấu hình biên dịch
+
+**Cấu hình mục tiêu biên dịch là ESP32S3:**
+
+```bash
+idf.py set-target esp32s3
+```
+
+**Mở menuconfig:**
+
+```bash
+idf.py menuconfig
+```
+
+**Chọn bo mạch:**
+
+```
+Xiaozhi Assistant -> Board Type -> DFRobot K10 Board
+```
+
+**Sửa đổi cấu hình psram:**
+
+```
+Component config -> ESP PSRAM -> SPI RAM config -> Mode (QUAD/OCT) -> Octal Mode PSRAM
+```
+
+**Biên dịch:**
 
 ```bash
 idf.py build

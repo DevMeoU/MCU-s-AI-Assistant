@@ -1,73 +1,150 @@
-# EchoEar 喵伴
+# EchoEar
 
-## 简介
+## Introduction
 
 <div align="center">
-    <a href="https://oshwhub.com/esp-college/echoear"><b> 立创开源平台 </b></a>
+    <a href="https://oshwhub.com/esp-college/echoear"><b> LiChuang Open Source Platform </b></a>
 </div>
 
-EchoEar 喵伴是一款智能 AI 开发套件，搭载 ESP32-S3-WROOM-1 模组，1.85 寸 QSPI 圆形触摸屏，双麦阵列，支持离线语音唤醒与声源定位算法。硬件详情等可查看[立创开源项目](https://oshwhub.com/esp-college/echoear)。
+EchoEar is an intelligent AI development kit, equipped with an ESP32-S3-WROOM-1 module, a 1.85-inch QSPI circular touchscreen, and a dual microphone array, supporting offline voice wake-up and sound source localization algorithms. For hardware details, please refer to the [LiChuang Open Source Project](https://oshwhub.com/esp-college/echoear).
 
-## 配置、编译命令
+## Configuration and Compilation Commands
 
-**配置编译目标为 ESP32S3**
+**Configure the compilation target to ESP32S3**
 
 ```bash
 idf.py set-target esp32s3
 ```
 
-**打开 menuconfig 并配置**
+**Open menuconfig and configure**
 
 ```bash
 idf.py menuconfig
 ```
 
-分别配置如下选项：
+Configure the following options respectively:
 
-### 基本配置
-- `Xiaozhi Assistant` → `Board Type` → 选择 `EchoEar`
+### Basic Configuration
+- `Xiaozhi Assistant` → `Board Type` → Select `EchoEar`
 
-### UI风格选择
+### UI Style Selection
 
-EchoEar 支持两种不同的UI显示风格，通过修改代码中的宏定义来选择：
+EchoEar supports two different UI display styles, which can be selected by modifying the macro definition in the code:
 
-#### 自定义表情显示系统 (推荐)
+#### Custom Emote Display System (Recommended)
 ```c
 #define USE_LVGL_DEFAULT    0
 ```
-- **特点**: 使用自定义的 `EmoteDisplay` 表情显示系统
-- **功能**: 支持丰富的表情动画、眼睛动画、状态图标显示
-- **适用**: 智能助手场景，提供更生动的人机交互体验
-- **类**: `anim::EmoteDisplay` + `anim::EmoteEngine`
+- **Features**: Uses a custom `EmoteDisplay` emote display system
+- **Functions**: Supports rich emote animations, eye animations, and status icon display
+- **Applicable**: Smart assistant scenarios, providing a more vivid human-computer interaction experience
+- **Classes**: `anim::EmoteDisplay` + `anim::EmoteEngine`
 
-#### LVGL默认显示系统
+#### LVGL Default Display System
 ```c
 #define USE_LVGL_DEFAULT    1
 ```
-- **特点**: 使用标准LVGL图形库的显示系统
-- **功能**: 传统的文本和图标显示界面
-- **适用**: 需要标准GUI控件的应用场景
-- **类**: `SpiLcdDisplay`
+- **Features**: Uses the standard LVGL graphics library display system
+- **Functions**: Traditional text and icon display interface
+- **Applicable**: Application scenarios requiring standard GUI controls
+- **Classes**: `SpiLcdDisplay`
 
-#### 如何修改
-1. 打开 `main/boards/echoear/EchoEar.cc` 文件
-2. 找到第29行的宏定义：`#define USE_LVGL_DEFAULT    0`
-3. 修改为想要的值（0或1）
-4. 重新编译项目
+#### How to Modify
+1. Open the `main/boards/echoear/EchoEar.cc` file
+2. Find the macro definition on line 29: `#define USE_LVGL_DEFAULT    0`
+3. Change it to the desired value (0 or 1)
+4. Recompile the project
 
-> **说明**: EchoEar 使用16MB Flash，需要使用专门的分区表配置来合理分配存储空间给应用程序、OTA更新、资源文件等。
+> **Note**: EchoEar uses 16MB Flash and requires a dedicated partition table configuration to reasonably allocate storage space for applications, OTA updates, resource files, etc.
 
-按 `S` 保存，按 `Q` 退出。
+Press `S` to save, press `Q` to exit.
 
-**编译**
+**Compile**
 
 ```bash
 idf.py build
 ```
 
-**烧录**
+**Flash**
 
-将 EchoEar 连接至电脑，**注意打开电源**，并运行：
+Connect EchoEar to the computer, **make sure the power is on**, and run:
+
+```bash
+idf.py flash
+```
+
+---
+
+# EchoEar
+
+## Giới thiệu
+
+<div align="center">
+    <a href="https://oshwhub.com/esp-college/echoear"><b> Nền tảng mã nguồn mở LiChuang </b></a>
+</div>
+
+EchoEar là một bộ công cụ phát triển AI thông minh, được trang bị mô-đun ESP32-S3-WROOM-1, màn hình cảm ứng tròn QSPI 1.85 inch và mảng micrô kép, hỗ trợ đánh thức bằng giọng nói ngoại tuyến và thuật toán định vị nguồn âm thanh. Để biết chi tiết phần cứng, vui lòng tham khảo [Dự án mã nguồn mở LiChuang](https://oshwhub.com/esp-college/echoear).
+
+## Lệnh cấu hình và biên dịch
+
+**Cấu hình mục tiêu biên dịch là ESP32S3**
+
+```bash
+idf.py set-target esp32s3
+```
+
+**Mở menuconfig và cấu hình**
+
+```bash
+idf.py menuconfig
+```
+
+Cấu hình các tùy chọn sau:
+
+### Cấu hình cơ bản
+- `Xiaozhi Assistant` → `Board Type` → Chọn `EchoEar`
+
+### Lựa chọn kiểu giao diện người dùng (UI)
+
+EchoEar hỗ trợ hai kiểu hiển thị UI khác nhau, có thể được chọn bằng cách sửa đổi định nghĩa macro trong mã:
+
+#### Hệ thống hiển thị biểu tượng cảm xúc tùy chỉnh (Khuyên dùng)
+```c
+#define USE_LVGL_DEFAULT    0
+```
+- **Tính năng**: Sử dụng hệ thống hiển thị biểu tượng cảm xúc `EmoteDisplay` tùy chỉnh
+- **Chức năng**: Hỗ trợ hoạt ảnh biểu tượng cảm xúc phong phú, hoạt ảnh mắt và hiển thị biểu tượng trạng thái
+- **Áp dụng**: Các kịch bản trợ lý thông minh, cung cấp trải nghiệm tương tác người-máy sống động hơn
+- **Lớp**: `anim::EmoteDisplay` + `anim::EmoteEngine`
+
+#### Hệ thống hiển thị mặc định LVGL
+```c
+#define USE_LVGL_DEFAULT    1
+```
+- **Tính năng**: Sử dụng hệ thống hiển thị thư viện đồ họa LVGL tiêu chuẩn
+- **Chức năng**: Giao diện hiển thị văn bản và biểu tượng truyền thống
+- **Áp dụng**: Các kịch bản ứng dụng yêu cầu điều khiển GUI tiêu chuẩn
+- **Lớp**: `SpiLcdDisplay`
+
+#### Cách sửa đổi
+1. Mở tệp `main/boards/echoear/EchoEar.cc`
+2. Tìm định nghĩa macro trên dòng 29: `#define USE_LVGL_DEFAULT    0`
+3. Thay đổi nó thành giá trị mong muốn (0 hoặc 1)
+4. Biên dịch lại dự án
+
+> **Lưu ý**: EchoEar sử dụng Flash 16MB và yêu cầu cấu hình bảng phân vùng chuyên dụng để phân bổ hợp lý không gian lưu trữ cho các ứng dụng, cập nhật OTA, tệp tài nguyên, v.v.
+
+Nhấn `S` để lưu, nhấn `Q` để thoát.
+
+**Biên dịch**
+
+```bash
+idf.py build
+```
+
+**Nạp chương trình**
+
+Kết nối EchoEar với máy tính, **đảm bảo đã bật nguồn**, và chạy:
 
 ```bash
 idf.py flash

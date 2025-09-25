@@ -10,7 +10,7 @@
 
 ## English
 
-The code in this directory is ported from LVGL's GIF program.
+This directory's code is ported from LVGL's GIF program.
 
 Main fixes and improvements:
 - Fixed transparent background issues

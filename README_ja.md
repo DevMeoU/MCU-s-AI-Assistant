@@ -1,6 +1,6 @@
 # MCP ベースのチャットボット
 
-（日本語 | [中文](README.md) | [English](README_en.md)）
+（日本語 | [中文](README.md) | [English](README_en.md) | [Tiếng Việt](README_vi.md)）
 
 ## 動画
 
@@ -32,7 +32,7 @@
 - 話者認識、現在話している人を識別 [3D Speaker](https://github.com/modelscope/3D-Speaker)
 - OLED / LCDディスプレイ、表情表示対応
 - バッテリー表示と電源管理
-- 多言語対応（中国語、英語、日本語）
+- 多言語対応（中国語、英語、日本語、ベトナム語）
 - ESP32-C3、ESP32-S3、ESP32-P4チッププラットフォーム対応
 - デバイス側MCPによるデバイス制御（音量・明るさ調整、アクション制御など）
 - クラウド側MCPで大規模モデル能力を拡張（スマートホーム制御、PCデスクトップ操作、知識検索、メール送受信など）
@@ -154,4 +154,4 @@ Feishuドキュメントチュートリアルをご覧ください：
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=78/xiaozhi-esp32&type=Date" />
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=78/xiaozhi-esp32&type=Date" />
  </picture>
-</a> 
+</a>

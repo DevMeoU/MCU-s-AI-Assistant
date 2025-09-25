@@ -110,7 +110,7 @@ void LvglDisplay::UpdateStatusBar(bool update_all) {
             return;
         }
 
-        // 如果静音状态改变，则更新图标
+        // If mute status changes, update the icon
         if (codec->output_volume() == 0 && !muted_) {
             muted_ = true;
             lv_label_set_text(mute_label_, FONT_AWESOME_VOLUME_XMARK);
@@ -180,7 +180,7 @@ void LvglDisplay::UpdateStatusBar(bool update_all) {
     // 每 10 秒更新一次网络图标
     static int seconds_counter = 0;
     if (update_all || seconds_counter++ % 10 == 0) {
-        // 升级固件时，不读取 4G 网络状态，避免占用 UART 资源
+        // When upgrading firmware, do not read 4G network status to avoid occupying UART resources
         auto device_state = Application::GetInstance().GetDeviceState();
         static const std::vector<DeviceState> allowed_states = {
             kDeviceStateIdle,
@@ -233,10 +233,10 @@ bool LvglDisplay::SnapshotToJpeg(std::string& jpeg_data, int quality) {
         data[i] = __builtin_bswap16(data[i]);
     }
 
-    // 清空输出字符串并使用回调版本，避免预分配大内存块
+    // Clear the output string and use the callback version to avoid pre-allocating large memory blocks
     jpeg_data.clear();
 
-    // 🚀 使用回调版本的JPEG编码器，进一步节省内存
+    // 🚀 Use the callback version of the JPEG encoder to further save memory
     bool ret = image_to_jpeg_cb(draw_buffer->data, draw_buffer->data_size, draw_buffer->header.w, draw_buffer->header.h, PIXFORMAT_RGB565, quality,
         [](void *arg, size_t index, const void *data, size_t len) -> size_t {
         std::string* output = static_cast<std::string*>(arg);
