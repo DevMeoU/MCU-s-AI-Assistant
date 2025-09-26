@@ -2,10 +2,25 @@
 # Automatically generated file. DO NOT EDIT.
 # Espressif IoT Development Framework (ESP-IDF) 5.5.0 Project Configuration
 #
+# Tệp cấu hình tự động được tạo bởi ESP-IDF. KHÔNG CHỈNH SỬA THỦ CÔNG.
+# ESP-IDF 5.5.0 - Cấu hình dự án cho M5Stack Tab5 (ESP32-P4)
+#
+# Các tính năng phần cứng được hỗ trợ bởi ESP32-P4
+# Hardware features supported by ESP32-P4
+# Hỗ trợ ADC (Analog to Digital Converter) - Chuyển đổi tín hiệu tương tự sang số
+# ADC support for analog to digital conversion
 CONFIG_SOC_ADC_SUPPORTED=y
+# Hỗ trợ bộ so sánh analog - Dùng cho các ứng dụng cảm biến
+# Analog comparator support for sensor applications
 CONFIG_SOC_ANA_CMPR_SUPPORTED=y
+# Hỗ trợ GPIO chuyên dụng - Các chân GPIO với chức năng đặc biệt
+# Dedicated GPIO support for special functions
 CONFIG_SOC_DEDICATED_GPIO_SUPPORTED=y
+# Hỗ trợ UART - Giao tiếp nối tiếp
+# UART support for serial communication
 CONFIG_SOC_UART_SUPPORTED=y
+# Hỗ trợ DMA (Direct Memory Access) - Truyền dữ liệu không qua CPU
+# DMA support for high-speed data transfer without CPU intervention
 CONFIG_SOC_GDMA_SUPPORTED=y
 CONFIG_SOC_UHCI_SUPPORTED=y
 CONFIG_SOC_AHB_GDMA_SUPPORTED=y
@@ -14,9 +29,17 @@ CONFIG_SOC_DW_GDMA_SUPPORTED=y
 CONFIG_SOC_DMA2D_SUPPORTED=y
 CONFIG_SOC_GPTIMER_SUPPORTED=y
 CONFIG_SOC_PCNT_SUPPORTED=y
+# Hỗ trợ LCD & Camera - Giao tiếp màn hình và camera
+# LCD & Camera support for display and imaging
 CONFIG_SOC_LCDCAM_SUPPORTED=y
+# Hỗ trợ Camera - Giao tiếp với camera module
+# Camera support for imaging applications
 CONFIG_SOC_LCDCAM_CAM_SUPPORTED=y
+# Hỗ trợ LCD giao tiếp I80 - Màn hình LCD loại I80
+# I80 LCD support for parallel display interface
 CONFIG_SOC_LCDCAM_I80_LCD_SUPPORTED=y
+# Hỗ trợ LCD giao tiếp RGB - Màn hình LCD loại RGB
+# RGB LCD support for RGB display interface
 CONFIG_SOC_LCDCAM_RGB_LCD_SUPPORTED=y
 CONFIG_SOC_MIPI_CSI_SUPPORTED=y
 CONFIG_SOC_MIPI_DSI_SUPPORTED=y
@@ -74,28 +97,83 @@ CONFIG_SOC_PSRAM_DMA_CAPABLE=y
 CONFIG_SOC_SDMMC_HOST_SUPPORTED=y
 CONFIG_SOC_CLK_TREE_SUPPORTED=y
 CONFIG_SOC_ASSIST_DEBUG_SUPPORTED=y
+# Hỗ trợ Debug Probe - Công cụ gỡ lỗi phần cứng
+# Debug Probe Support - Hardware debugging tool support
 CONFIG_SOC_DEBUG_PROBE_SUPPORTED=y
+
+# Hỗ trợ Watchdog Timer - Bộ đếm thời gian giám sát hoạt động
+# Watchdog Timer Support - System activity monitoring timer
 CONFIG_SOC_WDT_SUPPORTED=y
+
+# Hỗ trợ SPI Flash - Bộ nhớ flash ngoài qua giao tiếp SPI
+# SPI Flash Support - External flash memory via SPI interface
 CONFIG_SOC_SPI_FLASH_SUPPORTED=y
+
+# Hỗ trợ cảm biến cảm ứng - Cảm biến chạm điện dung
+# Touch Sensor Support - Capacitive touch sensor support
 CONFIG_SOC_TOUCH_SENSOR_SUPPORTED=y
+
+# Hỗ trợ RNG - Bộ tạo số ngẫu nhiên phần cứng
+# RNG Support - Hardware random number generator
 CONFIG_SOC_RNG_SUPPORTED=y
+
+# Hỗ trợ GP LDO - Bộ điều chỉnh điện áp thấp điện áp chung
+# GP LDO Support - General Purpose Low Dropout Regulator support
 CONFIG_SOC_GP_LDO_SUPPORTED=y
+
+# Hỗ trợ PPA - Bộ xử lý pixel/phần cứng đồ họa
+# PPA Support - Pixel Processing Accelerator/Graphics hardware support
 CONFIG_SOC_PPA_SUPPORTED=y
+
+# Hỗ trợ chế độ ngủ nhẹ - Tiết kiệm năng lượng khi không hoạt động
+# Light Sleep Support - Power saving during inactive periods
 CONFIG_SOC_LIGHT_SLEEP_SUPPORTED=y
+
+# Hỗ trợ chế độ ngủ sâu - Tiết kiệm năng lượng tối đa
+# Deep Sleep Support - Maximum power saving mode
 CONFIG_SOC_DEEP_SLEEP_SUPPORTED=y
+
+# Hỗ trợ quản lý năng lượng - Tối ưu hóa tiêu thụ điện năng
+# Power Management Support - Optimize power consumption
 CONFIG_SOC_PM_SUPPORTED=y
+
+# Hỗ trợ Bit Scrambler - Mã hóa/bit scrambling phần cứng
+# Bit Scrambler Support - Hardware bit scrambling/encryption
 CONFIG_SOC_BITSCRAMBLER_SUPPORTED=y
+
+# Hỗ trợ lệnh SIMD - Xử lý dữ liệu song song
+# SIMD Instruction Support - Parallel data processing instructions
 CONFIG_SOC_SIMD_INSTRUCTION_SUPPORTED=y
+
+# Hỗ trợ I3C Master - Giao tiếp cải tiến I2C thế hệ mới
+# I3C Master Support - Enhanced next-generation I2C communication
 CONFIG_SOC_I3C_MASTER_SUPPORTED=y
+
+# Hỗ trợ tinh thể 40MHz - Bộ tạo dao động chính 40MHz
+# 40MHz Crystal Support - Main 40MHz oscillator support
 CONFIG_SOC_XTAL_SUPPORT_40M=y
+# Hỗ trợ DMA cho AES - Tăng tốc mã hóa/giải mã
+# AES DMA Support - Accelerate encryption/decryption
 CONFIG_SOC_AES_SUPPORT_DMA=y
-CONFIG_SOC_AES_SUPPORT_GCM=y
 CONFIG_SOC_AES_GDMA=y
+
+# Hỗ trợ chế độ GCM cho AES - Xác thực mã hóa bản tin
+# AES GCM Mode Support - Galois/Counter Mode for authenticated encryption
+CONFIG_SOC_AES_SUPPORT_GCM=y
+
+# Hỗ trợ AES-128 và AES-256 - Các kích thước khóa mã hóa chuẩn
+# AES-128 and AES-256 Support - Standard encryption key sizes
 CONFIG_SOC_AES_SUPPORT_AES_128=y
 CONFIG_SOC_AES_SUPPORT_AES_256=y
+
+# Hỗ trợ ADC - Bộ chuyển đổi tín hiệu Analog sang Digital
+# ADC Support - Analog to Digital Converter support
 CONFIG_SOC_ADC_RTC_CTRL_SUPPORTED=y
 CONFIG_SOC_ADC_DIG_CTRL_SUPPORTED=y
 CONFIG_SOC_ADC_DMA_SUPPORTED=y
+
+# Cấu hình ADC - Số lượng và thông số kỹ thuật
+# ADC Configuration - Quantity and technical parameters
 CONFIG_SOC_ADC_PERIPH_NUM=2
 CONFIG_SOC_ADC_MAX_CHANNEL_NUM=8
 CONFIG_SOC_ADC_ATTEN_NUM=4
@@ -103,14 +181,28 @@ CONFIG_SOC_ADC_DIGI_CONTROLLER_NUM=2
 CONFIG_SOC_ADC_PATT_LEN_MAX=16
 CONFIG_SOC_ADC_DIGI_MAX_BITWIDTH=12
 CONFIG_SOC_ADC_DIGI_MIN_BITWIDTH=12
+# Bộ lọc và giám sát ADC - Xử lý tín hiệu nâng cao
+# ADC Filters and Monitoring - Advanced signal processing
 CONFIG_SOC_ADC_DIGI_IIR_FILTER_NUM=2
 CONFIG_SOC_ADC_DIGI_MONITOR_NUM=2
+
+# Kích thước dữ liệu ADC - Định dạng và độ phân giải
+# ADC Data Size - Format and resolution
 CONFIG_SOC_ADC_DIGI_RESULT_BYTES=4
 CONFIG_SOC_ADC_DIGI_DATA_BYTES_PER_CONV=4
+
+# Giới hạn tần số lấy mẫu ADC - Tốc độ chuyển đổi tối đa/tối thiểu
+# ADC Sampling Frequency Limits - Maximum/minimum conversion rates
 CONFIG_SOC_ADC_SAMPLE_FREQ_THRES_HIGH=83333
 CONFIG_SOC_ADC_SAMPLE_FREQ_THRES_LOW=611
+
+# Độ phân giải ADC - Số bit cho mỗi chuyển đổi
+# ADC Resolution - Bits per conversion
 CONFIG_SOC_ADC_RTC_MIN_BITWIDTH=12
 CONFIG_SOC_ADC_RTC_MAX_BITWIDTH=12
+
+# Hỗ trợ hiệu chuẩn ADC - Tự động điều chỉnh độ chính xác
+# ADC Calibration Support - Automatic accuracy adjustment
 CONFIG_SOC_ADC_CALIBRATION_V1_SUPPORTED=y
 CONFIG_SOC_ADC_SELF_HW_CALI_SUPPORTED=y
 CONFIG_SOC_ADC_CALIB_CHAN_COMPENS_SUPPORTED=y
@@ -205,12 +297,26 @@ CONFIG_SOC_I2C_SUPPORT_10BIT_ADDR=y
 CONFIG_SOC_I2C_SLAVE_SUPPORT_BROADCAST=y
 CONFIG_SOC_I2C_SLAVE_CAN_GET_STRETCH_CAUSE=y
 CONFIG_SOC_I2C_SLAVE_SUPPORT_I2CRAM_ACCESS=y
+# I2C Slave không khớp - Xử lý địa chỉ slave không chính xác
+# I2C Slave Unmatch - Handle incorrect slave addresses
 CONFIG_SOC_I2C_SLAVE_SUPPORT_SLAVE_UNMATCH=y
+
+# Hỗ trợ giữ nguyên trạng thái I2C khi ngủ
+# I2C Sleep Retention Support - Maintain I2C state during sleep
 CONFIG_SOC_I2C_SUPPORT_SLEEP_RETENTION=y
+
+# I2C Low Power - Giao tiếp I2C ở chế độ năng lượng thấp
+# Low Power I2C - I2C communication in low power mode
 CONFIG_SOC_LP_I2C_NUM=1
 CONFIG_SOC_LP_I2C_FIFO_LEN=16
+
+# Cấu hình I2S - Giao tiếp âm thanh chuyên dụng
+# I2S Configuration - Dedicated audio communication
 CONFIG_SOC_I2S_NUM=3
 CONFIG_SOC_I2S_HW_VERSION_2=y
+
+# Hỗ trợ các tính năng I2S nâng cao
+# Advanced I2S Features Support
 CONFIG_SOC_I2S_SUPPORTS_ETM=y
 CONFIG_SOC_I2S_SUPPORTS_XTAL=y
 CONFIG_SOC_I2S_SUPPORTS_APLL=y
@@ -228,6 +334,8 @@ CONFIG_SOC_I2S_PDM_MAX_RX_LINES=4
 CONFIG_SOC_I2S_TDM_FULL_DATA_WIDTH=y
 CONFIG_SOC_I2S_SUPPORT_SLEEP_RETENTION=y
 CONFIG_SOC_LP_I2S_NUM=1
+# ISP - Image Signal Processor (Bộ xử lý tín hiệu hình ảnh)
+# ISP - Image Signal Processor for camera image enhancement
 CONFIG_SOC_ISP_BF_SUPPORTED=y
 CONFIG_SOC_ISP_CCM_SUPPORTED=y
 CONFIG_SOC_ISP_DEMOSAIC_SUPPORTED=y
@@ -236,6 +344,9 @@ CONFIG_SOC_ISP_SHARPEN_SUPPORTED=y
 CONFIG_SOC_ISP_COLOR_SUPPORTED=y
 CONFIG_SOC_ISP_LSC_SUPPORTED=y
 CONFIG_SOC_ISP_SHARE_CSI_BRG=y
+
+# Số lượng bộ điều khiển ISP
+# Number of ISP controllers
 CONFIG_SOC_ISP_NUMS=1
 CONFIG_SOC_ISP_DVP_CTLR_NUMS=1
 CONFIG_SOC_ISP_AE_CTLR_NUMS=1
@@ -266,11 +377,19 @@ CONFIG_SOC_ISP_HIST_INTERVAL_NUMS=15
 CONFIG_SOC_ISP_LSC_GRAD_RATIO_INT_BITS=2
 CONFIG_SOC_ISP_LSC_GRAD_RATIO_DEC_BITS=8
 CONFIG_SOC_ISP_LSC_GRAD_RATIO_RES_BITS=22
+# LEDC - LED Controller (Bộ điều khiển LED)
+# LEDC - LED Controller for PWM LED control
 CONFIG_SOC_LEDC_SUPPORT_PLL_DIV_CLOCK=y
 CONFIG_SOC_LEDC_SUPPORT_XTAL_CLOCK=y
+
+# Số lượng timer và kênh LEDC
+# Number of LEDC timers and channels
 CONFIG_SOC_LEDC_TIMER_NUM=4
 CONFIG_SOC_LEDC_CHANNEL_NUM=8
 CONFIG_SOC_LEDC_TIMER_BIT_WIDTH=20
+
+# Hỗ trợ hiệu ứng fade gamma - Làm mờ dần LED
+# Gamma curve fade support - Smooth LED dimming effects
 CONFIG_SOC_LEDC_GAMMA_CURVE_FADE_SUPPORTED=y
 CONFIG_SOC_LEDC_GAMMA_CURVE_FADE_RANGE_MAX=16
 CONFIG_SOC_LEDC_SUPPORT_FADE_STOP=y
@@ -289,11 +408,16 @@ CONFIG_SOC_PCNT_THRES_POINT_PER_UNIT=2
 CONFIG_SOC_PCNT_SUPPORT_RUNTIME_THRES_UPDATE=y
 CONFIG_SOC_PCNT_SUPPORT_CLEAR_SIGNAL=y
 CONFIG_SOC_PCNT_SUPPORT_SLEEP_RETENTION=y
+# RMT - Remote Control (Điều khiển từ xa)
+# RMT - Remote Control for infrared/RF signal processing
 CONFIG_SOC_RMT_GROUPS=1
 CONFIG_SOC_RMT_TX_CANDIDATES_PER_GROUP=4
 CONFIG_SOC_RMT_RX_CANDIDATES_PER_GROUP=4
 CONFIG_SOC_RMT_CHANNELS_PER_GROUP=8
 CONFIG_SOC_RMT_MEM_WORDS_PER_CHANNEL=48
+
+# Tính năng nâng cao của RMT
+# Advanced RMT features
 CONFIG_SOC_RMT_SUPPORT_RX_PINGPONG=y
 CONFIG_SOC_RMT_SUPPORT_RX_DEMODULATION=y
 CONFIG_SOC_RMT_SUPPORT_TX_ASYNC_STOP=y
@@ -312,6 +436,8 @@ CONFIG_SOC_LCDCAM_I80_BUS_WIDTH=24
 CONFIG_SOC_LCDCAM_RGB_NUM_PANELS=1
 CONFIG_SOC_LCDCAM_RGB_DATA_WIDTH=24
 CONFIG_SOC_LCD_SUPPORT_RGB_YUV_CONV=y
+# MCPWM - Motor Control PWM (Điều khiển động cơ bằng PWM)
+# MCPWM - Motor Control PWM for precise motor control
 CONFIG_SOC_MCPWM_GROUPS=2
 CONFIG_SOC_MCPWM_TIMERS_PER_GROUP=3
 CONFIG_SOC_MCPWM_OPERATORS_PER_GROUP=3
@@ -341,11 +467,21 @@ CONFIG_SOC_PARLIO_RX_CLK_SUPPORT_OUTPUT=y
 CONFIG_SOC_PARLIO_TRANS_BIT_ALIGN=y
 CONFIG_SOC_PARLIO_TX_SUPPORT_LOOP_TRANSMISSION=y
 CONFIG_SOC_PARLIO_SUPPORT_SLEEP_RETENTION=y
+# PARLIO - Parallel IO Controller (Bộ điều khiển song song)
+# PARLIO - Parallel IO Controller for high-speed parallel data transfer
 CONFIG_SOC_PARLIO_SUPPORT_SPI_LCD=y
 CONFIG_SOC_PARLIO_SUPPORT_I80_LCD=y
+
+# MPI - Memory Protection Unit (Đơn vị bảo vệ bộ nhớ)
+# MPI - Memory Protection Unit for memory access control
 CONFIG_SOC_MPI_MEM_BLOCKS_NUM=4
 CONFIG_SOC_MPI_OPERATIONS_NUM=3
+
+# RSA - Cryptographic processor (Bộ xử lý mã hóa RSA)
+# RSA - RSA cryptographic processor for secure communications
 CONFIG_SOC_RSA_MAX_BIT_LEN=4096
+# SDMMC - Secure Digital Memory Card Controller (Bộ điều khiển thẻ nhớ)
+# SDMMC - Secure Digital Memory Card Controller for storage
 CONFIG_SOC_SDMMC_USE_IOMUX=y
 CONFIG_SOC_SDMMC_USE_GPIO_MATRIX=y
 CONFIG_SOC_SDMMC_NUM_SLOTS=2
@@ -353,6 +489,9 @@ CONFIG_SOC_SDMMC_DELAY_PHASE_NUM=4
 CONFIG_SOC_SDMMC_IO_POWER_EXTERNAL=y
 CONFIG_SOC_SDMMC_PSRAM_DMA_CAPABLE=y
 CONFIG_SOC_SDMMC_UHS_I_SUPPORTED=y
+
+# SHA - Secure Hash Algorithm (Thuật toán băm bảo mật)
+# SHA - Secure Hash Algorithm for cryptographic hashing
 CONFIG_SOC_SHA_DMA_MAX_BUFFER_SIZE=3968
 CONFIG_SOC_SHA_SUPPORT_DMA=y
 CONFIG_SOC_SHA_SUPPORT_RESUME=y
@@ -365,13 +504,20 @@ CONFIG_SOC_SHA_SUPPORT_SHA512=y
 CONFIG_SOC_SHA_SUPPORT_SHA512_224=y
 CONFIG_SOC_SHA_SUPPORT_SHA512_256=y
 CONFIG_SOC_SHA_SUPPORT_SHA512_T=y
+# ECDSA - Elliptic Curve Digital Signature Algorithm (Chữ ký số đường cong elliptic)
+# ECDSA - Elliptic Curve Digital Signature Algorithm for secure digital signatures
 CONFIG_SOC_ECDSA_SUPPORT_EXPORT_PUBKEY=y
 CONFIG_SOC_ECDSA_SUPPORT_DETERMINISTIC_MODE=y
 CONFIG_SOC_ECDSA_USES_MPI=y
+
+# SDM - Sigma-Delta Modulation (Điều chế sigma-delta)
+# SDM - Sigma-Delta Modulation for high-resolution analog output
 CONFIG_SOC_SDM_GROUPS=1
 CONFIG_SOC_SDM_CHANNELS_PER_GROUP=8
 CONFIG_SOC_SDM_CLK_SUPPORT_PLL_F80M=y
 CONFIG_SOC_SDM_CLK_SUPPORT_XTAL=y
+# SPI - Serial Peripheral Interface (Giao tiếp ngoại vi nối tiếp)
+# SPI - Serial Peripheral Interface for high-speed serial communication
 CONFIG_SOC_SPI_PERIPH_NUM=3
 CONFIG_SOC_SPI_MAX_CS_NUM=6
 CONFIG_SOC_SPI_MAXIMUM_BUFFER_SIZE=64
@@ -406,6 +552,9 @@ CONFIG_SOC_MEMSPI_SRC_FREQ_40M_SUPPORTED=y
 CONFIG_SOC_MEMSPI_SRC_FREQ_20M_SUPPORTED=y
 CONFIG_SOC_MEMSPI_SRC_FREQ_120M_SUPPORTED=y
 CONFIG_SOC_MEMSPI_FLASH_PSRAM_INDEPENDENT=y
+
+# SYSTIMER - System Timer (Bộ định thời hệ thống)
+# SYSTIMER - System Timer for precise system timing
 CONFIG_SOC_SYSTIMER_COUNTER_NUM=2
 CONFIG_SOC_SYSTIMER_ALARM_NUM=3
 CONFIG_SOC_SYSTIMER_BIT_WIDTH_LO=32
@@ -417,6 +566,8 @@ CONFIG_SOC_SYSTIMER_ALARM_MISS_COMPENSATE=y
 CONFIG_SOC_SYSTIMER_SUPPORT_ETM=y
 CONFIG_SOC_LP_TIMER_BIT_WIDTH_LO=32
 CONFIG_SOC_LP_TIMER_BIT_WIDTH_HI=16
+# TIMER - Timer Groups (Nhóm bộ định thời)
+# TIMER - Timer Groups for precise timing control
 CONFIG_SOC_TIMER_GROUPS=2
 CONFIG_SOC_TIMER_GROUP_TIMERS_PER_GROUP=2
 CONFIG_SOC_TIMER_GROUP_COUNTER_BIT_WIDTH=54
@@ -427,6 +578,9 @@ CONFIG_SOC_TIMER_SUPPORT_ETM=y
 CONFIG_SOC_TIMER_SUPPORT_SLEEP_RETENTION=y
 CONFIG_SOC_MWDT_SUPPORT_XTAL=y
 CONFIG_SOC_MWDT_SUPPORT_SLEEP_RETENTION=y
+
+# TOUCH - Touch Sensor (Cảm biến cảm ứng)
+# TOUCH - Touch Sensor for capacitive touch detection
 CONFIG_SOC_TOUCH_SENSOR_VERSION=3
 CONFIG_SOC_TOUCH_SENSOR_NUM=14
 CONFIG_SOC_TOUCH_MIN_CHAN_ID=0
@@ -439,6 +593,8 @@ CONFIG_SOC_TOUCH_PROXIMITY_CHANNEL_NUM=3
 CONFIG_SOC_TOUCH_PROXIMITY_MEAS_DONE_SUPPORTED=y
 CONFIG_SOC_TOUCH_SUPPORT_FREQ_HOP=y
 CONFIG_SOC_TOUCH_SAMPLE_CFG_NUM=3
+# TWAI - Two-Wire Automotive Interface (Giao diện ô tô 2 dây)
+# TWAI - Two-Wire Automotive Interface for CAN bus communication
 CONFIG_SOC_TWAI_CONTROLLER_NUM=3
 CONFIG_SOC_TWAI_MASK_FILTER_NUM=1
 CONFIG_SOC_TWAI_CLK_SUPPORT_XTAL=y
@@ -446,6 +602,9 @@ CONFIG_SOC_TWAI_BRP_MIN=2
 CONFIG_SOC_TWAI_BRP_MAX=32768
 CONFIG_SOC_TWAI_SUPPORTS_RX_STATUS=y
 CONFIG_SOC_TWAI_SUPPORT_SLEEP_RETENTION=y
+
+# EFUSE - Electronic Fuse (Cầu chì điện tử)
+# EFUSE - Electronic Fuse for security and configuration
 CONFIG_SOC_EFUSE_DIS_PAD_JTAG=y
 CONFIG_SOC_EFUSE_DIS_USB_JTAG=y
 CONFIG_SOC_EFUSE_DIS_DIRECT_BOOT=y
@@ -464,6 +623,9 @@ CONFIG_SOC_FLASH_ENCRYPTION_XTS_AES=y
 CONFIG_SOC_FLASH_ENCRYPTION_XTS_AES_OPTIONS=y
 CONFIG_SOC_FLASH_ENCRYPTION_XTS_AES_128=y
 CONFIG_SOC_FLASH_ENCRYPTION_XTS_AES_256=y
+
+# UART - Universal Asynchronous Receiver-Transmitter (Bộ thu phát không đồng bộ)
+# UART - Universal Asynchronous Receiver-Transmitter for serial communication
 CONFIG_SOC_UART_NUM=6
 CONFIG_SOC_UART_HP_NUM=5
 CONFIG_SOC_UART_LP_NUM=1
@@ -487,6 +649,8 @@ CONFIG_SOC_UHCI_NUM=1
 CONFIG_SOC_COEX_HW_PTI=y
 CONFIG_SOC_PHY_DIG_REGS_MEM_SIZE=21
 CONFIG_SOC_WIFI_LIGHT_SLEEP_CLK_WIDTH=12
+# PM - Power Management (Quản lý năng lượng)
+# PM - Power Management for energy efficiency
 CONFIG_SOC_PM_SUPPORT_EXT1_WAKEUP=y
 CONFIG_SOC_PM_SUPPORT_EXT1_WAKEUP_MODE_PER_PIN=y
 CONFIG_SOC_PM_EXT1_WAKEUP_BY_PMU=y
@@ -511,6 +675,9 @@ CONFIG_SOC_SLEEP_SYSTIMER_STALL_WORKAROUND=y
 CONFIG_SOC_SLEEP_TGWDT_STOP_WORKAROUND=y
 CONFIG_SOC_PM_RETENTION_MODULE_NUM=64
 CONFIG_SOC_PSRAM_VDD_POWER_MPLL=y
+
+# CLOCK - Clock Management (Quản lý đồng hồ)
+# CLOCK - Clock Management for system timing
 CONFIG_SOC_CLK_RC_FAST_SUPPORT_CALIBRATION=y
 CONFIG_SOC_CLK_APLL_SUPPORTED=y
 CONFIG_SOC_CLK_MPLL_SUPPORTED=y
@@ -521,23 +688,40 @@ CONFIG_SOC_CLK_LP_FAST_SUPPORT_LP_PLL=y
 CONFIG_SOC_CLK_LP_FAST_SUPPORT_XTAL=y
 CONFIG_SOC_PERIPH_CLK_CTRL_SHARED=y
 CONFIG_SOC_CLK_ANA_I2C_MST_HAS_ROOT_GATE=y
+# TEMP SENSOR - Temperature Sensor (Cảm biến nhiệt độ)
+# TEMP SENSOR - Temperature Sensor for thermal monitoring
 CONFIG_SOC_TEMPERATURE_SENSOR_LP_PLL_SUPPORT=y
 CONFIG_SOC_TEMPERATURE_SENSOR_INTR_SUPPORT=y
 CONFIG_SOC_TSENS_IS_INDEPENDENT_FROM_ADC=y
 CONFIG_SOC_TEMPERATURE_SENSOR_SUPPORT_ETM=y
 CONFIG_SOC_TEMPERATURE_SENSOR_SUPPORT_SLEEP_RETENTION=y
+
+# MEMORY - Memory Configuration (Cấu hình bộ nhớ)
+# MEMORY - Memory Configuration for system memory management
 CONFIG_SOC_MEM_TCM_SUPPORTED=y
 CONFIG_SOC_MEM_NON_CONTIGUOUS_SRAM=y
 CONFIG_SOC_ASYNCHRONOUS_BUS_ERROR_MODE=y
+
+# EMAC - Ethernet MAC Controller (Bộ điều khiển Ethernet)
+# EMAC - Ethernet MAC Controller for network connectivity
 CONFIG_SOC_EMAC_IEEE1588V2_SUPPORTED=y
 CONFIG_SOC_EMAC_USE_MULTI_IO_MUX=y
 CONFIG_SOC_EMAC_MII_USE_GPIO_MATRIX=y
+
+# JPEG - JPEG Codec (Bộ mã hóa/giải mã JPEG)
+# JPEG - JPEG Codec for image compression
 CONFIG_SOC_JPEG_CODEC_SUPPORTED=y
 CONFIG_SOC_JPEG_DECODE_SUPPORTED=y
 CONFIG_SOC_JPEG_ENCODE_SUPPORTED=y
+
+# LCDCAM - LCD Camera Interface (Giao diện camera LCD)
+# LCDCAM - LCD Camera Interface for camera integration
 CONFIG_SOC_LCDCAM_CAM_SUPPORT_RGB_YUV_CONV=y
 CONFIG_SOC_LCDCAM_CAM_PERIPH_NUM=1
 CONFIG_SOC_LCDCAM_CAM_DATA_WIDTH_MAX=16
+
+# I3C - Improved Inter-Integrated Circuit (Giao tiếp I2C cải tiến)
+# I3C - Improved Inter-Integrated Circuit for advanced I2C communication
 CONFIG_SOC_I3C_MASTER_PERIPH_NUM=y
 CONFIG_SOC_I3C_MASTER_ADDRESS_TABLE_NUM=12
 CONFIG_SOC_I3C_MASTER_COMMAND_TABLE_NUM=12

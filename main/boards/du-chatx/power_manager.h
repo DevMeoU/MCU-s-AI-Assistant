@@ -37,7 +37,8 @@ private:
             return;
         }
 
-        // 如果电池电量数据不足，则读取电池电量数据
+        // If battery level data is insufficient, read the battery level data
+        // Tiếng Việt: Nếu dữ liệu điện lượng pin không đủ, thì đọc dữ liệu điện lượng pin
         if (adc_values_.size() < kBatteryAdcDataCount) {
             ReadBatteryAdcData();
             return;
@@ -65,7 +66,8 @@ private:
         }
         average_adc /= adc_values_.size();
 
-        // 定义电池电量区间
+        // Define battery level ranges
+        // Tiếng Việt: Định nghĩa các khoảng điện lượng pin
         const struct {
             uint16_t adc;
             uint8_t level;
@@ -78,15 +80,18 @@ private:
             {1217, 100}
         };
 
-        // 低于最低值时
+        // When below the minimum value
+        // Tiếng Việt: Khi dưới giá trị tối thiểu
         if (average_adc < levels[0].adc) {
             battery_level_ = 0;
         }
-        // 高于最高值时
+        // When above the maximum value
+        // Tiếng Việt: Khi trên giá trị tối đa
         else if (average_adc >= levels[5].adc) {
             battery_level_ = 100;
         } else {
-            // 线性插值计算中间值
+            // Linear interpolation to calculate intermediate values
+            // Tiếng Việt: Nội suy tuyến tính để tính giá trị trung gian
             for (int i = 0; i < 5; i++) {
                 if (average_adc >= levels[i].adc && average_adc < levels[i+1].adc) {
                     float ratio = static_cast<float>(average_adc - levels[i].adc) / (levels[i+1].adc - levels[i].adc);
@@ -112,7 +117,8 @@ private:
 
 public:
     PowerManager(gpio_num_t pin) : charging_pin_(pin) {
-        // 初始化充电引脚
+        // Initialize charging pin
+        // Tiếng Việt: Khởi tạo chân sạc
         gpio_config_t io_conf = {};
         io_conf.intr_type = GPIO_INTR_DISABLE;
         io_conf.mode = GPIO_MODE_INPUT;
@@ -135,7 +141,8 @@ public:
         ESP_ERROR_CHECK(esp_timer_create(&timer_args, &timer_handle_));
         ESP_ERROR_CHECK(esp_timer_start_periodic(timer_handle_, 1000000));
 
-        // 初始化 ADC
+        // Initialize ADC
+        // Tiếng Việt: Khởi tạo ADC
         adc_oneshot_unit_init_cfg_t init_config = {
             .unit_id = ADC_UNIT_1,
             .ulp_mode = ADC_ULP_MODE_DISABLE,
@@ -160,7 +167,8 @@ public:
     }
 
     bool IsCharging() {
-        // 如果电量已经满了，则不再显示充电中
+        // If the battery is fully charged, do not show charging
+        // Tiếng Việt: Nếu pin đã đầy, không hiển thị trạng thái sạc
         if (battery_level_ == 100) {
             return false;
         }
@@ -168,7 +176,8 @@ public:
     }
 
     bool IsDischarging() {
-        // 没有区分充电和放电，所以直接返回相反状态
+        // No distinction between charging and discharging, so return the opposite state
+        // Tiếng Việt: Không phân biệt sạc và xả, nên trả về trạng thái ngược lại
         return !is_charging_;
     }
 

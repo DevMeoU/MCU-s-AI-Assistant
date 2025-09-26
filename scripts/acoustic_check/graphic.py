@@ -21,7 +21,9 @@ from demod import RealTimeAFSKDecoder
 
 
 class UDPServerProtocol(asyncio.DatagramProtocol):
-    """UDP服务器协议类"""
+    """UDP Server Protocol Class
+    # UDP Server Protocol Class
+    """
     def __init__(self, data_queue):
         self.client_address = None
         self.data_queue: deque = data_queue
@@ -33,14 +35,16 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
         # 如果还没有客户端地址，记录第一个连接的客户端
         if self.client_address is None:
             self.client_address = addr
-            print(f"接受来自 {addr} 的连接")
+            print(f"Received connection from {addr}")
+            # Received connection from {addr}
         
         # 只处理来自已记录客户端的数据
         if addr == self.client_address:
             # 将接收到的音频数据添加到队列
             self.data_queue.extend(data)
         else:
-            print(f"忽略来自未知地址 {addr} 的数据")
+            print(f"Ignoring data from unknown address {addr}")
+            # Ignoring data from unknown address {addr}
 
 
 class MatplotlibWidget(QWidget):
@@ -204,18 +208,22 @@ class MainWindow(QMainWindow):
         control_layout = QHBoxLayout(control_panel)
         
         # 监听地址和端口输入
-        control_layout.addWidget(QLabel("监听地址:"))
+        control_layout.addWidget(QLabel("Listen Address:"))
+        # Listen Address:
         self.address_input = QLineEdit("0.0.0.0")
         self.address_input.setFixedWidth(120)
         control_layout.addWidget(self.address_input)
         
-        control_layout.addWidget(QLabel("端口:"))
+        control_layout.addWidget(QLabel("Port:"))
+        # Port:
         self.port_input = QLineEdit("8000")
         self.port_input.setFixedWidth(80)
         control_layout.addWidget(self.port_input)
         
-        # 监听按钮
-        self.listen_button = QPushButton("开始监听")
+        # Listen Button
+        # Listen Button
+        self.listen_button = QPushButton("Start Listening")
+        # Start Listening
         self.listen_button.clicked.connect(self.toggle_listening)
         control_layout.addWidget(self.listen_button)
         
@@ -227,8 +235,10 @@ class MainWindow(QMainWindow):
         self.data_label = QLabel("接收数据: 0 bytes")
         control_layout.addWidget(self.data_label)
         
-        # 保存按钮
-        self.save_button = QPushButton("保存音频")
+        # Save Button
+        # Save Button
+        self.save_button = QPushButton("Save Audio")
+        # Save Audio
         self.save_button.clicked.connect(self.save_audio)
         self.save_button.setEnabled(False)
         control_layout.addWidget(self.save_button)
@@ -241,8 +251,10 @@ class MainWindow(QMainWindow):
         decode_panel = QWidget()
         decode_layout = QVBoxLayout(decode_panel)
         
-        # 解码标题
-        decode_title = QLabel("实时AFSK解码结果:")
+        # Decode Title
+        # Decode Title
+        decode_title = QLabel("Real-time AFSK Decode Results:")
+        # Real-time AFSK Decode Results:
         decode_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         decode_layout.addWidget(decode_title)
         
@@ -256,8 +268,10 @@ class MainWindow(QMainWindow):
         # 解码控制按钮
         decode_control_layout = QHBoxLayout()
         
-        # 清空按钮
-        self.clear_decode_button = QPushButton("清空解码")
+        # Clear Button
+        # Clear Button
+        self.clear_decode_button = QPushButton("Clear Decode")
+        # Clear Decode
         self.clear_decode_button.clicked.connect(self.clear_decode_text)
         decode_control_layout.addWidget(self.clear_decode_button)
         
@@ -283,7 +297,9 @@ class MainWindow(QMainWindow):
         self.stats_timer.timeout.connect(self.update_stats)
         
     def on_decode_text(self, new_text: str):
-        """解码文本回调"""
+        """Decode Text Callback
+        # Decode Text Callback
+        """
         if new_text:
             # 添加新解码的文本
             current_text = self.decode_text.toPlainText()
@@ -301,31 +317,38 @@ class MainWindow(QMainWindow):
             self.decode_text.setTextCursor(cursor)
             
     def clear_decode_text(self):
-        """清空解码文本"""
+        """Clear Decode Text
+        # Clear Decode Text
+        """
         self.decode_text.clear()
         if hasattr(self.matplotlib_widget, 'decoder'):
             self.matplotlib_widget.decoder.clear()
-        self.decode_stats_label.setText("解码统计: 0 bits, 0 chars")
+        self.decode_stats_label.setText("Decode Stats: 0 bits, 0 chars")
+        # Decode Stats: 0 bits, 0 chars
         
     def update_decode_stats(self):
-        """更新解码统计"""
+        """Update Decode Stats
+        # Update Decode Stats
+        """
         if hasattr(self.matplotlib_widget, 'decoder'):
             stats = self.matplotlib_widget.decoder.get_stats()
             stats_text = (
-                f"前置: {stats['prelude_bits']} , 已接收{stats['total_chars']} chars, "
-                f"缓冲: {stats['buffer_bits']} bits, 状态: {stats['state']}"
+                f"Prelude: {stats['prelude_bits']}, Received {stats['total_chars']} chars, "
+                f"Buffer: {stats['buffer_bits']} bits, State: {stats['state']}"
             )
+            # Prelude: {stats['prelude_bits']}, Received {stats['total_chars']} chars, "
+            # Buffer: {stats['buffer_bits']} bits, State: {stats['state']}
             self.decode_stats_label.setText(stats_text)
         
     def toggle_listening(self):
-        """切换监听状态"""
+        """Toggle listening status"""
         if not self.is_listening:
             self.start_listening()
         else:
             self.stop_listening()
             
     async def start_listening_async(self):
-        """异步启动UDP监听"""
+        """Asynchronously start UDP listening"""
         try:
             address = self.address_input.text().strip()
             port = int(self.port_input.text().strip())
@@ -337,22 +360,22 @@ class MainWindow(QMainWindow):
             )
             
             self.status_label.setText(f"状态: 监听中 ({address}:{port})")
-            print(f"UDP服务器启动, 监听 {address}:{port}")
+            print(f"UDP server started, listening on {address}:{port}")
             
         except Exception as e:
             self.status_label.setText(f"状态: 启动失败 - {str(e)}")
-            print(f"UDP服务器启动失败: {e}")
+            print(f"UDP server failed to start: {e}")
             self.is_listening = False
             self.listen_button.setText("开始监听")
             self.address_input.setEnabled(True)
             self.port_input.setEnabled(True)
             
     def start_listening(self):
-        """开始监听"""
+        """Start listening"""
         try:
             int(self.port_input.text().strip())  # 验证端口号格式
         except ValueError:
-            self.status_label.setText("状态: 端口号必须是数字")
+            self.status_label.setText("Status: Port number must be a digit")
             return
             
         self.is_listening = True
@@ -373,7 +396,7 @@ class MainWindow(QMainWindow):
         loop.create_task(self.start_listening_async())
 
     def stop_listening(self):
-        """停止监听"""
+        """Stop listening"""
         self.is_listening = False
         self.listen_button.setText("开始监听")
         self.address_input.setEnabled(True)
@@ -392,7 +415,7 @@ class MainWindow(QMainWindow):
         self.status_label.setText("状态: 已停止")
         
     def update_stats(self):
-        """更新数据统计"""
+        """Update data statistics"""
         data_size = len(self.matplotlib_widget.signals)
         self.data_label.setText(f"接收数据: {data_size} 采样")
         
@@ -400,7 +423,7 @@ class MainWindow(QMainWindow):
         self.update_decode_stats()
         
     def save_audio(self):
-        """保存音频数据"""
+        """Save audio data"""
         if len(self.matplotlib_widget.signals) > 0:
             try:
                 signal_data = np.array(self.matplotlib_widget.signals)
@@ -423,7 +446,7 @@ class MainWindow(QMainWindow):
 
 
 async def main():
-    """异步主函数"""
+    """Asynchronous main function"""
     app = QApplication(sys.argv)
     
     # 设置异步事件循环
@@ -437,7 +460,7 @@ async def main():
         with loop:
             await loop.run_forever()
     except KeyboardInterrupt:
-        print("程序被用户中断")
+        print("Program interrupted by user")
     finally:
         # 确保清理资源
         if window.udp_transport:

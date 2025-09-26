@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""
-音频实时监听与绘图系统主程序
-基于Qt GUI + Matplotlib + UDP接收 + AFSK解码字符串
+""""
+Main program for real-time audio monitoring and plotting system
+Based on Qt GUI + Matplotlib + UDP receiving + AFSK decoding strings
+--# Translated from: Real-time audio monitoring and plotting system main program based on Qt GUI + Matplotlib + UDP receiving + AFSK decoding strings
 """
 
 import sys
@@ -12,7 +13,9 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("程序被用户中断")
+        print("Program interrupted by user")
+        # -- Dịch từ: 程序被用户中断
     except Exception as e:
-        print(f"程序执行出错: {e}")
+        print(f"Program execution error: {e}")
+        # -- Dịch từ: 程序执行出错
         sys.exit(1)

@@ -1,6 +1,6 @@
 # An MCP-based Chatbot
 
-(English | [中文](README.md) | [日本語](README_ja.md))
+(English | [中文](README.md) | [日本語](README_ja.md) | [Tiếng Việt](README_vi.md))
 
 ## Video
 
@@ -32,7 +32,7 @@ As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabiliti
 - Speaker recognition, identifies the current speaker [3D Speaker](https://github.com/modelscope/3D-Speaker)
 - OLED / LCD display, supports emoji display
 - Battery display and power management
-- Multi-language support (Chinese, English, Japanese)
+- Multi-language support (Chinese, English, Japanese, Vietnamese)
 - Supports ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
 - Device-side MCP for device control (Speaker, LED, Servo, GPIO, etc.)
 - Cloud-side MCP to extend large model capabilities (smart home control, PC desktop operation, knowledge search, email, etc.)
@@ -126,6 +126,7 @@ The firmware connects to the official [xiaozhi.me](https://xiaozhi.me) server by
 - [MCP Protocol IoT Control Usage](docs/mcp-usage.md) - Learn how to control IoT devices via MCP protocol
 - [MCP Protocol Interaction Flow](docs/mcp-protocol.md) - Device-side MCP protocol implementation
 - [A detailed WebSocket communication protocol document](docs/websocket.md)
+- [Mixed MQTT + UDP communication protocol document](docs/mqtt-udp.md)
 
 ## Large Model Configuration
 
@@ -145,6 +146,9 @@ Other client projects using the XiaoZhi communication protocol:
 
 - [huangjunsen0406/py-xiaozhi](https://github.com/huangjunsen0406/py-xiaozhi) Python client
 - [TOM88812/xiaozhi-android-client](https://github.com/TOM88812/xiaozhi-android-client) Android client
+- [100askTeam/xiaozhi-linux](http://github.com/100askTeam/xiaozhi-linux) Linux client provided by 100ask Team
+- [78/xiaozhi-sf32](https://github.com/78/xiaozhi-sf32) Si Che Technology Bluetooth chip firmware
+- [QuecPython/solution-xiaozhiAI](https://github.com/QuecPython/solution-xiaozhiAI) QuecPython firmware provided by Quectel
 
 ## Star History
 
@@ -154,4 +158,4 @@ Other client projects using the XiaoZhi communication protocol:
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=78/xiaozhi-esp32&type=Date" />
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=78/xiaozhi-esp32&type=Date" />
  </picture>
-</a> 
+</a>

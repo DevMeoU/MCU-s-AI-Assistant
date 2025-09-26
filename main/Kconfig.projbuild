@@ -1,25 +1,43 @@
-menu "Xiaozhi Assistant"
+# Menu chính của Trợ lý Xiaozhi (Được tùy chỉnh bởi Deesol)
+# Main menu for Xiaozhi Assistant (Customized by Deesol)
+menu "Xiaozhi Assistant (Custom by Deesol)"
 
+# Cấu hình URL cho OTA (Over-The-Air) - Cập nhật firmware qua mạng
+# OTA URL configuration for firmware updates over the air
 config OTA_URL
     string "Default OTA URL"
     default "https://api.tenclass.net/xiaozhi/ota/"
     help
         The application will access this URL to check for new firmwares and server address.
+        # Ứng dụng sẽ truy cập URL này để kiểm tra firmware mới và địa chỉ máy chủ.
+        # Đây là đường dẫn mặc định cho cập nhật tự động qua mạng.
 
+# Lựa chọn tài nguyên (assets) để nạp vào Flash
+# Choice for selecting assets to flash into memory
 choice
     prompt "Flash Assets"
     default FLASH_DEFAULT_ASSETS
     help
         Select the assets to flash.
+        # Lựa chọn tài nguyên để nạp vào bộ nhớ Flash.
+        # Tài nguyên có thể bao gồm hình ảnh, âm thanh, font chữ, v.v.
 
     config FLASH_NONE_ASSETS
         bool "Do not flash assets"
+        # Không nạp tài nguyên - Tiết kiệm bộ nhớ Flash
+        # Do not flash assets - Save Flash memory
     config FLASH_DEFAULT_ASSETS
         bool "Flash Default Assets"
+        # Nạp tài nguyên mặc định - Cài đặt cơ bản
+        # Flash default assets - Basic installation
     config FLASH_CUSTOM_ASSETS
         bool "Flash Custom Assets"
+        # Nạp tài nguyên tùy chỉnh - Cho phép người dùng tự định nghĩa
+        # Flash custom assets - Allow user-defined resources
 endchoice
 
+# Cấu hình file tài nguyên tùy chỉnh
+# Custom assets file configuration
 config CUSTOM_ASSETS_FILE
     depends on FLASH_CUSTOM_ASSETS
     string "Custom Assets File"
@@ -27,72 +45,133 @@ config CUSTOM_ASSETS_FILE
     help
         The custom assets file to flash.
         It can be a local file relative to the project directory or a remote url.
+        # File tài nguyên tùy chỉnh để nạp vào Flash.
+        # Có thể là file cục bộ trong thư mục dự án hoặc URL từ xa.
+        # Định dạng file thường là .bin chứa dữ liệu tài nguyên như hình ảnh, âm thanh, font.
 
+# Lựa chọn ngôn ngữ mặc định cho thiết bị
+# Default language selection for device interface
 choice
     prompt "Default Language"
     default LANGUAGE_ZH_CN
     help
         Select device display language
+        # Lựa chọn ngôn ngữ hiển thị cho thiết bị.
+        # Ngôn ngữ này sẽ được sử dụng cho menu, thông báo và giao diện người dùng.
 
     config LANGUAGE_ZH_CN
         bool "Chinese"
+        # Tiếng Trung Quốc (Giản thể) - Ngôn ngữ mặc định
+        # Chinese (Simplified) - Default language
     config LANGUAGE_ZH_TW
         bool "Chinese Traditional"
+        # Tiếng Trung Quốc (Phồn thể)
+        # Chinese (Traditional)
     config LANGUAGE_EN_US
         bool "English"
+        # Tiếng Anh (Mỹ)
+        # English (US)
     config LANGUAGE_JA_JP
         bool "Japanese"
+        # Tiếng Nhật
+        # Japanese
     config LANGUAGE_KO_KR
         bool "Korean"
+        # Tiếng Hàn
+        # Korean
     config LANGUAGE_VI_VN
         bool "Vietnamese"
+        # Tiếng Việt - Ngôn ngữ bản địa
+        # Vietnamese - Native language
     config LANGUAGE_TH_TH
         bool "Thai"
+        # Tiếng Thái
+        # Thai
     config LANGUAGE_DE_DE
         bool "German"
+        # Tiếng Đức
+        # German
     config LANGUAGE_FR_FR
         bool "French"
+        # Tiếng Pháp
+        # French
     config LANGUAGE_ES_ES
         bool "Spanish"
+        # Tiếng Tây Ban Nha
+        # Spanish
     config LANGUAGE_IT_IT
         bool "Italian"
+        # Tiếng Ý
+        # Italian
     config LANGUAGE_RU_RU
         bool "Russian"
+        # Tiếng Nga
+        # Russian
     config LANGUAGE_AR_SA
         bool "Arabic"
+        # Tiếng Ả Rập
+        # Arabic
     config LANGUAGE_HI_IN
         bool "Hindi"
+        # Tiếng Hindi (Ấn Độ)
+        # Hindi (India)
     config LANGUAGE_PT_PT
         bool "Portuguese"
+        # Tiếng Bồ Đào Nha
+        # Portuguese
     config LANGUAGE_PL_PL
         bool "Polish"
+        # Tiếng Ba Lan
+        # Polish
     config LANGUAGE_CS_CZ
         bool "Czech"
+        # Tiếng Séc
+        # Czech
     config LANGUAGE_FI_FI
         bool "Finnish"
+        # Tiếng Phần Lan
+        # Finnish
     config LANGUAGE_TR_TR
         bool "Turkish"
+        # Tiếng Thổ Nhĩ Kỳ
+        # Turkish
     config LANGUAGE_ID_ID
         bool "Indonesian"
+        # Tiếng Indonesia
+        # Indonesian
     config LANGUAGE_UK_UA
         bool "Ukrainian"
+        # Tiếng Ukraina
+        # Ukrainian
     config LANGUAGE_RO_RO
         bool "Romanian"
+        # Tiếng Rumani
+        # Romanian
 endchoice
 
+# Lựa chọn loại board (mạch phát triển) đang sử dụng
+# Board type selection for hardware configuration
 choice BOARD_TYPE
     prompt "Board Type"
     default BOARD_TYPE_BREAD_COMPACT_WIFI
     help
         Board type. (开发板类型)
+        # Chọn loại board phát triển. Điều này quan trọng để định cấu hình đúng các chân GPIO và ngoại vi.
+        # Select development board type. This is important for correct GPIO and peripheral configuration.
     config BOARD_TYPE_BREAD_COMPACT_WIFI
         bool "Bread Compact WiFi (Breadboard)"
+        # Board cơ bản với WiFi, sử dụng ESP32-S3
+        # Basic board with WiFi, uses ESP32-S3
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_BREAD_COMPACT_WIFI_LCD
         bool "Bread Compact WiFi + LCD (Breadboard)"
+        # Board với WiFi và màn hình LCD, sử dụng ESP32-S3
+        # Board with WiFi and LCD display, uses ESP32-S3
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_BREAD_COMPACT_WIFI_CAM
         bool "Bread Compact WiFi + LCD + Camera (Breadboard)"
+        # Board đầy đủ với WiFi, LCD và Camera, sử dụng ESP32-S3
+        # Full-featured board with WiFi, LCD and Camera, uses ESP32-S3
         depends on IDF_TARGET_ESP32S3     
     config BOARD_TYPE_BREAD_COMPACT_ML307
         bool "Bread Compact ML307/EC801E (Breadboard 4G)"
@@ -158,37 +237,41 @@ choice BOARD_TYPE
         bool "ESP32 CGC 144"
         depends on IDF_TARGET_ESP32
     config BOARD_TYPE_KEVIN_YUYING_313LCD
-        bool "Yuying Technology 3.13LCD (鱼鹰科技 3.13LCD)"
+        bool "Yuying Technology 3.13LCD"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_LICHUANG_DEV
-        bool "LiChuang · Combat ESP32-S3 (立创·实战派 ESP32-S3)"
+        bool "LiChuang · Combat ESP32-S3"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_LICHUANG_C3_DEV
-        bool "LiChuang · Combat ESP32-C3 (立创·实战派 ESP32-C3)"
+        bool "LiChuang · Combat ESP32-C3"
         depends on IDF_TARGET_ESP32C3
     config BOARD_TYPE_DF_K10
-        bool "DFRobot Skyboard k10 (DFRobot 行空板 k10)"
+        bool "DFRobot Skyboard k10"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_DF_S3_AI_CAM
-        bool "DFRobot ESP32-S3 AI Smart Camera Module (DFRobot ESP32-S3 AI智能摄像头模块)"
+        bool "DFRobot ESP32-S3 AI Smart Camera Module"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_MAGICLICK_2P4
-        bool "Magic Button Magiclick_2.4 (神奇按钮 Magiclick_2.4)"
+        bool "Magic Button Magiclick_2.4"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_MAGICLICK_2P5
-        bool "Magic Button Magiclick_2.5 (神奇按钮 Magiclick_2.5)"
+        bool "Magic Button Magiclick_2.5"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_MAGICLICK_C3
-        bool "Magic Button Magiclick_C3 (神奇按钮 Magiclick_C3)"
+        bool "Magic Button Magiclick_C3"
         depends on IDF_TARGET_ESP32C3
     config BOARD_TYPE_MAGICLICK_C3_V2
-        bool "Magic Button Magiclick_C3_v2 (神奇按钮 Magiclick_C3_v2)"
+        bool "Magic Button Magiclick_C3_v2"
         depends on IDF_TARGET_ESP32C3
     config BOARD_TYPE_M5STACK_CORE_S3
         bool "M5Stack CoreS3"
+        # M5Stack CoreS3 - Board phát triển cao cấp với ESP32-S3, màn hình cảm ứng và nhiều tính năng
+        # M5Stack CoreS3 - Premium development board with ESP32-S3, touch screen and many features
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_M5STACK_CORE_TAB5
         bool "M5Stack Tab5"
+        # M5Stack Tab5 - Board với ESP32-P4, thiết kế cho ứng dụng AI và điều khiển
+        # M5Stack Tab5 - Board with ESP32-P4, designed for AI and control applications
         depends on IDF_TARGET_ESP32P4
     config BOARD_TYPE_ATOMS3_ECHO_BASE
         bool "AtomS3 + Echo Base"
@@ -300,52 +383,52 @@ choice BOARD_TYPE
         bool "Dudu Development Board CHATX (wifi) (嘟嘟开发板CHATX(wifi))"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32S3_Taiji_Pi
-        bool "Taiji Xiaopai esp32s3 (太极小派esp32s3)"
+        bool "Taiji Xiaopai ESP32-S3"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_XINGZHI_Cube_0_85TFT_WIFI
-        bool "Nameless Technology Xingzhi 0.85 (WIFI) (无名科技星智0.85(WIFI))"
+        bool "Nameless Technology Xingzhi 0.85 (WIFI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_XINGZHI_Cube_0_85TFT_ML307
-        bool "Nameless Technology Xingzhi 0.85 (ML307) (无名科技星智0.85(ML307))"
+        bool "Nameless Technology Xingzhi 0.85 (ML307)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_XINGZHI_Cube_0_96OLED_WIFI
-        bool "Nameless Technology Xingzhi 0.96 (WIFI) (无名科技星智0.96(WIFI))"
+        bool "Nameless Technology Xingzhi 0.96 (WIFI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_XINGZHI_Cube_0_96OLED_ML307
-        bool "Nameless Technology Xingzhi 0.96 (ML307) (无名科技星智0.96(ML307))"
+        bool "Nameless Technology Xingzhi 0.96 (ML307)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_XINGZHI_Cube_1_54TFT_WIFI
-        bool "Nameless Technology Xingzhi 1.54 (WIFI) (无名科技星智1.54(WIFI))"
+        bool "Nameless Technology Xingzhi 1.54 (WIFI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_XINGZHI_Cube_1_54TFT_ML307
-        bool "Nameless Technology Xingzhi 1.54 (ML307) (无名科技星智1.54(ML307))"
+        bool "Nameless Technology Xingzhi 1.54 (ML307)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_SENSECAP_WATCHER
         bool "SenseCAP Watcher"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_DOIT_S3_AIBOX
-        bool "Sibo Zhilian AI Companion Box (四博智联AI陪伴盒子)"
+        bool "Sibo Zhilian AI Companion Box"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_MIXGO_NOVA
-        bool "Yuankong · Youth (元控·青春)"
+        bool "Yuankong Youth"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_GENJUTECH_S3_1_54TFT
-        bool "Gengju Technology 1.54 (s3) (亘具科技1.54(s3))"
+        bool "Gengju Technology 1.54 (S3)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP_S3_LCD_EV_Board
-        bool "Lexin ESP S3 LCD EV Board Development Board (乐鑫ESP S3 LCD EV Board开发板)"
+        bool "Lexin ESP-S3 LCD EV Board Development Board"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP_S3_LCD_EV_Board_2
-        bool "Lexin ESP S3 LCD EV Board 2 Development Board (乐鑫ESP S3 LCD EV Board 2开发板)"
+        bool "Lexin ESP-S3 LCD EV Board 2 Development Board"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ZHENGCHEN_1_54TFT_WIFI
-        bool "Zhengchen Technology 1.54 (WIFI) (征辰科技1.54(WIFI))"
+        bool "Zhengchen Technology 1.54 (WIFI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ZHENGCHEN_1_54TFT_ML307
-        bool "Zhengchen Technology 1.54 (ML307) (征辰科技1.54(ML307))"
+        bool "Zhengchen Technology 1.54 (ML307)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_MINSI_K08_DUAL
-        bool "Minsi Technology K08 (DUAL) (敏思科技K08(DUAL))"
+        bool "Minsi Technology K08 (DUAL)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32_S3_1_54_MUMA
         bool "Spotpear ESP32-S3-1.54-MUMA"
@@ -364,7 +447,7 @@ choice BOARD_TYPE
         select LV_USE_GIF
         select LV_GIF_CACHE_DECODE_DATA
     config BOARD_TYPE_JIUCHUAN
-        bool "Jiuchuan Smart (九川智能)"
+        bool "Jiuchuan Smart"
     config BOARD_TYPE_LABPLUS_MPYTHON_V3
         bool "labplus mpython_v3 board"
         depends on IDF_TARGET_ESP32S3
@@ -376,7 +459,7 @@ choice BOARD_TYPE
         bool "Surfer-C3-1.14TFT"
         depends on IDF_TARGET_ESP32C3
     config BOARD_TYPE_YUNLIAO_S3
-        bool "小智云聊-S3"
+        bool "Xiaozhi Yunliao-S3"
         depends on IDF_TARGET_ESP32S3
 endchoice
 
@@ -390,26 +473,40 @@ choice ESP_S3_LCD_EV_Board_Version_TYPE
         bool "Lexin ESP32_S3_LCD_EV_Board-MB_V1.5 (乐鑫ESP32_S3_LCD_EV_Board-MB_V1.5)"
 endchoice
 
+# Lựa chọn loại màn hình OLED đơn sắc
+# OLED display type selection for monochrome screens
 choice DISPLAY_OLED_TYPE
     depends on BOARD_TYPE_BREAD_COMPACT_WIFI || BOARD_TYPE_BREAD_COMPACT_ML307 || BOARD_TYPE_BREAD_COMPACT_ESP32
     prompt "OLED Type"
     default OLED_SSD1306_128X32
     help
         OLED Monochrome Display Type
+        # Loại màn hình OLED đơn sắc. Lựa chọn này ảnh hưởng đến thư viện driver và độ phân giải.
+        # OLED monochrome display type. This affects driver library and resolution.
     config OLED_SSD1306_128X32
         bool "SSD1306 128*32"
+        # SSD1306 với độ phân giải 128x32 pixel - Kích thước nhỏ gọn
+        # SSD1306 with 128x32 pixel resolution - Compact size
     config OLED_SSD1306_128X64
         bool "SSD1306 128*64"
+        # SSD1306 với độ phân giải 128x64 pixel - Kích thước phổ biến
+        # SSD1306 with 128x64 pixel resolution - Common size
     config OLED_SH1106_128X64
         bool "SH1106 128*64"
+        # SH1106 với độ phân giải 128x64 pixel - Driver khác với SSD1306
+        # SH1106 with 128x64 pixel resolution - Different driver from SSD1306
 endchoice
 
+# Lựa chọn loại màn hình LCD màu
+# LCD color display type selection
 choice DISPLAY_LCD_TYPE
     depends on BOARD_TYPE_BREAD_COMPACT_WIFI_LCD || BOARD_TYPE_BREAD_COMPACT_ESP32_LCD || BOARD_TYPE_ESP32_CGC || BOARD_TYPE_ESP32P4_NANO || BOARD_TYPE_ESP32P4_WIFI6_Touch_LCD_XC || BOARD_TYPE_BREAD_COMPACT_WIFI_CAM
     prompt "LCD Type"
     default LCD_ST7789_240X320
     help
         LCD Display Type
+        # Loại màn hình LCD màu. Lựa chọn driver phù hợp với màn hình đang sử dụng.
+        # LCD color display type. Choose appropriate driver for your display.
     config LCD_ST7789_240X320
         bool "ST7789 240*320, IPS"
     config LCD_ST7789_240X320_NO_IPS
@@ -476,61 +573,87 @@ choice DISPLAY_ESP32S3_AUDIO_BOARD
         bool "ST7789 240*320"
 endchoice
 
+# Lựa chọn kiểu hiển thị giao diện cho thiết bị Xiaozhi
+# Display style selection for Xiaozhi device interface
 choice DISPLAY_STYLE
     prompt "Select display style"
     default USE_DEFAULT_MESSAGE_STYLE
     help
         Select display style for Xiaozhi device
+        # Lựa chọn kiểu hiển thị cho thiết bị Xiaozhi.
+        # Kiểu hiển thị ảnh cách bố trí và trình bày thông tin trên màn hình.
 
     config USE_DEFAULT_MESSAGE_STYLE
         bool "Enable default message style"
+        # Kiểu mặc định - Giao diện cơ bản và đơn giản
+        # Default style - Basic and simple interface
 
     config USE_WECHAT_MESSAGE_STYLE
         bool "Enable WeChat Message Style"
+        # Kiểu giống WeChat - Giao diện quen thuộc như ứng dụng chat
+        # WeChat-like style - Familiar chat application interface
 
     config USE_EMOTE_MESSAGE_STYLE
         bool "Emote animation style"
+        # Kiểu biểu cảm - Có hoạt ảnh và biểu tượng cảm xúc
+        # Emote animation style - With animations and emoticons
         depends on BOARD_TYPE_ESP_BOX_3 || BOARD_TYPE_ECHOEAR
 endchoice
 
+# Lựa chọn kiểu triển khai từ đánh thức (Wake Word)
+# Wake word implementation type selection
 choice WAKE_WORD_TYPE
     prompt "Wake Word Implementation Type"
     default USE_AFE_WAKE_WORD if (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
     default WAKE_WORD_DISABLED
     help
         Choose the type of wake word implementation to use
+        # Lựa chọn kiểu triển khai từ đánh thức để sử dụng.
+        # Từ đánh thức cho phép thiết bị "nghe" và đánh thức khi nghe thấy từ khóa.
 
     config WAKE_WORD_DISABLED
         bool "Disabled"
         help
             Disable wake word detection
+            # Tắt chức năng phát hiện từ đánh thức - Tiết kiệm tài nguyên
+            # Disable wake word detection - Save resources
 
     config USE_ESP_WAKE_WORD
         bool "Wakenet model without AFE"
         depends on IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C5 || IDF_TARGET_ESP32C6 || (IDF_TARGET_ESP32 && SPIRAM)
         help
             Support ESP32 C3、ESP32 C5 与 ESP32 C6, and (ESP32 with PSRAM)
+            # Mô hình Wakenet không có AFE - Hỗ trợ ESP32-C3, C5, C6 và ESP32 với PSRAM
+            # Wakenet model without AFE - Support ESP32-C3, C5, C6 and ESP32 with PSRAM
 
     config USE_AFE_WAKE_WORD
         bool "Wakenet model with AFE"
         depends on (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
         help
             Support AEC if available, requires ESP32 S3 and PSRAM
+            # Mô hình Wakenet với AFE (Audio Front-End) - Hỗ trợ AEC nếu có, yêu cầu ESP32-S3 và PSRAM
+            # Wakenet model with AFE - Support AEC if available, requires ESP32-S3 and PSRAM
 
     config USE_CUSTOM_WAKE_WORD
         bool "Multinet model (Custom Wake Word)"
         depends on (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
         help
             Requires ESP32 S3 and PSRAM
+            # Mô hình Multinet với từ đánh thức tùy chỉnh - Yêu cầu ESP32-S3 và PSRAM
+            # Multinet model with custom wake word - Requires ESP32-S3 and PSRAM
 
 endchoice
 
+# Cấu hình từ đánh thức tùy chỉnh
+# Custom wake word configuration
 config CUSTOM_WAKE_WORD
     string "Custom Wake Word"
     default "xiao tu dou"
     depends on USE_CUSTOM_WAKE_WORD
     help
         Custom Wake Word, use pinyin for Chinese, separated by spaces
+        # Từ đánh thức tùy chỉnh. Sử dụng phiên âm Pinyin cho tiếng Trung, cách nhau bằng khoảng trắng.
+        # Ví dụ: "xin chao" cho "xin chào" hoặc "hello" cho tiếng Anh.
 
 config CUSTOM_WAKE_WORD_DISPLAY
     string "Custom Wake Word Display"
@@ -538,6 +661,8 @@ config CUSTOM_WAKE_WORD_DISPLAY
     depends on USE_CUSTOM_WAKE_WORD
     help
         Greeting sent to the server after wake word detection
+        # Lời chào được gửi đến máy chủ sau khi phát hiện từ đánh thức.
+        # Đây là văn bản sẽ hiển thị khi thiết bị được đánh thức thành công.
 
 config CUSTOM_WAKE_WORD_THRESHOLD
     int "Custom Wake Word Threshold (%)"
@@ -546,6 +671,8 @@ config CUSTOM_WAKE_WORD_THRESHOLD
     depends on USE_CUSTOM_WAKE_WORD
     help
         Custom Wake Word Threshold, range 1-99, the smaller the more sensitive, default 20
+        # Ngưỡng phát hiện từ đánh thức tùy chỉnh. Phạm vi 1-99, giá trị nhỏ thì nhạy hơn, mặc định là 20.
+        # Ngưỡng thấp = nhạy hơn nhưng dễ bị kích hoạt nhầm. Ngưỡng cao = chính xác hơn nhưng cần nói to rõ ràng.
 
 config SEND_WAKE_WORD_DATA
     bool "Send Wake Word Data"
@@ -553,14 +680,24 @@ config SEND_WAKE_WORD_DATA
     depends on USE_AFE_WAKE_WORD || USE_CUSTOM_WAKE_WORD
     help
         Send wake word data to the server as the first message of the conversation and wait for response
+        # Gửi dữ liệu từ đánh thức đến máy chủ như tin nhắn đầu tiên của cuộc hội thoại và chờ phản hồi.
+        # Cho phép máy chủ biết thiết bị đã được đánh thức và sẵn sàng nhận lệnh.
         
+# Bộ xử lý âm thanh - Giảm nhiễu và xử lý tín hiệu
+# Audio processor - Noise reduction and signal processing
 config USE_AUDIO_PROCESSOR
     bool "Enable Audio Noise Reduction"
     default y
     depends on (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
     help
         Requires ESP32 S3 and PSRAM
+        # Kích hoạt bộ xử lý âm thanh để giảm nhiễu và cải thiện chất lượng âm thanh.
+        # Yêu cầu ESP32-S3 và PSRAM để xử lý thời gian thực.
+        # Enable audio processor for noise reduction and audio quality improvement.
+        # Requires ESP32-S3 and PSRAM for real-time processing.
 
+# AEC (Acoustic Echo Cancellation) phía thiết bị
+# Device-side Acoustic Echo Cancellation
 config USE_DEVICE_AEC
     bool "Enable Device-Side AEC"
     default n
@@ -571,49 +708,93 @@ config USE_DEVICE_AEC
         || BOARD_TYPE_ECHOEAR || BOARD_TYPE_ESP32S3_Touch_LCD_3_49)
     help
         To work properly, device-side AEC requires a clean output reference path from the speaker signal and physical acoustic isolation between the microphone and speaker.
+        # AEC phía thiết bị - Loại bỏ tiếng vọng từ loa vào microphone.
+        # Cần đường tín hiệu tham khảo sạch từ loa và cách ly vật lý giữa mic và loa.
+        # Device-side AEC - Removes echo from speaker to microphone.
+        # Requires clean reference path from speaker and physical isolation.
 
+# AEC phía máy chủ (chưa ổn định)
+# Server-side Acoustic Echo Cancellation (unstable)
 config USE_SERVER_AEC
     bool "Enable Server-Side AEC (Unstable)"
     default n
     depends on USE_AUDIO_PROCESSOR
     help
         To work perperly, server-side AEC requires server support
+        # AEC phía máy chủ - Xử lý loại bỏ tiếng vọng trên máy chủ (tính năng chưa ổn định).
+        # Yêu cầu máy chủ hỗ trợ xử lý âm thanh thời gian thực.
+        # Server-side AEC - Echo cancellation processed on server (unstable feature).
+        # Requires server support for real-time audio processing.
 
+# Bộ gỡ lỗi âm thanh - Gửi dữ liệu âm thanh qua UDP
+# Audio debugger - Send audio data through UDP
 config USE_AUDIO_DEBUGGER
     bool "Enable Audio Debugger"
     default n
     help
         Enable audio debugger, send audio data through UDP to the host machine
+        # Kích hoạt bộ gỡ lỗi âm thanh - Gửi dữ liệu âm thanh thời gian thực qua UDP đến máy tính.
+        # Hữu ích để phân tích và gỡ lỗu chất lượng âm thanh, tiếng ồn, hay các vấn đề về nhận dạng giọng nói.
+        # Enable audio debugger - Send real-time audio data via UDP to host computer.
+        # Useful for analyzing and debugging audio quality, noise, or speech recognition issues.
 
+# Địa chỉ máy chủ UDP cho gỡ lỗi âm thanh
+# UDP server address for audio debugging
 config AUDIO_DEBUG_UDP_SERVER
     string "Audio Debug UDP Server Address"
     default "192.168.2.100:8000"
     depends on USE_AUDIO_DEBUGGER
     help
         UDP server address, format: IP:PORT, used to receive audio debugging data
+        # Địa chỉ máy chủ UDP để nhận dữ liệu gỡ lỗi âm thanh. Định dạng: IP:PORT.
+        # Ví dụ: "192.168.1.100:8000" - IP của máy tính chạy phần mềm gỡ lỗi.
+        # UDP server address format: IP:PORT for receiving audio debug data.
+        # Example: "192.168.1.100:8000" - IP of computer running debug software.
 
+# Cấu hình WiFi qua âm thanh - Truyền dữ liệu WiFi bằng tín hiệu âm
+# Acoustic WiFi provisioning - Transmit WiFi data using audio signals
 config USE_ACOUSTIC_WIFI_PROVISIONING
     bool "Enable Acoustic WiFi Provisioning"
     default n
     help
         Enable acoustic WiFi provisioning, use audio signal to transmit WiFi configuration data
+        # Kích hoạt cấu hình WiFi qua âm thanh - Sử dụng tín hiệu âm để truyền dữ liệu cấu hình WiFi.
+        # Hữu ích khi không có màn hình hoặc giao diện người dùng, chỉ cần phát âm thanh từ điện thoại.
+        # Enable acoustic WiFi provisioning - Use audio signals to transmit WiFi configuration data.
+        # Useful when no screen or UI is available, just play audio from phone.
 
+# Nhận tin nhắn tùy chỉnh từ máy chủ
+# Receive custom messages from server
 config RECEIVE_CUSTOM_MESSAGE
     bool "Enable Custom Message Reception"
     default n
     help
         Enable custom message reception, allow the device to receive custom messages from the server (preferably through the MQTT protocol)
+        # Kích hoạt nhận tin nhắn tùy chỉnh từ máy chủ - Thường qua giao thức MQTT.
+        # Cho phép thiết bị nhận các lệnh hoặc thông điệp đặc biệt từ máy chủ điều khiển.
+        # Enable custom message reception from server - Usually via MQTT protocol.
+        # Allows device to receive special commands or messages from control server.
 
+# Lựa chọn kiểu giao tiếp I2S cho board Taiji Pi S3
+# I2S communication type selection for Taiji Pi S3 board
 choice I2S_TYPE_TAIJIPI_S3
     depends on BOARD_TYPE_ESP32S3_Taiji_Pi
     prompt "taiji-pi-S3 I2S Type"
     default TAIJIPAI_I2S_TYPE_STD
     help
         I2S Type
+        # Lựa chọn kiểu giao tiếp I2S (Inter-IC Sound) cho board Taiji Pi S3.
+        # STD: Chuẩn I2S truyền thống, PDM: Pulse Density Modulation cho microphone kỹ thuật số.
+        # Select I2S (Inter-IC Sound) communication type for Taiji Pi S3 board.
+        # STD: Standard I2S, PDM: Pulse Density Modulation for digital microphones.
     config TAIJIPAI_I2S_TYPE_STD
         bool "I2S Type STD"
+        # I2S chuẩn - Giao tiếp âm thanh nổi tiếng, phù hợp cho hầu hết thiết bị ngoại vi.
+        # Standard I2S - Popular audio communication, suitable for most peripherals.
     config TAIJIPAI_I2S_TYPE_PDM
         bool "I2S Type PDM"
+        # PDM - Dành cho microphone kỹ thuật số, đơn giản hóa thiết kế phần cứng.
+        # PDM - For digital microphones, simplifies hardware design.
 endchoice
 
 endmenu

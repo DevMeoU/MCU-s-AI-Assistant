@@ -1,5 +1,5 @@
-// jpeg_encoder.h - 使用类成员变量的简单版本
-// 这个版本直接在类中声明数组，要求必须在堆上创建实例
+// jpeg_encoder.h - Simple version using class member variables
+// This version declares arrays directly in the class, requiring instance creation on the heap
 
 #ifndef JPEG_ENCODER_H
 #define JPEG_ENCODER_H
@@ -33,8 +33,8 @@ namespace jpge2_simple
             virtual uint get_size() const = 0;
     };
     
-    // 简单版本：直接在类中声明数组
-    // 警告：必须在堆上创建实例！（使用 new）
+    // Simple version: Declare arrays directly in the class
+    // Warning: Must create instance on heap! (use new)
     class jpeg_encoder {
         public:
             jpeg_encoder();

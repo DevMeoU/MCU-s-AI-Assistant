@@ -1,4 +1,4 @@
-// 基于原版to_jpg.cpp，替换为使用jpeg_encoder以节省SRAM
+// Based on original to_jpg.cpp, replaced with jpeg_encoder to save SRAM
 // Copyright 2015-2016 Espressif Systems (Shanghai) PTE LTD
 
 #include <stddef.h>
@@ -8,7 +8,7 @@
 #include <esp_heap_caps.h>
 #include <esp_log.h>
 
-#include "jpeg_encoder.h"  // 使用新的JPEG编码器
+#include "jpeg_encoder.h"  // Use new JPEG encoder
 #include "image_to_jpeg.h"
 
 
@@ -72,7 +72,7 @@ static IRAM_ATTR void convert_line_format(uint8_t * src, pixformat_t format, uin
             dst[o++] = (g < 0) ? 0 : ((g > 255) ? 255 : g);
             dst[o++] = (b < 0) ? 0 : ((b > 255) ? 255 : b);
 
-            // Y1像素
+            // Y1 pixel
             c = y1 - 16;
             r = (298 * c + 409 * e + 128) >> 8;
             g = (298 * c - 100 * d - 208 * e + 128) >> 8;
@@ -140,7 +140,7 @@ public:
     }
 };
 
-// 使用优化的JPEG编码器进行图像转换，必须在堆上创建编码器
+// Use optimized JPEG encoder for image conversion, must create encoder on heap
 static bool convert_image(uint8_t *src, uint16_t width, uint16_t height, pixformat_t format, uint8_t quality, jpge2_simple::output_stream *dst_stream)
 {
     int num_channels = 3;
@@ -199,7 +199,7 @@ bool image_to_jpeg(uint8_t *src, size_t src_len, uint16_t width, uint16_t height
 {
     ESP_LOGI(TAG, "Using optimized JPEG encoder (saves ~8KB SRAM)");
     
-    // 分配JPEG输出缓冲区，这个大小对于大多数图像应该足够
+    // Allocate JPEG output buffer, this size should be sufficient for most images
     int jpg_buf_len = 128*1024;
 
     uint8_t * jpg_buf = (uint8_t *)_malloc(jpg_buf_len);

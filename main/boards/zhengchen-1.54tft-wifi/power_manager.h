@@ -11,7 +11,7 @@
 
 class PowerManager {
 private:
-    // 定时器句柄
+    // Timer handle
     esp_timer_handle_t timer_handle_;
     std::function<void(bool)> on_charging_status_changed_;
     std::function<void(bool)> on_low_battery_status_changed_;
@@ -44,7 +44,7 @@ private:
             return;
         }
 
-        // 如果电池电量数据不足，则读取电池电量数据
+        // If battery level data is insufficient, read battery level data
         if (adc_values_.size() < kBatteryAdcDataCount) {
             ReadBatteryAdcData();
             return;
@@ -68,7 +68,7 @@ private:
         ESP_ERROR_CHECK(adc_oneshot_read(adc_handle_, ADC_CHANNEL_7, &adc_value));
        
         
-        // 将 ADC 值添加到队列中
+        // Add ADC value to the queue
         adc_values_.push_back(adc_value);
         if (adc_values_.size() > kBatteryAdcDataCount) {
             adc_values_.erase(adc_values_.begin());
@@ -80,7 +80,7 @@ private:
         average_adc /= adc_values_.size();
 
        
-        // 定义电池电量区间
+        // Define battery level ranges
         const struct {
             uint16_t adc;
             uint8_t level;
@@ -92,15 +92,15 @@ private:
             {2488, 80},
             {2606, 100}
         };
-        // 低于最低值时
+        // Below the minimum value
         if (average_adc < levels[0].adc) {
             battery_level_ = 0;
         }
-        // 高于最高值时
+        // Above the maximum value
         else if (average_adc >= levels[5].adc) {
             battery_level_ = 100;
         } else {
-            // 线性插值计算中间值
+            // Linear interpolation to calculate intermediate values
             for (int i = 0; i < 5; i++) {
                 if (average_adc >= levels[i].adc && average_adc < levels[i+1].adc) {
                     float ratio = static_cast<float>(average_adc - levels[i].adc) / (levels[i+1].adc - levels[i].adc);
@@ -109,7 +109,7 @@ private:
                 }
             }
         }
-        // 检查是否达到低电量阈值
+        // Check if low battery threshold is reached
         if (adc_values_.size() >= kBatteryAdcDataCount) {
             bool new_low_battery_status = battery_level_ <= kLowBatteryLevel;
             if (new_low_battery_status != is_low_battery_) {
@@ -140,7 +140,7 @@ private:
 public:
     PowerManager(gpio_num_t pin) : charging_pin_(pin) {
         
-        // 初始化充电引脚
+        // Initialize charging pin
         gpio_config_t io_conf = {};
         io_conf.intr_type = GPIO_INTR_DISABLE;
         io_conf.mode = GPIO_MODE_INPUT;
@@ -204,7 +204,7 @@ public:
     }
 
     bool IsCharging() {
-        // 如果电量已经满了，则不再显示充电中
+        // If the battery is full, do not show charging
         if (battery_level_ == 100) {
             return false;
         }
@@ -216,13 +216,13 @@ public:
         return !is_charging_;
     }
 
-    // 获取电池电量
+    // Get battery level
     uint8_t GetBatteryLevel() {
-        // 返回电池电量
+        // Return battery level
         return battery_level_;
     }
 
-    float GetTemperature() const { return current_temperature_; }  // 获取当前温度
+    float GetTemperature() const { return current_temperature_; }  // Get current temperature
 
     void OnTemperatureChanged(std::function<void(float)> callback) { 
         on_temperature_changed_ = callback; 

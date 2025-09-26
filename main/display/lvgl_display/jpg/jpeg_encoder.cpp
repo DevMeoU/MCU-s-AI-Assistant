@@ -699,7 +699,7 @@ namespace jpge2_simple {
     {
         jpge_free(m_mcu_lines[0]);
         clear();
-        // 简单版本：不需要释放成员变量内存
+        // Simple version: No need to free member variable memory
     }
 
     bool jpeg_encoder::process_scanline(const void* pScanline)

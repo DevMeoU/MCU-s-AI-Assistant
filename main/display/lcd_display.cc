@@ -408,7 +408,7 @@ void LcdDisplay::SetupUI() {
     lv_obj_set_style_pad_left(status_bar_, lvgl_theme->spacing(4), 0);
     lv_obj_set_style_pad_right(status_bar_, lvgl_theme->spacing(4), 0);
     lv_obj_set_scrollbar_mode(status_bar_, LV_SCROLLBAR_MODE_OFF);
-    // 设置状态栏的内容垂直居中
+    // Center status bar content vertically
     lv_obj_set_flex_align(status_bar_, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     network_label_ = lv_label_create(status_bar_);
@@ -474,10 +474,10 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         return;
     }
     
-    // 检查消息数量是否超过限制
+    // Check if message count exceeds limit
     uint32_t child_count = lv_obj_get_child_cnt(content_);
     if (child_count >= MAX_MESSAGES) {
-        // 删除最早的消息（第一个子对象）
+        // Delete the earliest message (first child object)
         lv_obj_t* first_child = lv_obj_get_child(content_, 0);
         lv_obj_t* last_child = lv_obj_get_child(content_, child_count - 1);
         if (first_child != nullptr) {
@@ -498,21 +498,21 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
                 // 获取容器内的气泡
                 lv_obj_t* last_bubble = lv_obj_get_child(last_container, 0);
                 if (last_bubble != nullptr) {
-                    // 检查气泡类型是否为系统消息
+                    // Check if bubble type is system message
                     void* bubble_type_ptr = lv_obj_get_user_data(last_bubble);
                     if (bubble_type_ptr != nullptr && strcmp((const char*)bubble_type_ptr, "system") == 0) {
-                        // 如果最后一个消息也是系统消息，则删除它
+                        // If the last message is also a system message, delete it
                         lv_obj_del(last_container);
                     }
                 }
             }
         }
     } else {
-        // 隐藏居中显示的 AI logo
+        // Hide the center-aligned AI logo
         lv_obj_add_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
     }
 
-    //避免出现空的消息框
+    // Avoid empty message box
     if(strlen(content) == 0) {
         return;
     }
@@ -531,15 +531,15 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
     lv_obj_t* msg_text = lv_label_create(msg_bubble);
     lv_label_set_text(msg_text, content);
     
-    // 计算文本实际宽度
+    // Calculate actual text width
     lv_coord_t text_width = lv_txt_get_width(content, strlen(content), text_font, 0);
 
-    // 计算气泡宽度
-    lv_coord_t max_width = LV_HOR_RES * 85 / 100 - 16;  // 屏幕宽度的85%
+    // Calculate bubble width
+    lv_coord_t max_width = LV_HOR_RES * 85 / 100 - 16;  // 85% of screen width
     lv_coord_t min_width = 20;  
     lv_coord_t bubble_width;
     
-    // 确保文本宽度不小于最小宽度
+    // Ensure text width is not less than minimum width
     if (text_width < min_width) {
         text_width = min_width;
     }
@@ -567,7 +567,7 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         // Set text color for contrast
         lv_obj_set_style_text_color(msg_text, lvgl_theme->text_color(), 0);
         
-        // 设置自定义属性标记气泡类型
+        // Set custom properties to mark bubble type
         lv_obj_set_user_data(msg_bubble, (void*)"user");
         
         // Set appropriate width for content
@@ -631,20 +631,20 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         // Auto-scroll to this container
         lv_obj_scroll_to_view_recursive(container, LV_ANIM_ON);
     } else if (strcmp(role, "system") == 0) {
-        // 为系统消息创建全宽容器以确保居中对齐
+        // Create full-width container for system messages to ensure center alignment
         lv_obj_t* container = lv_obj_create(content_);
         lv_obj_set_width(container, LV_HOR_RES);
         lv_obj_set_height(container, LV_SIZE_CONTENT);
         
-        // 使容器透明且无边框
+        // Set container to transparent and borderless
         lv_obj_set_style_bg_opa(container, LV_OPA_TRANSP, 0);
         lv_obj_set_style_border_width(container, 0, 0);
         lv_obj_set_style_pad_all(container, 0, 0);
         
-        // 将消息气泡移入此容器
+        // Move message bubble into this container
         lv_obj_set_parent(msg_bubble, container);
         
-        // 将气泡居中对齐在容器中
+        // Center the bubble in the container
         lv_obj_align(msg_bubble, LV_ALIGN_CENTER, 0, 0);
         
         // 自动滚动底部
@@ -717,7 +717,7 @@ void LcdDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
     
     // Add event handler to clean up LvglImage when image is deleted
     // We need to transfer ownership of the unique_ptr to the event callback
-    LvglImage* raw_image = image.release(); // 释放智能指针的所有权
+    LvglImage* raw_image = image.release(); // Release ownership of smart pointer
     lv_obj_add_event_cb(preview_image, [](lv_event_t* e) {
         LvglImage* img = (LvglImage*)lv_event_get_user_data(e);
         if (img != nullptr) {
@@ -793,8 +793,8 @@ void LcdDisplay::SetupUI() {
     lv_obj_set_style_border_width(content_, 0, 0);
     lv_obj_set_style_bg_color(content_, lvgl_theme->chat_background_color(), 0);
 
-    lv_obj_set_flex_flow(content_, LV_FLEX_FLOW_COLUMN); // 垂直布局（从上到下）
-    lv_obj_set_flex_align(content_, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_EVENLY); // 子对象居中对齐，等距分布
+    lv_obj_set_flex_flow(content_, LV_FLEX_FLOW_COLUMN); // Vertical layout (from top to bottom)
+    lv_obj_set_flex_align(content_, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_EVENLY); // Center child objects with equal distribution
 
     emoji_box_ = lv_obj_create(content_);
     lv_obj_set_size(emoji_box_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -887,7 +887,7 @@ void LcdDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
 
     preview_image_cached_ = std::move(image);
     auto img_dsc = preview_image_cached_->image_dsc();
-    // 设置图片源并显示预览图片
+    // Set image source and display preview image
     lv_image_set_src(preview_image_, img_dsc);
     if (img_dsc->header.w > 0 && img_dsc->header.h > 0) {
         // zoom factor 0.5
@@ -967,7 +967,7 @@ void LcdDisplay::SetEmotion(const char* emotion) {
     }
 
 #if CONFIG_USE_WECHAT_MESSAGE_STYLE
-    // Wechat message style中，如果emotion是neutral，则不显示
+    // If Wechat message style and emotion is neutral, do not display
     uint32_t child_count = lv_obj_get_child_cnt(content_);
     if (strcmp(emotion, "neutral") == 0 && child_count > 0) {
         // Stop GIF animation if running
@@ -1042,12 +1042,12 @@ void LcdDisplay::SetTheme(Theme* theme) {
         
         lv_obj_t* bubble = nullptr;
         
-        // 检查这个对象是容器还是气泡
-        // 如果是容器（用户或系统消息），则获取其子对象作为气泡
-        // 如果是气泡（助手消息），则直接使用
+        // Check if this object is container or bubble
+        // If container (user or system message), acquire its child object as bubble
+        // If bubble (assistant message), use directly
         if (lv_obj_get_child_cnt(obj) > 0) {
-            // 可能是容器，检查它是否为用户或系统消息容器
-            // 用户和系统消息容器是透明的
+            // Possibly container, check if it's user or system message container
+            // User and system message containers are transparent
             lv_opa_t bg_opa = lv_obj_get_style_bg_opa(obj, 0);
             if (bg_opa == LV_OPA_TRANSP) {
                 // 这是用户或系统消息的容器
@@ -1086,7 +1086,7 @@ void LcdDisplay::SetTheme(Theme* theme) {
             if (lv_obj_get_child_cnt(bubble) > 0) {
                 lv_obj_t* text = lv_obj_get_child(bubble, 0);
                 if (text != nullptr) {
-                    // 根据气泡类型设置文本颜色
+                    // Set text color based on bubble type
                     if (strcmp(bubble_type, "system") == 0) {
                         lv_obj_set_style_text_color(text, lvgl_theme->system_text_color(), 0);
                     } else {

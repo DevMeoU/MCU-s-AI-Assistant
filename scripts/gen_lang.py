@@ -56,10 +56,10 @@ def generate_header(lang_code, output_path):
     main_dir = os.path.dirname(output_path)  # main/assets
     if os.path.basename(main_dir) == 'assets':
         main_dir = os.path.dirname(main_dir)  # main
-    project_dir = os.path.dirname(main_dir)  # 项目根目录
+    project_dir = os.path.dirname(main_dir)  # project root directory
     assets_dir = os.path.join(main_dir, 'assets')
     
-    # 构建语言JSON文件路径
+    # Build language JSON file path
     input_path = os.path.join(assets_dir, 'locales', lang_code, 'language.json')
     
     print(f"Processing language: {lang_code}")
@@ -72,20 +72,20 @@ def generate_header(lang_code, output_path):
     with open(input_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # 验证数据结构
+    # Verify data structure
     if 'language' not in data or 'strings' not in data:
         raise ValueError("Invalid JSON structure")
 
-    # 加载 en-US 基准语言数据
+    # Load en-US base language data
     base_data = load_base_language(assets_dir)
     
-    # 合并字符串：以 en-US 为基准，用户语言覆盖
+    # Merge strings: based on en-US, user language overrides
     base_strings = base_data.get('strings', {})
     user_strings = data['strings']
     merged_strings = base_strings.copy()
     merged_strings.update(user_strings)
     
-    # 统计信息
+    # Statistics
     base_count = len(base_strings)
     user_count = len(user_strings)
     total_count = len(merged_strings)

@@ -10,7 +10,8 @@ import json
 import requests
 from requests.exceptions import RequestException
 
-# 切换到项目根目录
+# Change to the project root directory
+# Change to the project root directory
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def get_chip_id_string(chip_id):
@@ -175,11 +176,14 @@ def upload_dir_to_oss(source_dir, target_dir):
 
 def post_info_to_server(info):
     """
-    将固件信息发送到服务器
+    Send firmware information to the server
     
     Args:
-        info: 包含固件信息的字典
+        info: Dictionary containing firmware information
     """
+    # Gửi thông tin firmware đến máy chủ
+    # Args:
+    #     info: Từ điển chứa thông tin firmware (Vietnamese)
     try:
         # 从环境变量获取服务器URL和token
         server_url = os.environ.get('VERSIONS_SERVER_URL')
