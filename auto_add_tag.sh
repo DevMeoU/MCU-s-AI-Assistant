@@ -1,6 +1,6 @@
 #!/bin/bash
-# Script: Sync branch develop từ origin và auto-tag
-# Author: Son (Deesol workflow)
+# Script: Sync branch develop từ origin và auto-tag an toàn
+# Branch chính: develop
 
 BRANCH="develop"
 
@@ -10,12 +10,13 @@ git checkout $BRANCH || {
     exit 1
 }
 
-# 2. Pull code mới nhất từ origin/develop
-echo ">>> Pulling latest code from origin/$BRANCH..."
-git pull origin $BRANCH || {
-    echo "!!! Pull thất bại"
+# 2. Pull an toàn (chỉ fast-forward)
+echo ">>> Pulling latest code from origin/$BRANCH (safe mode)..."
+if ! git pull --ff-only origin $BRANCH; then
+    echo "!!! Pull thất bại: có commit local khác với origin/$BRANCH"
+    echo ">>> Hãy xử lý thủ công (merge hoặc stash) trước khi chạy lại."
     exit 1
-}
+fi
 
 # 3. Tạo tag tự động theo timestamp
 TAG="auto-$(date +%Y%m%d-%H%M)"
