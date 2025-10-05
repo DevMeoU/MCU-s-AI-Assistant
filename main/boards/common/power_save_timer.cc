@@ -110,12 +110,19 @@ void PowerSaveTimer::WakeUp() {
         in_sleep_mode_ = false;
 
         if (cpu_max_freq_ != -1) {
+#if CONFIG_PM_ENABLE
             esp_pm_config_t pm_config = {
                 .max_freq_mhz = cpu_max_freq_,
                 .min_freq_mhz = cpu_max_freq_,
                 .light_sleep_enable = false,
             };
-            esp_pm_configure(&pm_config);
+            esp_err_t err = esp_pm_configure(&pm_config);
+            if (err != ESP_OK) {
+                ESP_LOGW(TAG, "Failed to configure power management: %s", esp_err_to_name(err));
+            }
+#else
+            ESP_LOGW(TAG, "Power management is disabled, skipping frequency configuration");
+#endif
 
             // Enable wake word detection
             auto& app = Application::GetInstance();

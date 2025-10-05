@@ -1,7 +1,7 @@
-#include "SystemInfo.h"
-
+#include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_log.h>
+#include <esp_pm.h>
 #include <esp_flash.h>
 #include <esp_mac.h>
 #include <esp_system.h>
@@ -9,13 +9,15 @@
 #include <esp_app_desc.h>
 #include <esp_ota_ops.h>
 #include <esp_heap_caps.h>
-#include <esp_spiram.h>
-#include <esp_clk.h>
+#include <esp_psram.h>
+
 #if CONFIG_IDF_TARGET_ESP32P4
 #include "esp_wifi_remote.h"
 #endif
 
-#define TAG "SystemInfo"
+#include "system_info.h"
+
+#define TAG "system_info"
 
 // ---------------- Flash / Heap ----------------
 
@@ -38,9 +40,9 @@ size_t SystemInfo::GetFreeHeapSize() {
 
 // ---------------- PSRAM / Memory ----------------
 
-size_t SystemInfo::GetSPIRAMSize() {
-#if CONFIG_SPIRAM
-    return esp_spiram_get_size();
+size_t SystemInfo::GetPSRAMSize() {
+#if CONFIG_PSRAM
+    return esp_psram_get_size();
 #else
     return 0;
 #endif
@@ -58,12 +60,12 @@ MemoryStats SystemInfo::GetMemoryStats() {
     stats.rtcRamTotal = heap_caps_get_total_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL | MALLOC_CAP_RTCRAM);
 
     // PSRAM
-#if CONFIG_SPIRAM
-    stats.spiRamFree  = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-    stats.spiRamTotal = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+#if CONFIG_PSRAM
+    stats.psRamFree  = heap_caps_get_free_size(MALLOC_CAP_PSRAM);
+    stats.psRamTotal = heap_caps_get_total_size(MALLOC_CAP_PSRAM);
 #else
-    stats.spiRamFree  = 0;
-    stats.spiRamTotal = 0;
+    stats.psRamFree  = 0;
+    stats.psRamTotal = 0;
 #endif
 
     return stats;
@@ -73,7 +75,7 @@ void SystemInfo::PrintMemoryStats() {
     MemoryStats stats = GetMemoryStats();
     ESP_LOGI(TAG, "SRAM free/total: %u / %u", (unsigned)stats.sramFree, (unsigned)stats.sramTotal);
     ESP_LOGI(TAG, "RTC RAM free/total: %u / %u", (unsigned)stats.rtcRamFree, (unsigned)stats.rtcRamTotal);
-    ESP_LOGI(TAG, "PSRAM free/total: %u / %u", (unsigned)stats.spiRamFree, (unsigned)stats.spiRamTotal);
+    ESP_LOGI(TAG, "PSRAM free/total: %u / %u", (unsigned)stats.psRamFree, (unsigned)stats.psRamTotal);
 }
 
 // ---------------- Chip / Device ----------------
@@ -106,7 +108,12 @@ std::string SystemInfo::GetUserAgent() {
 }
 
 size_t SystemInfo::GetFreqMHz() {
-    return esp_clk_cpu_freq() / 1000000;
+    esp_pm_config_t conf = {};
+    if (esp_pm_get_configuration(&conf) == ESP_OK) {
+        return conf.max_freq_mhz;   // hoặc conf.min_freq_mhz
+    } else {
+        return 0; // lỗi thì trả về 0
+    }
 }
 
 // ---------------- Task / Debug ----------------

@@ -126,21 +126,21 @@ void Alarm::ProcessAlarmTrigger() {
  * @param void
  * @return void
  */
-void Alarm::WaitSyncTime(void) {
-    // Wait for time synchronization
-    int retry = 0;
-    const int retry_count = 10;
-    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && retry < retry_count) {
-        ESP_LOGI(TAG, "Waiting for time synchronization...");
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        retry++;
-    }
-    if (retry == retry_count) {
-        ESP_LOGW(TAG, "Time synchronization failed after %d attempts", retry_count);
-    } else {
-        ESP_LOGI(TAG, "Time synchronization successful");
-    }
-}
+// void Alarm::WaitSyncTime(void) {
+//     // Wait for time synchronization
+//     int retry = 0;
+//     const int retry_count = 10;
+//     while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && retry < retry_count) {
+//         ESP_LOGI(TAG, "Waiting for time synchronization...");
+//         vTaskDelay(2000 / portTICK_PERIOD_MS);
+//         retry++;
+//     }
+//     if (retry == retry_count) {
+//         ESP_LOGW(TAG, "Time synchronization failed after %d attempts", retry_count);
+//     } else {
+//         ESP_LOGI(TAG, "Time synchronization successful");
+//     }
+// }
 
 void Alarm::AlarmSet(int index, int hour, int minute) {
     if (index < 0 || index >= ALARM_MAX_SETTINGS) {
@@ -201,12 +201,12 @@ void Alarm::AlarmClearAll() {
 
 void Alarm::Start() {
     // Start the sleep timer functionality
-    SleepTimer::Start();
+    // SleepTimer::Start();
 }
 
 void Alarm::Stop() {
     // Stop the sleep timer functionality
-    SleepTimer::Stop();
+    // SleepTimer::Stop();
 }
 
 void Alarm::OnExitLightAlarmMode(std::function<void()> callback) {
@@ -215,13 +215,6 @@ void Alarm::OnExitLightAlarmMode(std::function<void()> callback) {
 
 void Alarm::OnAlarm(std::function<void()> callback) {
     on_alarm_ = callback;
-}
-
-void Alarm::ProcessAlarmTrigger() {
-    // This method is called from application task context
-    if (on_alarm_) {
-        on_alarm_();
-    }
 }
 
 void Alarm::LoadAlarmsFromNVS() {

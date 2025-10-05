@@ -1,11 +1,12 @@
-#include "system_establish.h"
-
 #include <esp_log.h>
+#include <string>
 #include <nvs.h>
 #include <nvs_flash.h>
 #include <esp_event.h>
 #include <lwip/apps/sntp.h> // Sử dụng lwip SNTP cho ESP-IDF v5.x
 #include <sys/time.h> // Thêm cho settimeofday
+
+#include "system_establish.h"
 
 #define TAG "SystemEstablish"
 
@@ -15,7 +16,23 @@ static void time_sync_notification_cb(struct timeval *tv);
 void SystemEstablish::Init() {
     // Khởi tạo event loop mặc định
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-
+    
+    // Cấu hình PM - chỉ khởi tạo nếu power management được bật trong cấu hình
+#if CONFIG_PM_ENABLE
+    CpuPowerManager cpuPM(80, 240, true);
+    esp_err_t pm_err = cpuPM.init();
+    if (pm_err == ESP_OK) {
+        ESP_LOGI(TAG, "Cấu hình hiện tại: %s", cpuPM.getCurrentConfig().c_str());
+        cpuPM.setFrequency(80, 240);
+        ESP_LOGI(TAG, "ESP khởi động ở chế độ tiết kiệm");
+    } else {
+        ESP_LOGW(TAG, "Không thể cấu hình power management: %s", esp_err_to_name(pm_err));
+        ESP_LOGW(TAG, "Tiếp tục khởi động mà không có power management");
+    }
+#else
+    ESP_LOGW(TAG, "Power management bị tắt trong cấu hình");
+#endif
+    
     // Khởi tạo NVS flash cho cấu hình WiFi
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -40,17 +57,7 @@ void SystemEstablish::Deinit() {
  * @brief Khởi tạo SNTP và thiết lập callback đồng bộ thời gian
  * @param time_sync_callback Hàm callback được gọi khi thời gian được đồng bộ
  */
-void SystemEstablish::InitSNTP(std::function<void(struct timeval*)> time_sync_callback) {
-    // Cấu hình PM
-    CpuPowerManager cpuPM(80, 240, true);
-    
-    cpuPM.init();
-    ESP_LOGI(TAG, "Cấu hình hiện tại: %s", cpuPM.getCurrentConfig().c_str());
-
-    cpuPM.setFrequency(80, 240);
-    ESP_LOGI(TAG, "ESP khởi động ở chế độ tiết kiệm");
-
-    // Cấu hình chế độ hoạt động cho SNTP
+void SystemEstablish::InitSNTP(std::function<void(struct timeval*)> time_sync_callback) {// Cấu hình chế độ hoạt động cho SNTP
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     
     // Thiết lập máy chủ NTP
@@ -96,7 +103,7 @@ CpuPowerManager::CpuPowerManager(int minFreqMhz, int maxFreqMhz, bool lightSleep
     initialized = false;
 }
 
-CpuCpuPowerManager::~CpuPowerManager() {}
+CpuPowerManager::~CpuPowerManager() {}
 
 esp_err_t CpuPowerManager::init()
 {
@@ -141,7 +148,7 @@ std::string CpuPowerManager::getCurrentConfig() const
 {
     char buf[64];
     snprintf(buf, sizeof(buf),
-            "Min: %d MHz, Max: % MHx, LightSleep: %s",
+            "Min: %d MHz, Max: %d MHz, LightSleep: %s",
             pm_config.min_freq_mhz,
             pm_config.max_freq_mhz,
             pm_config.light_sleep_enable ? "ON" : "OFF"

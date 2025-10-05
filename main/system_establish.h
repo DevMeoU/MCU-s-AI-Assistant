@@ -2,6 +2,8 @@
 #define _SYSTEM_ESTABLISH_H_
 
 #include <functional>
+#include <string>
+#include "esp_pm.h"
 
 /**
  * @brief Lớp quản lý khởi tạo và dọn dẹp hệ thống
@@ -55,6 +57,6 @@ private:
     esp_pm_config_esp32s3_t pm_config;
     bool initialized;
 // #endif
-}
+};
 
 #endif // _SYSTEM_ESTABLISH_H_

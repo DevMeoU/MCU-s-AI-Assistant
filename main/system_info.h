@@ -3,7 +3,6 @@
 
 #include <string>
 #include <esp_err.h>
-#include <freertos/FreeRTOS.h>
 
 /**
  * @brief Cấu trúc lưu thông tin bộ nhớ
@@ -13,8 +12,8 @@ struct MemoryStats {
     size_t sramTotal;
     size_t rtcRamFree;
     size_t rtcRamTotal;
-    size_t spiRamFree;
-    size_t spiRamTotal;
+    size_t psRamFree;
+    size_t psRamTotal;
 };
 
 /**
@@ -28,7 +27,7 @@ public:
     static size_t GetFreeHeapSize();
 
     // PSRAM
-    static size_t GetSPIRAMSize();
+    static size_t GetPSRAMSize();
     static MemoryStats GetMemoryStats();
     static void PrintMemoryStats();
 

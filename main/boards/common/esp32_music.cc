@@ -463,7 +463,7 @@ bool Esp32Music::SearchMainstream(const std::string& song_name, const std::strin
     ESP_LOGI(TAG, "Audio URL obtained: %s", current_music_url_.c_str());
     
     // Get lyrics URL using MAINSTREAM_LYRIC_URL
-    std::string lyric_url = MAINSTREAM_LYRIC_URL + "?id=" + song_id_str;
+    std::string lyric_url = (std::string(MAINSTREAM_LYRIC_URL) + "?id=" + song_id_str);
     current_lyric_url_ = lyric_url;
     
     ESP_LOGI(TAG, "Lyric URL: %s", current_lyric_url_.c_str());
@@ -703,7 +703,7 @@ bool Esp32Music::StopStreaming() {
     auto& board = Board::GetInstance();
     auto display = board.GetDisplay();
     if (display) {
-        display->SetMusicInfo("");  // Xóa hiển thị tên bài hát
+        // display->SetMusicInfo("");  // Xóa hiển thị tên bài hát
         ESP_LOGI(TAG, "Cleared song name display");
     }
     
@@ -759,7 +759,7 @@ bool Esp32Music::StopStreaming() {
     
     // Sau khi luồng kết thúc hoàn toàn, chỉ dừng hiển thị FFT trong chế độ phổ
     if (display && display_mode_ == DISPLAY_MODE_SPECTRUM) {
-        display->stopFft();
+        // display->stopFft();
         ESP_LOGI(TAG, "Stopped FFT display in StopStreaming (spectrum mode)");
     } else if (display) {
         ESP_LOGI(TAG, "Not in spectrum mode, skipping FFT stop in StopStreaming");
@@ -980,7 +980,7 @@ void Esp32Music::PlayAudioStream() {
             if (display) {
                 // Định dạng hiển thị tên bài hát thành 《Tên bài hát》đang phát...
                 std::string formatted_song_name = "《" + current_song_name_ + "》đang phát...";
-                display->SetMusicInfo(formatted_song_name.c_str());
+                // display->SetMusicInfo(formatted_song_name.c_str());
                 ESP_LOGI(TAG, "Displaying song name: %s", formatted_song_name.c_str());
                 song_name_displayed_ = true;
             }
@@ -988,7 +988,7 @@ void Esp32Music::PlayAudioStream() {
             // Khởi động chức năng hiển thị tương ứng theo chế độ hiển thị
             if (display) {
                 if (display_mode_ == DISPLAY_MODE_SPECTRUM) {
-                    display->start();
+                    // display->start();
                     ESP_LOGI(TAG, "Display start() called for spectrum visualization");
                 } else {
                     ESP_LOGI(TAG, "Lyrics display mode active, FFT visualization disabled");
@@ -1163,7 +1163,7 @@ void Esp32Music::PlayAudioStream() {
                         final_sample_count, pcm_size_bytes, mp3_frame_info_.samprate, mp3_frame_info_.nChans);
                 
                 // Gửi đến hàng đợi giải mã âm thanh của Application
-                app.AddAudioData(std::move(packet));
+                // app.AddAudioData(std::move(packet));
                 total_played += pcm_size_bytes;
                 
                 // In tiến độ phát
@@ -1203,7 +1203,7 @@ void Esp32Music::PlayAudioStream() {
         auto& board = Board::GetInstance();
         auto display = board.GetDisplay();
         if (display) {
-            display->stopFft();
+            // display->stopFft();
             ESP_LOGI(TAG, "Stopped FFT display from play thread (spectrum mode)");
         }
     } else {
@@ -1255,16 +1255,16 @@ void Esp32Music::CleanupMp3Decoder() {
 void Esp32Music::ResetSampleRate() {
     auto& board = Board::GetInstance();
     auto codec = board.GetAudioCodec();
-    if (codec && codec->original_output_sample_rate() > 0 && 
-        codec->output_sample_rate() != codec->original_output_sample_rate()) {
-        ESP_LOGI(TAG, "Đặt lại tần số lấy mẫu: từ %d Hz đặt lại về giá trị gốc %d Hz", 
-                codec->output_sample_rate(), codec->original_output_sample_rate());
-        if (codec->SetOutputSampleRate(-1)) {  // -1 có nghĩa là đặt lại về giá trị gốc
-            ESP_LOGI(TAG, "Thành công đặt lại tần số lấy mẫu về giá trị gốc: %d Hz", codec->output_sample_rate());
-        } else {
-            ESP_LOGW(TAG, "Không thể đặt lại tần số lấy mẫu về giá trị gốc");
-        }
-    }
+    // if (codec && codec->original_output_sample_rate() > 0 && 
+    //     codec->output_sample_rate() != codec->original_output_sample_rate()) {
+    //     ESP_LOGI(TAG, "Đặt lại tần số lấy mẫu: từ %d Hz đặt lại về giá trị gốc %d Hz", 
+    //             codec->output_sample_rate(), codec->original_output_sample_rate());
+    //     if (codec->SetOutputSampleRate(-1)) {  // -1 có nghĩa là đặt lại về giá trị gốc
+    //         ESP_LOGI(TAG, "Thành công đặt lại tần số lấy mẫu về giá trị gốc: %d Hz", codec->output_sample_rate());
+    //     } else {
+    //         ESP_LOGW(TAG, "Không thể đặt lại tần số lấy mẫu về giá trị gốc");
+    //     }
+    // }
 }
 
 // Bỏ qua thẻ ID3 ở đầu tệp MP3
