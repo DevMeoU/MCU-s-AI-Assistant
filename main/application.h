@@ -16,6 +16,8 @@
 #include "audio_service.h"
 #include "device_state_event.h"
 
+// Forward declaration for Alarm class
+class Alarm;
 
 #define MAIN_EVENT_SCHEDULE (1 << 0)
 #define MAIN_EVENT_SEND_AUDIO (1 << 1)
@@ -64,6 +66,9 @@ public:
     void PlaySound(const std::string_view& sound);
     AudioService& GetAudioService() { return audio_service_; }
 
+    // Alarm system access
+    Alarm& GetAlarm() { return *alarm_; }
+
 private:
     Application();
     ~Application();
@@ -78,6 +83,7 @@ private:
     AecMode aec_mode_ = kAecOff;
     std::string last_error_message_;
     AudioService audio_service_;
+    std::unique_ptr<Alarm> alarm_;  // Alarm system instance
 
     bool has_server_time_ = false;
     bool aborted_ = false;

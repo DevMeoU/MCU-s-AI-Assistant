@@ -90,13 +90,13 @@ class PairGoertzel:
         self.F0 = f_space
         self.F1 = f_mark
         self.bit_rate = bit_rate
-        self.n_per_bit = int(f_sample // bit_rate)  # 每个比特的采样点数
+        self.n_per_bit = int(f_sample // bit_rate)  # Số lượng điểm mẫu cho mỗi bit
         
-        # 计算归一化频率
+        # Tính toán tần số chuẩn hóa
         f1 = f_mark / f_sample
         f0 = f_space / f_sample
         
-        # 初始化Goertzel算法
+        # Khởi tạo thuật toán Goertzel
         self.g0 = TraceGoertzel(freq=f0, n=win_size)
         self.g1 = TraceGoertzel(freq=f1, n=win_size)
         
@@ -122,11 +122,11 @@ class PairGoertzel:
         
         amp0, amp1, p1_prob = 0, 0, None
         
-        # 每个比特周期输出一次结果
+        # Xuất kết quả một lần cho mỗi chu kỳ bit
         if self.out_count >= self.n_per_bit:
             amp0 = self.g0(self.in_buffer)  # Calculate space frequency amplitude
             amp1 = self.g1(self.in_buffer)  # Calculate mark frequency amplitude
-            p1_prob = amp1 / (amp0 + amp1 + 1e-8)  # 计算mark概率
+            p1_prob = amp1 / (amp0 + amp1 + 1e-8)  # Tính xác suất mark
             self.out_count = 0
             
         return amp0, amp1, p1_prob
@@ -160,26 +160,26 @@ class RealTimeAFSKDecoder:
         # Calculate window size - Consistent with reference code
         win_size = int(f_sample / mark_freq * s_goertzel)
         
-        # 初始化解调器
+        # Khởi tạo bộ giải điều chế
         self.demodulator = PairGoertzel(f_sample, space_freq, mark_freq, 
                                        bitrate, win_size)
         
-        # 帧定义 - 与参考代码一致
+        # Định nghĩa khung - phù hợp với mã tham khảo
         self.start_bytes = b'\x01\x02'
         self.end_bytes = b'\x03\x04'
         self.start_bits = "".join(format(int(x), '08b') for x in self.start_bytes)
         self.end_bits = "".join(format(int(x), '08b') for x in self.end_bytes)
 
-        # 状态机
+        # Máy trạng thái
         self.state = "idle" # idle / entering
         
-        # 存储解调结果
-        self.buffer_prelude:deque = deque(maxlen=len(self.start_bits)) # 判断是否启动
-        self.indicators = []  # 存储概率序列
-        self.signal_bits = ""  # 存储比特序列
+        # Lưu trữ kết quả giải điều chế
+        self.buffer_prelude:deque = deque(maxlen=len(self.start_bits)) # Kiểm tra xem có khởi động hay không
+        self.indicators = []  # Lưu trữ chuỗi xác suất
+        self.signal_bits = ""  # Lưu trữ chuỗi bit
         self.text_cache = ""
         
-        # 解码结果
+        # Kết quả giải mã
         self.decoded_messages = []
         self.total_bits_received = 0
         
@@ -217,17 +217,17 @@ class RealTimeAFSKDecoder:
                         pass
                 self.indicators.append(p1_prob)
 
-                # 检查状态机
+                # Kiểm tra máy trạng thái
                 if self.state == "idle" and "".join(self.buffer_prelude) == self.start_bits:
                     self.state = "entering"
                     self.text_cache = ""
-                    self.signal_bits = ""  # 清空比特序列
+                    self.signal_bits = ""  # Xóa chuỗi bit
                     self.buffer_prelude.clear()
                 elif self.state == "entering" and ("".join(self.buffer_prelude) == self.end_bits or len(self.signal_bits) >= 256):
                     self.state = "idle"
                     self.buffer_prelude.clear()
 
-                # 每收集一定数量的比特后尝试解码
+                # Thử giải mã sau khi thu thập đủ số lượng bit nhất định
                 if len(self.signal_bits) >= 8:
                     text = self._decode_bits_to_text(self.signal_bits)
                     if len(text) > len(self.text_cache):

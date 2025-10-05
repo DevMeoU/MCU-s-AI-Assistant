@@ -29,7 +29,7 @@ struct AssetData {
     AssetData(const void* d, size_t s, uint8_t f, bool l, bool k)
         : data(d), size(s)
     {
-        fps = f > 63 ? 63 : f;  // 限制 FPS 到 6 位范围
+        fps = f > 63 ? 63 : f;  // Giới hạn FPS trong phạm vi 6 bit
         loop = l;
         lack = k;
     }

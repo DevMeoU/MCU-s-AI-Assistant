@@ -93,15 +93,15 @@ private:
 
     void InitializeButtons() {
         
-        // 配置 GPIO
+        // Cấu hình GPIO
         gpio_config_t io_conf = {
-            .pin_bit_mask = 1ULL << BUILTIN_LED_GPIO,  // 设置需要配置的 GPIO 引脚
-            .mode = GPIO_MODE_OUTPUT,           // 设置为输出模式
-            .pull_up_en = GPIO_PULLUP_DISABLE,  // 禁用上拉
-            .pull_down_en = GPIO_PULLDOWN_DISABLE,  // 禁用下拉
-            .intr_type = GPIO_INTR_DISABLE      // 禁用中断
+            .pin_bit_mask = 1ULL << BUILTIN_LED_GPIO,  // Đặt chân GPIO cần cấu hình
+            .mode = GPIO_MODE_OUTPUT,           // Đặt chế độ đầu ra
+            .pull_up_en = GPIO_PULLUP_DISABLE,  // Vô hiệu hóa kéo lên
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,  // Vô hiệu hóa kéo xuống
+            .intr_type = GPIO_INTR_DISABLE      // Vô hiệu hóa ngắt
         };
-        gpio_config(&io_conf);  // 应用配置
+        gpio_config(&io_conf);  // Áp dụng cấu hình
 
         boot_button_.OnClick([this]() {
             auto& app = Application::GetInstance();
@@ -125,7 +125,7 @@ private:
         });
 
         asr_button_.OnClick([this]() {
-            std::string wake_word="你好小智";
+            std::string wake_word="Xin chào Xiao Zhi";
             Application::GetInstance().WakeWordInvoke(wake_word);
         });
 
@@ -139,7 +139,7 @@ private:
         });
     }
 
-    // 物联网初始化，添加对 AI 可见设备
+    // Khởi tạo IoT, thêm thiết bị có thể nhìn thấy cho AI
     void InitializeTools() {
         static LampController lamp(LAMP_GPIO);
     }

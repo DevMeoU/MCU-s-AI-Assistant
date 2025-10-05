@@ -212,16 +212,16 @@ void Otto::SetRestState(bool state) {
 ///////////////////////////////////////////////////////////////////
 
 //---------------------------------------------------------
-//-- 统一手部动作函数
+//-- Hàm hành động tay thống nhất
 //--  Parameters:
-//--    action: 动作类型 1=举左手, 2=举右手, 3=举双手, 4=放左手, 5=放右手, 6=放双手,
-//--            7=挥左手, 8=挥右手, 9=挥双手, 10=拍打左手, 11=拍打右手, 12=拍打双手
-//--    times: 重复次数
-//--    amount: 动作幅度 (10-50)
-//--    period: 动作时间
+//--    action: Loại hành động 1=nâng tay trái, 2=nâng tay phải, 3=nâng cả hai tay, 4=hạ tay trái, 5=hạ tay phải, 6=hạ cả hai tay,
+//--            7=vẫy tay trái, 8=vẫy tay phải, 9=vẫy cả hai tay, 10=vỗ tay trái, 11=vỗ tay phải, 12=vỗ cả hai tay
+//--    times: Số lần lặp lại
+//--    amount: Biên độ hành động (10-50)
+//--    period: Thời gian hành động
 //---------------------------------------------------------
 void Otto::HandAction(int action, int times, int amount, int period) {
-    // 限制参数范围
+    // Giới hạn phạm vi tham số
     times = 2 * std::max(3, std::min(100, times));
     amount = std::max(10, std::min(50, amount));
     period = std::max(100, std::min(1000, period));
@@ -232,31 +232,31 @@ void Otto::HandAction(int action, int times, int amount, int period) {
     }
 
     switch (action) {
-        case 1:  // 举左手
+        case 1:  // Nâng tay trái
             current_positions[LEFT_PITCH] = 180;
             MoveServos(period, current_positions);
             break;
 
-        case 2:  // 举右手
+        case 2:  // Nâng tay phải
             current_positions[RIGHT_PITCH] = 0;
             MoveServos(period, current_positions);
             break;
 
-        case 3:  // 举双手
+        case 3:  // Nâng cả hai tay
             current_positions[LEFT_PITCH] = 180;
             current_positions[RIGHT_PITCH] = 0;
             MoveServos(period, current_positions);
             break;
 
-        case 4:  // 放左手
-        case 5:  // 放右手
-        case 6:  // 放双手
-            // 回到初始位置
+        case 4:  // Hạ tay trái
+        case 5:  // Hạ tay phải
+        case 6:  // Hạ cả hai tay
+            // Trở về vị trí ban đầu
             memcpy(current_positions, servo_initial_, sizeof(current_positions));
             MoveServos(period, current_positions);
             break;
 
-        case 7:  // 挥左手
+        case 7:  // Vẫy tay trái
             current_positions[LEFT_PITCH] = 150;
             MoveServos(period, current_positions);
             for (int i = 0; i < times; i++) {
@@ -268,7 +268,7 @@ void Otto::HandAction(int action, int times, int amount, int period) {
             MoveServos(period, current_positions);
             break;
 
-        case 8:  // 挥右手
+        case 8:  // Vẫy tay phải
             current_positions[RIGHT_PITCH] = 30;
             MoveServos(period, current_positions);
             for (int i = 0; i < times; i++) {
@@ -280,7 +280,7 @@ void Otto::HandAction(int action, int times, int amount, int period) {
             MoveServos(period, current_positions);
             break;
 
-        case 9:  // 挥双手
+        case 9:  // Vẫy cả hai tay
             current_positions[LEFT_PITCH] = 150;
             current_positions[RIGHT_PITCH] = 30;
             MoveServos(period, current_positions);
@@ -294,7 +294,7 @@ void Otto::HandAction(int action, int times, int amount, int period) {
             MoveServos(period, current_positions);
             break;
 
-        case 10:  // 拍打左手
+        case 10:  // Vỗ tay trái
             current_positions[LEFT_ROLL] = 20;
             MoveServos(period, current_positions);
             for (int i = 0; i < times; i++) {
@@ -307,7 +307,7 @@ void Otto::HandAction(int action, int times, int amount, int period) {
             MoveServos(period, current_positions);
             break;
 
-        case 11:  // 拍打右手
+        case 11:  // Vỗ tay phải
             current_positions[RIGHT_ROLL] = 160;
             MoveServos(period, current_positions);
             for (int i = 0; i < times; i++) {
@@ -320,7 +320,7 @@ void Otto::HandAction(int action, int times, int amount, int period) {
             MoveServos(period, current_positions);
             break;
 
-        case 12:  // 拍打双手
+        case 12:  // Vỗ cả hai tay
             current_positions[LEFT_ROLL] = 20;
             current_positions[RIGHT_ROLL] = 160;
             MoveServos(period, current_positions);
@@ -340,15 +340,15 @@ void Otto::HandAction(int action, int times, int amount, int period) {
 }
 
 //---------------------------------------------------------
-//-- 统一身体动作函数
+//-- Hàm hành động thân thống nhất
 //--  Parameters:
-//--    action: 动作类型 1=左转, 2=右转，3=回中心
-//--    times: 转动次数
-//--    amount: 旋转角度 (0-90度，以90度为中心左右旋转)
-//--    period: 动作时间
+//--    action: Loại hành động 1=quay trái, 2=quay phải, 3=về tâm
+//--    times: Số lần quay
+//--    amount: Góc quay (0-90 độ, với 90 độ là tâm quay trái phải)
+//--    period: Thời gian hành động
 //---------------------------------------------------------
 void Otto::BodyAction(int action, int times, int amount, int period) {
-    // 限制参数范围
+    // Giới hạn phạm vi tham số
     times = std::max(1, std::min(10, times));
     amount = std::max(0, std::min(90, amount));
     period = std::max(500, std::min(3000, period));
@@ -366,19 +366,19 @@ void Otto::BodyAction(int action, int times, int amount, int period) {
     int target_angle = body_center;
 
     switch (action) {
-        case 1:  // 左转
+        case 1:  // Quay trái
             target_angle = body_center + amount;
             target_angle = std::min(180, target_angle);
             break;
-        case 2:  // 右转
+        case 2:  // Quay phải
             target_angle = body_center - amount;
             target_angle = std::max(0, target_angle);
             break;
-        case 3:  // 回中心
+        case 3:  // Về tâm
             target_angle = body_center;
             break;
         default:
-            return;  // 无效动作
+            return;  // Hành động không hợp lệ
     }
 
     current_positions[BODY] = target_angle;
@@ -387,15 +387,15 @@ void Otto::BodyAction(int action, int times, int amount, int period) {
 }
 
 //---------------------------------------------------------
-//-- 统一头部动作函数
+//-- Hàm hành động đầu thống nhất
 //--  Parameters:
-//--    action: 动作类型 1=抬头, 2=低头, 3=点头, 4=回中心, 5=连续点头
-//--    times: 重复次数 (仅对连续点头有效)
-//--    amount: 角度偏移 (1-15度范围内)
-//--    period: 动作时间
+//--    action: Loại hành động 1=ngẩng đầu, 2=cúi đầu, 3=gật đầu, 4=về tâm, 5=gật đầu liên tục
+//--    times: Số lần lặp lại (chỉ có hiệu lực với gật đầu liên tục)
+//--    amount: Độ lệch góc (trong phạm vi 1-15 độ)
+//--    period: Thời gian hành động
 //---------------------------------------------------------
 void Otto::HeadAction(int action, int times, int amount, int period) {
-    // 限制参数范围
+    // Giới hạn phạm vi tham số
     times = std::max(1, std::min(10, times));
     amount = std::max(1, std::min(15, abs(amount)));
     period = std::max(300, std::min(3000, period));
@@ -409,60 +409,60 @@ void Otto::HeadAction(int action, int times, int amount, int period) {
         }
     }
 
-    int head_center = 90;  // 头部中心位置
+    int head_center = 90;  // Vị trí tâm đầu
 
     switch (action) {
-        case 1:                                              // 抬头
-            current_positions[HEAD] = head_center + amount;  // 抬头是增加角度
+        case 1:                                              // Ngẩng đầu
+            current_positions[HEAD] = head_center + amount;  // Ngẩng đầu là tăng góc
             MoveServos(period, current_positions);
             break;
 
-        case 2:                                              // 低头
-            current_positions[HEAD] = head_center - amount;  // 低头是减少角度
+        case 2:                                              // Cúi đầu
+            current_positions[HEAD] = head_center - amount;  // Cúi đầu là giảm góc
             MoveServos(period, current_positions);
             break;
 
-        case 3:  // 点头 (上下运动)
-            // 先抬头
+        case 3:  // Gật đầu (chuyển động lên xuống)
+            // Trước tiên ngẩng đầu
             current_positions[HEAD] = head_center + amount;
             MoveServos(period / 3, current_positions);
             vTaskDelay(pdMS_TO_TICKS(period / 6));
 
-            // 再低头
+            // Sau đó cúi đầu
             current_positions[HEAD] = head_center - amount;
             MoveServos(period / 3, current_positions);
             vTaskDelay(pdMS_TO_TICKS(period / 6));
 
-            // 回到中心
+            // Trở về tâm
             current_positions[HEAD] = head_center;
             MoveServos(period / 3, current_positions);
             break;
 
-        case 4:  // 回到中心位置
+        case 4:  // Trở về vị trí tâm
             current_positions[HEAD] = head_center;
             MoveServos(period, current_positions);
             break;
 
-        case 5:  // 连续点头
+        case 5:  // Gật đầu liên tục
             for (int i = 0; i < times; i++) {
-                // 抬头
+                // Ngẩng đầu
                 current_positions[HEAD] = head_center + amount;
                 MoveServos(period / 2, current_positions);
 
-                // 低头
+                // Cúi đầu
                 current_positions[HEAD] = head_center - amount;
                 MoveServos(period / 2, current_positions);
 
-                vTaskDelay(pdMS_TO_TICKS(50));  // 短暂停顿
+                vTaskDelay(pdMS_TO_TICKS(50));  // Tạm dừng ngắn
             }
 
-            // 回到中心
+            // Trở về tâm
             current_positions[HEAD] = head_center;
             MoveServos(period / 2, current_positions);
             break;
 
         default:
-            // 无效动作，回到中心
+            // Hành động không hợp lệ, trở về tâm
             current_positions[HEAD] = head_center;
             MoveServos(period, current_positions);
             break;

@@ -11,7 +11,7 @@ static const char* TAG = "OttoMovements";
 Otto::Otto() {
     is_otto_resting_ = false;
     has_hands_ = false;
-    // 初始化所有舵机管脚为-1（未连接）
+    // Khởi tạo tất cả các chân servo thành -1 (không kết nối)
     for (int i = 0; i < SERVO_COUNT; i++) {
         servo_pins_[i] = -1;
         servo_trim_[i] = 0;
@@ -35,7 +35,7 @@ void Otto::Init(int left_leg, int right_leg, int left_foot, int right_foot, int 
     servo_pins_[LEFT_HAND] = left_hand;
     servo_pins_[RIGHT_HAND] = right_hand;
 
-    // 检查是否有手部舵机
+    // Kiểm tra xem có servo tay không
     has_hands_ = (left_hand != -1 && right_hand != -1);
 
     AttachServos();
@@ -203,23 +203,23 @@ void Otto::Execute(int amplitude[SERVO_COUNT], int offset[SERVO_COUNT], int peri
 ///////////////////////////////////////////////////////////////////
 void Otto::Home(bool hands_down) {
     if (is_otto_resting_ == false) {  // Go to rest position only if necessary
-        // 为所有舵机准备初始位置值
+        // Chuẩn bị giá trị vị trí ban đầu cho tất cả các servo
         int homes[SERVO_COUNT];
         for (int i = 0; i < SERVO_COUNT; i++) {
             if (i == LEFT_HAND || i == RIGHT_HAND) {
                 if (hands_down) {
-                    // 如果需要复位手部，设置为默认值
+                    // Nếu cần đặt lại tay, đặt về giá trị mặc định
                     if (i == LEFT_HAND) {
                         homes[i] = HAND_HOME_POSITION;
                     } else {                                  // RIGHT_HAND
-                        homes[i] = 180 - HAND_HOME_POSITION;  // 右手镜像位置
+                        homes[i] = 180 - HAND_HOME_POSITION;  // Vị trí phản chiếu của tay phải
                     }
                 } else {
-                    // 如果不需要复位手部，保持当前位置
+                    // Nếu không cần đặt lại tay, giữ vị trí hiện tại
                     homes[i] = servo_[i].GetPosition();
                 }
             } else {
-                // 腿部和脚部舵机始终复位
+                // Servo chân và bàn chân luôn được đặt lại
                 homes[i] = 90;
             }
         }
@@ -274,15 +274,15 @@ void Otto::Walk(float steps, int period, int dir, int amount) {
     int O[SERVO_COUNT] = {0, 0, 5, -5, HAND_HOME_POSITION - 90, HAND_HOME_POSITION};
     double phase_diff[SERVO_COUNT] = {0, 0, DEG2RAD(dir * -90), DEG2RAD(dir * -90), 0, 0};
 
-    // 如果amount>0且有手部舵机，设置手部振幅和相位
+    // Nếu amount>0 và có servo tay, đặt biên độ và pha của tay
     if (amount > 0 && has_hands_) {
-        // 手臂振幅使用传入的amount参数
+        // Biên độ cánh tay sử dụng tham số amount được truyền vào
         A[LEFT_HAND] = amount;
         A[RIGHT_HAND] = amount;
 
-        // 左手与右腿同相，右手与左腿同相，使得机器人走路时手臂自然摆动
-        phase_diff[LEFT_HAND] = phase_diff[RIGHT_LEG];  // 左手与右腿同相
-        phase_diff[RIGHT_HAND] = phase_diff[LEFT_LEG];  // 右手与左腿同相
+        // Tay trái cùng pha với chân phải, tay phải cùng pha với chân trái, giúp robot vung tay tự nhiên khi đi bộ
+        phase_diff[LEFT_HAND] = phase_diff[RIGHT_LEG];  // Tay trái cùng pha với chân phải
+        phase_diff[RIGHT_HAND] = phase_diff[LEFT_LEG];  // Tay phải cùng pha với chân trái
     } else {
         A[LEFT_HAND] = 0;
         A[RIGHT_HAND] = 0;
@@ -318,15 +318,15 @@ void Otto::Turn(float steps, int period, int dir, int amount) {
         A[1] = 30;
     }
 
-    // 如果amount>0且有手部舵机，设置手部振幅和相位
+    // Nếu amount>0 và có servo tay, đặt biên độ và pha của tay
     if (amount > 0 && has_hands_) {
-        // 手臂振幅使用传入的amount参数
+        // Biên độ cánh tay sử dụng tham số amount được truyền vào
         A[LEFT_HAND] = amount;
         A[RIGHT_HAND] = amount;
 
-        // 转向时手臂摆动相位：左手与左腿同相，右手与右腿同相，增强转向效果
-        phase_diff[LEFT_HAND] = phase_diff[LEFT_LEG];    // 左手与左腿同相
-        phase_diff[RIGHT_HAND] = phase_diff[RIGHT_LEG];  // 右手与右腿同相
+        // Pha vung tay khi rẽ: tay trái cùng pha với chân trái, tay phải cùng pha với chân phải, tăng cường hiệu ứng rẽ
+        phase_diff[LEFT_HAND] = phase_diff[LEFT_LEG];    // Tay trái cùng pha với chân trái
+        phase_diff[RIGHT_HAND] = phase_diff[RIGHT_LEG];  // Tay phải cùng pha với chân phải
     } else {
         A[LEFT_HAND] = 0;
         A[RIGHT_HAND] = 0;
@@ -589,10 +589,10 @@ void Otto::Flapping(float steps, int period, int height, int dir) {
 }
 
 //---------------------------------------------------------
-//-- 手部动作: 举手
+//-- Động tác tay: Giơ tay
 //--  Parameters:
-//--    period: 动作时间
-//--    dir: 方向 1=左手, -1=右手, 0=双手
+//--    period: Thời gian động tác
+//--    dir: Hướng 1=tay trái, -1=tay phải, 0=cả hai tay
 //---------------------------------------------------------
 void Otto::HandsUp(int period, int dir) {
     if (!has_hands_) {
@@ -617,10 +617,10 @@ void Otto::HandsUp(int period, int dir) {
 }
 
 //---------------------------------------------------------
-//-- 手部动作: 双手放下
+//-- Động tác tay: Hạ cả hai tay
 //--  Parameters:
-//--    period: 动作时间
-//--    dir: 方向 1=左手, -1=右手, 0=双手
+//--    period: Thời gian động tác
+//--    dir: Hướng 1=tay trái, -1=tay phải, 0=cả hai tay
 //---------------------------------------------------------
 void Otto::HandsDown(int period, int dir) {
     if (!has_hands_) {
@@ -639,10 +639,10 @@ void Otto::HandsDown(int period, int dir) {
 }
 
 //---------------------------------------------------------
-//-- 手部动作: 挥手
+//-- Động tác tay: Vẫy tay
 //--  Parameters:
-//--    period: 动作周期
-//--    dir: 方向 LEFT/RIGHT/BOTH
+//--    period: Chu kỳ động tác
+//--    dir: Hướng LEFT/RIGHT/BOTH
 //---------------------------------------------------------
 void Otto::HandWave(int period, int dir) {
     if (!has_hands_) {
@@ -676,7 +676,7 @@ void Otto::HandWave(int period, int dir) {
     MoveServos(300, current_positions);
     vTaskDelay(pdMS_TO_TICKS(300));
 
-    // 左右摆动5次
+    // Vung qua lại 5 lần
     for (int i = 0; i < 5; i++) {
         if (servo_index == LEFT_HAND) {
             current_positions[servo_index] = position - 30;
@@ -703,9 +703,9 @@ void Otto::HandWave(int period, int dir) {
 }
 
 //---------------------------------------------------------
-//-- 手部动作: 双手同时挥手
+//-- Động tác tay: Vẫy cả hai tay cùng lúc
 //--  Parameters:
-//--    period: 动作周期
+//--    period: Chu kỳ động tác
 //---------------------------------------------------------
 void Otto::HandWaveBoth(int period) {
     if (!has_hands_) {
@@ -728,14 +728,14 @@ void Otto::HandWaveBoth(int period) {
     current_positions[RIGHT_HAND] = right_position;
     MoveServos(300, current_positions);
 
-    // 左右摆动5次
+    // Vung qua lại 5 lần
     for (int i = 0; i < 5; i++) {
-        // 波浪向左
+        // Sóng về bên trái
         current_positions[LEFT_HAND] = left_position - 30;
         current_positions[RIGHT_HAND] = right_position + 30;
         MoveServos(period / 10, current_positions);
 
-        // 波浪向右
+        // Sóng về bên phải
         current_positions[LEFT_HAND] = left_position + 30;
         current_positions[RIGHT_HAND] = right_position - 30;
         MoveServos(period / 10, current_positions);

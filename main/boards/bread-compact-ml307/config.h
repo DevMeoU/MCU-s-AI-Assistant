@@ -6,7 +6,7 @@
 #define AUDIO_INPUT_SAMPLE_RATE  16000
 #define AUDIO_OUTPUT_SAMPLE_RATE 24000
 
-// 如果使用 Duplex I2S 模式，请注释下面一行
+// Nếu sử dụng chế độ Duplex I2S, hãy comment dòng dưới đây
 #define AUDIO_I2S_METHOD_SIMPLEX
 
 #ifdef AUDIO_I2S_METHOD_SIMPLEX
@@ -42,7 +42,7 @@
 #elif CONFIG_OLED_SSD1306_128X64
 #define DISPLAY_HEIGHT  64
 #else
-#error "未选择 OLED 屏幕类型"
+#error "Chưa chọn loại màn hình OLED"
 #endif
 
 #define DISPLAY_MIRROR_X true

@@ -452,5 +452,5 @@ public:
 
 DECLARE_BOARD(atk_dnesp32s3_box2_wifi);
 
-// 定义静态成员变量
+// Định nghĩa biến thành viên tĩnh
 atk_dnesp32s3_box2_wifi* atk_dnesp32s3_box2_wifi::instance_ = nullptr;

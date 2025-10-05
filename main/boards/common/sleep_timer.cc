@@ -95,7 +95,7 @@ void SleepTimer::CheckTimer() {
                     // Cấu hình nguồn đánh thức bộ hẹn giờ (tự động đánh thức sau 30 giây)
                     esp_sleep_enable_timer_wakeup(30 * 1000000);
                     
-                    // 进入light sleep模式
+                    // Vào chế độ ngủ nhẹ
                     esp_light_sleep_start();
                     lvgl_port_resume();
 

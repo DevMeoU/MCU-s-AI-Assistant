@@ -271,7 +271,7 @@ public:
 
     std::string Call(const PropertyList& properties) {
         ReturnValue return_value = callback_(properties);
-        // 返回结果
+        // Trả về kết quả
         cJSON* result = cJSON_CreateObject();
         cJSON* content = cJSON_CreateArray();
 

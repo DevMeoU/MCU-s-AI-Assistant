@@ -78,7 +78,7 @@ public:
         : SpiLcdDisplay(io_handle, panel_handle, width, height, offset_x, offset_y, mirror_x, mirror_y, swap_xy) {
 
         DisplayLockGuard lock(this);
-        // Due to the round screen, the status bar needs to increase left and right padding (由于屏幕是圆的，所以状态栏需要增加左右内边距)
+        // Do màn hình là tròn, thanh trạng thái cần tăng khoảng cách bên trái và phải
         lv_obj_set_style_pad_left(status_bar_, LV_HOR_RES * 0.33, 0);
         lv_obj_set_style_pad_right(status_bar_, LV_HOR_RES * 0.33, 0);
     }
@@ -112,9 +112,9 @@ private:
         power_save_timer_->OnShutdownRequest([this]() {
             ESP_LOGI(TAG, "Shutting down");
             rtc_gpio_set_level(GPIO_NUM_3, 0);
-            // Enable hold function to ensure stable level during sleep (启用保持功能，确保睡眠期间电平不变)
+            // Kích hoạt chức năng giữ để đảm bảo mức điện áp ổn định trong khi ngủ
             rtc_gpio_hold_en(GPIO_NUM_3);
-            esp_lcd_panel_disp_on_off(panel_, false); // Turn off display (关闭显示)
+            esp_lcd_panel_disp_on_off(panel_, false); // Tắt hiển thị
             esp_deep_sleep_start();
         });
         power_save_timer_->SetEnabled(true);
@@ -159,22 +159,22 @@ private:
         auto touchpad = board.GetTouchpad();
         static bool was_touched = false;
         static int64_t touch_start_time = 0;
-        const int64_t TOUCH_THRESHOLD_MS = 500;  // Touch duration threshold, over 500ms is considered a long press (触摸时长阈值，超过500ms视为长按)
+        const int64_t TOUCH_THRESHOLD_MS = 500;  // Ngưỡng thời gian chạm, trên 500ms được coi là nhấn giữ
 
         touchpad->UpdateTouchPoint();
         auto touch_point = touchpad->GetTouchPoint();
 
-        // Detect touch start (检测触摸开始)
+        // Phát hiện bắt đầu chạm
         if (touch_point.num > 0 && !was_touched) {
             was_touched = true;
-            touch_start_time = esp_timer_get_time() / 1000; // Convert to milliseconds (转换为毫秒)
+            touch_start_time = esp_timer_get_time() / 1000; // Chuyển đổi sang mili giây
         }
-        // Detect touch release (检测触摸释放)
+        // Phát hiện thả chạm
         else if (touch_point.num == 0 && was_touched) {
             was_touched = false;
             int64_t touch_duration = (esp_timer_get_time() / 1000) - touch_start_time;
 
-            // Only trigger on short touch (只有短触才触发)
+            // Chỉ kích hoạt khi chạm ngắn
             if (touch_duration < TOUCH_THRESHOLD_MS) {
                 auto& app = Application::GetInstance();
                 if (app.GetDeviceState() == kDeviceStateStarting &&
@@ -190,7 +190,7 @@ private:
         ESP_LOGI(TAG, "Init Cst816D");
         cst816d_ = new Cst816d(i2c_bus_, 0x15);
 
-        // Create timer, 10ms interval (创建定时器，10ms 间隔)
+        // Tạo bộ hẹn giờ, khoảng thời gian 10ms
         esp_timer_create_args_t timer_args = {
             .callback = touchpad_timer_callback,
             .arg = NULL,
@@ -203,7 +203,7 @@ private:
         ESP_ERROR_CHECK(esp_timer_start_periodic(touchpad_timer_, 10 * 1000)); // 10ms = 10000us
     }
 
-    // SPI initialization (SPI初始化)
+    // Khởi tạo SPI
     void InitializeSpi() {
         ESP_LOGI(TAG, "Initialize SPI bus");
         spi_bus_config_t buscfg = GC9A01_PANEL_BUS_SPI_CONFIG(DISPLAY_SPI_SCLK_PIN, DISPLAY_SPI_MOSI_PIN,
@@ -211,7 +211,7 @@ private:
         ESP_ERROR_CHECK(spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_CH_AUTO));
     }
 
-    // GC9A01初始化
+    // Khởi tạo GC9A01
     void InitializeGc9a01Display() {
         ESP_LOGI(TAG, "Init GC9A01 display");
         ESP_LOGI(TAG, "Install panel IO");

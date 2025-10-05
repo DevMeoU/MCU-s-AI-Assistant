@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget,
                              QHBoxLayout, QLineEdit, QPushButton, QLabel, QTextEdit)
 from PyQt6.QtCore import QTimer
 
-# 导入解码器
+# Nhập bộ giải mã
 from demod import RealTimeAFSKDecoder
 
 
@@ -32,15 +32,15 @@ class UDPServerProtocol(asyncio.DatagramProtocol):
         self.transport = transport
         
     def datagram_received(self, data, addr):
-        # 如果还没有客户端地址，记录第一个连接的客户端
+        # Nếu chưa có địa chỉ khách hàng, ghi lại khách hàng kết nối đầu tiên
         if self.client_address is None:
             self.client_address = addr
             print(f"Received connection from {addr}")
             # Received connection from {addr}
         
-        # 只处理来自已记录客户端的数据
+        # Chỉ xử lý dữ liệu từ khách hàng đã ghi lại
         if addr == self.client_address:
-            # 将接收到的音频数据添加到队列
+            # Thêm dữ liệu âm thanh nhận được vào hàng đợi
             self.data_queue.extend(data)
         else:
             print(f"Ignoring data from unknown address {addr}")
@@ -51,13 +51,13 @@ class MatplotlibWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # 创建 Matplotlib 的 Figure 对象
+        # Tạo đối tượng Figure của Matplotlib
         self.figure = Figure()
 
-        # 创建 FigureCanvas 对象，它是 Figure 的 QWidget 容器
+        # Tạo đối tượng FigureCanvas, đó là vùng chứa QWidget của Figure
         self.canvas = FigureCanvas(self.figure)
 
-        # 创建 Matplotlib 的导航工具栏
+        # Tạo thanh công cụ điều hướng của Matplotlib
         # self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar = None
 
@@ -67,11 +67,11 @@ class MatplotlibWidget(QWidget):
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
-        # 初始化音频数据参数
-        self.freq = 16000  # 采样频率
-        self.time_window = 20  # 显示时间窗口
-        self.wave_data = deque(maxlen=self.freq * self.time_window * 2) # 缓冲队列, 用于分发计算/绘图
-        self.signals = deque(maxlen=self.freq * self.time_window)  # 双端队列存储信号数据
+        # Khởi tạo tham số dữ liệu âm thanh
+        self.freq = 16000  # Tần số lấy mẫu
+        self.time_window = 20  # Cửa sổ thời gian hiển thị
+        self.wave_data = deque(maxlen=self.freq * self.time_window * 2) # Hàng đợi đệm, dùng để phân phối tính toán/vẽ
+        self.signals = deque(maxlen=self.freq * self.time_window)  # Hàng đợi hai đầu lưu trữ dữ liệu tín hiệu
 
         # 创建包含两个子图的画布
         self.ax1 = self.figure.add_subplot(2, 1, 1)
@@ -122,19 +122,19 @@ class MatplotlibWidget(QWidget):
     def update_plot(self):
         """更新绘图数据"""
         if len(self.wave_data) >= 2:
-            # 进行实时解码
-            # 获取最新的音频数据进行解码
+            # Thực hiện giải mã thời gian thực
+            # Lấy dữ liệu âm thanh mới nhất để giải mã
             even = len(self.wave_data) // 2 * 2
             print(f"length of wave_data: {len(self.wave_data)}")
             drained = [self.wave_data.popleft() for _ in range(even)]
             signal = np.frombuffer(bytearray(drained), dtype='<i2') / 32768
-            decoded_text_new = self.decoder.process_audio(signal) # 处理新增信号, 返回全量解码文本
+            decoded_text_new = self.decoder.process_audio(signal) # Xử lý tín hiệu mới, trả về văn bản giải mã đầy đủ
             if decoded_text_new and self.decode_callback:
                 self.decode_callback(decoded_text_new)
-            self.signals.extend(signal.tolist())  # 将波形数据添加到绘图数据
+            self.signals.extend(signal.tolist())  # Thêm dữ liệu dạng sóng vào dữ liệu vẽ
 
         if len(self.signals) > 0:
-            # 只显示最近的一段数据，避免图表过于密集
+            # Chỉ hiển thị đoạn dữ liệu gần đây nhất, tránh biểu đồ quá dày đặc
             signal = np.array(self.signals)
             max_samples = min(len(signal), self.freq * self.time_window)
             if len(signal) > max_samples:
@@ -154,13 +154,13 @@ class MatplotlibWidget(QWidget):
                 else:
                     self.ax1.set_ylim(-1, 1)
             
-            # 计算频谱（短时离散傅立叶变换）
+            # Tính phổ (biến đổi Fourier rời rạc thời gian ngắn)
             if len(signal) > 1:
-                # 计算FFT
+                # Tính FFT
                 fft_signal = np.abs(np.fft.fft(signal))
                 frequencies = np.fft.fftfreq(len(signal), 1/self.freq)
                 
-                # 只取正频率部分
+                # Chỉ lấy phần tần số dương
                 positive_freq_idx = frequencies >= 0
                 freq_positive = frequencies[positive_freq_idx]
                 fft_positive = fft_signal[positive_freq_idx]
@@ -170,7 +170,7 @@ class MatplotlibWidget(QWidget):
                 
                 # 自动调整频域坐标轴范围
                 if len(fft_positive) > 0:
-                    # 限制频率显示范围到0-4000Hz，避免过于密集
+                    # Giới hạn phạm vi hiển thị tần số từ 0-4000Hz, tránh quá dày đặc
                     max_freq_show = min(4000, self.freq // 2)
                     freq_mask = freq_positive <= max_freq_show
                     if np.any(freq_mask):
@@ -203,42 +203,42 @@ class MainWindow(QMainWindow):
         self.matplotlib_widget = MatplotlibWidget()
         main_layout.addWidget(self.matplotlib_widget)
         
-        # 控制面板
+        # Bảng điều khiển
         control_panel = QWidget()
         control_layout = QHBoxLayout(control_panel)
         
-        # 监听地址和端口输入
+        # Nhập địa chỉ và cổng lắng nghe
         control_layout.addWidget(QLabel("Listen Address:"))
-        # Listen Address:
+        # Địa chỉ lắng nghe:
         self.address_input = QLineEdit("0.0.0.0")
         self.address_input.setFixedWidth(120)
         control_layout.addWidget(self.address_input)
         
         control_layout.addWidget(QLabel("Port:"))
-        # Port:
+        # Cổng:
         self.port_input = QLineEdit("8000")
         self.port_input.setFixedWidth(80)
         control_layout.addWidget(self.port_input)
         
-        # Listen Button
-        # Listen Button
+        # Nút lắng nghe
+        # Nút lắng nghe
         self.listen_button = QPushButton("Start Listening")
-        # Start Listening
+        # Bắt đầu lắng nghe
         self.listen_button.clicked.connect(self.toggle_listening)
         control_layout.addWidget(self.listen_button)
         
-        # 状态标签
-        self.status_label = QLabel("状态: 未连接")
+        # Nhãn trạng thái
+        self.status_label = QLabel("Trạng thái: Chưa kết nối")
         control_layout.addWidget(self.status_label)
         
-        # 数据统计标签
-        self.data_label = QLabel("接收数据: 0 bytes")
+        # Nhãn thống kê dữ liệu
+        self.data_label = QLabel("Dữ liệu nhận: 0 bytes")
         control_layout.addWidget(self.data_label)
         
-        # Save Button
-        # Save Button
+        # Nút lưu
+        # Nút lưu
         self.save_button = QPushButton("Save Audio")
-        # Save Audio
+        # Lưu âm thanh
         self.save_button.clicked.connect(self.save_audio)
         self.save_button.setEnabled(False)
         control_layout.addWidget(self.save_button)
@@ -247,36 +247,36 @@ class MainWindow(QMainWindow):
         
         main_layout.addWidget(control_panel)
         
-        # 解码显示区域
+        # Khu vực hiển thị giải mã
         decode_panel = QWidget()
         decode_layout = QVBoxLayout(decode_panel)
         
-        # Decode Title
-        # Decode Title
+        # Tiêu đề giải mã
+        # Tiêu đề giải mã
         decode_title = QLabel("Real-time AFSK Decode Results:")
-        # Real-time AFSK Decode Results:
+        # Kết quả giải mã AFSK thời gian thực:
         decode_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         decode_layout.addWidget(decode_title)
         
-        # 解码文本显示
+        # Hiển thị văn bản giải mã
         self.decode_text = QTextEdit()
         self.decode_text.setMaximumHeight(150)
         self.decode_text.setReadOnly(True)
         self.decode_text.setStyleSheet("font-family: 'Courier New', monospace; font-size: 12px;")
         decode_layout.addWidget(self.decode_text)
         
-        # 解码控制按钮
+        # Nút điều khiển giải mã
         decode_control_layout = QHBoxLayout()
         
-        # Clear Button
-        # Clear Button
+        # Nút xóa
+        # Nút xóa
         self.clear_decode_button = QPushButton("Clear Decode")
-        # Clear Decode
+        # Xóa giải mã
         self.clear_decode_button.clicked.connect(self.clear_decode_text)
         decode_control_layout.addWidget(self.clear_decode_button)
         
-        # 解码统计标签
-        self.decode_stats_label = QLabel("解码统计: 0 bits, 0 chars")
+        # Nhãn thống kê giải mã
+        self.decode_stats_label = QLabel("Thống kê giải mã: 0 bit, 0 ký tự")
         decode_control_layout.addWidget(self.decode_stats_label)
         
         decode_control_layout.addStretch()
@@ -284,51 +284,51 @@ class MainWindow(QMainWindow):
         
         main_layout.addWidget(decode_panel)
         
-        # 设置解码回调
+        # Thiết lập gọi lại giải mã
         self.matplotlib_widget.decode_callback = self.on_decode_text
         
-        # UDP相关属性
+        # Thuộc tính liên quan đến UDP
         self.udp_transport = None
         self.is_listening = False
         
-        # 数据统计定时器
+        # Bộ hẹn giờ thống kê dữ liệu
         self.stats_timer = QTimer(self)
-        self.stats_timer.setInterval(1000)  # 每秒更新一次统计
+        self.stats_timer.setInterval(1000)  # Cập nhật thống kê mỗi giây
         self.stats_timer.timeout.connect(self.update_stats)
         
     def on_decode_text(self, new_text: str):
         """Decode Text Callback
-        # Decode Text Callback
+        # Gọi lại văn bản giải mã
         """
         if new_text:
-            # 添加新解码的文本
+            # Thêm văn bản mới được giải mã
             current_text = self.decode_text.toPlainText()
             updated_text = current_text + new_text
 
-            # 限制文本长度，保留最新的1000个字符
+            # Giới hạn độ dài văn bản, giữ lại 1000 ký tự mới nhất
             if len(updated_text) > 1000:
                 updated_text = updated_text[-1000:]
             
             self.decode_text.setPlainText(updated_text)
             
-            # 滚动到底部
+            # Cuộn xuống cuối
             cursor = self.decode_text.textCursor()
             cursor.movePosition(cursor.MoveOperation.End)
             self.decode_text.setTextCursor(cursor)
             
     def clear_decode_text(self):
         """Clear Decode Text
-        # Clear Decode Text
+        # Xóa văn bản giải mã
         """
         self.decode_text.clear()
         if hasattr(self.matplotlib_widget, 'decoder'):
             self.matplotlib_widget.decoder.clear()
         self.decode_stats_label.setText("Decode Stats: 0 bits, 0 chars")
-        # Decode Stats: 0 bits, 0 chars
+        # Thống kê giải mã: 0 bit, 0 ký tự
         
     def update_decode_stats(self):
         """Update Decode Stats
-        # Update Decode Stats
+        # Cập nhật thống kê giải mã
         """
         if hasattr(self.matplotlib_widget, 'decoder'):
             stats = self.matplotlib_widget.decoder.get_stats()
@@ -336,8 +336,8 @@ class MainWindow(QMainWindow):
                 f"Prelude: {stats['prelude_bits']}, Received {stats['total_chars']} chars, "
                 f"Buffer: {stats['buffer_bits']} bits, State: {stats['state']}"
             )
-            # Prelude: {stats['prelude_bits']}, Received {stats['total_chars']} chars, "
-            # Buffer: {stats['buffer_bits']} bits, State: {stats['state']}
+            # Mở đầu: {stats['prelude_bits']}, Đã nhận {stats['total_chars']} ký tự, "
+            # Bộ đệm: {stats['buffer_bits']} bit, Trạng thái: {stats['state']}
             self.decode_stats_label.setText(stats_text)
         
     def toggle_listening(self):
@@ -359,23 +359,23 @@ class MainWindow(QMainWindow):
                 local_addr=(address, port)
             )
             
-            self.status_label.setText(f"状态: 监听中 ({address}:{port})")
+            self.status_label.setText(f"Trạng thái: Đang lắng nghe ({address}:{port})")
             print(f"UDP server started, listening on {address}:{port}")
             
         except Exception as e:
-            self.status_label.setText(f"状态: 启动失败 - {str(e)}")
+            self.status_label.setText(f"Trạng thái: Khởi động thất bại - {str(e)}")
             print(f"UDP server failed to start: {e}")
             self.is_listening = False
-            self.listen_button.setText("开始监听")
+            self.listen_button.setText("Bắt đầu lắng nghe")
             self.address_input.setEnabled(True)
             self.port_input.setEnabled(True)
             
     def start_listening(self):
         """Start listening"""
         try:
-            int(self.port_input.text().strip())  # 验证端口号格式
+            int(self.port_input.text().strip())  # Xác minh định dạng số cổng
         except ValueError:
-            self.status_label.setText("Status: Port number must be a digit")
+            self.status_label.setText("Trạng thái: Số cổng phải là chữ số")
             return
             
         self.is_listening = True
@@ -384,14 +384,14 @@ class MainWindow(QMainWindow):
         self.port_input.setEnabled(False)
         self.save_button.setEnabled(True)
         
-        # 清空数据队列
+        # Xóa hàng đợi dữ liệu
         self.matplotlib_widget.wave_data.clear()
         
-        # 启动绘图和统计更新
+        # Bắt đầu vẽ và cập nhật thống kê
         self.matplotlib_widget.start_plotting()
         self.stats_timer.start()
         
-        # 异步启动UDP服务器
+        # Khởi động máy chủ UDP bất đồng bộ
         loop = asyncio.get_event_loop()
         loop.create_task(self.start_listening_async())
 
@@ -412,14 +412,14 @@ class MainWindow(QMainWindow):
         self.matplotlib_widget.wave_data.clear()
         self.stats_timer.stop()
         
-        self.status_label.setText("状态: 已停止")
+        self.status_label.setText("Trạng thái: Đã dừng")
         
     def update_stats(self):
         """Update data statistics"""
         data_size = len(self.matplotlib_widget.signals)
         self.data_label.setText(f"接收数据: {data_size} 采样")
         
-        # 更新解码统计
+        # Cập nhật thống kê giải mã
         self.update_decode_stats()
         
     def save_audio(self):
@@ -428,28 +428,28 @@ class MainWindow(QMainWindow):
             try:
                 signal_data = np.array(self.matplotlib_widget.signals)
 
-                # 保存为WAV文件
+                # Lưu thành tệp WAV
                 with wave.open("received_audio.wav", "wb") as wf:
-                    wf.setnchannels(1)  # 单声道
-                    wf.setsampwidth(2)  # 采样宽度为2字节
-                    wf.setframerate(self.matplotlib_widget.freq)  # 设置采样率
-                    wf.writeframes(signal_data.tobytes())  # 写入数据
+                    wf.setnchannels(1)  # Đơn âm
+                    wf.setsampwidth(2)  # Độ rộng mẫu 2 byte
+                    wf.setframerate(self.matplotlib_widget.freq)  # Đặt tần số lấy mẫu
+                    wf.writeframes(signal_data.tobytes())  # Ghi dữ liệu
                 
-                self.status_label.setText("状态: 音频已保存为 received_audio.wav")
-                print("音频已保存为 received_audio.wav")
+                self.status_label.setText("Trạng thái: Âm thanh đã được lưu thành received_audio.wav")
+                print("Âm thanh đã được lưu thành received_audio.wav")
                 
             except Exception as e:
-                self.status_label.setText(f"状态: 保存失败 - {str(e)}")
-                print(f"保存音频失败: {e}")
+                self.status_label.setText(f"Trạng thái: Lưu thất bại - {str(e)}")
+                print(f"Lưu âm thanh thất bại: {e}")
         else:
-            self.status_label.setText("状态: 没有足够的数据可保存")
+            self.status_label.setText("Trạng thái: Không có đủ dữ liệu để lưu")
 
 
 async def main():
     """Asynchronous main function"""
     app = QApplication(sys.argv)
     
-    # 设置异步事件循环
+    # Thiết lập vòng lặp sự kiện bất đồng bộ
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
     
@@ -462,6 +462,6 @@ async def main():
     except KeyboardInterrupt:
         print("Program interrupted by user")
     finally:
-        # 确保清理资源
+        # Đảm bảo dọn dẹp tài nguyên
         if window.udp_transport:
             window.udp_transport.close()

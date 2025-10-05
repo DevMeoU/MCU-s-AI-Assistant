@@ -98,7 +98,7 @@ private:
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         esp_lcd_panel_handle_t panel = nullptr;
         ESP_LOGD(TAG, "Install panel IO");
-        // 液晶屏控制IO初始化
+        // Khởi tạo IO điều khiển màn hình LCD
         esp_lcd_panel_io_spi_config_t io_config = {};
         io_config.cs_gpio_num = LCD_CS_PIN;
         io_config.dc_gpio_num = LCD_DC_PIN;
@@ -109,7 +109,7 @@ private:
         io_config.lcd_param_bits = 8;
         esp_lcd_new_panel_io_spi(SPI2_HOST, &io_config, &panel_io);
 
-        // 初始化液晶屏驱动芯片ST7789
+        // Khởi tạo chip điều khiển màn hình LCD ST7789
         ESP_LOGD(TAG, "Install LCD driver");
         esp_lcd_panel_dev_config_t panel_config = {};
         panel_config.reset_gpio_num = GPIO_NUM_NC;
@@ -130,20 +130,20 @@ private:
                                     DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
-    // 初始化摄像头：ov2640；
-    // 根据正点原子官方示例参数
+    // Khởi tạo camera: ov2640;
+    // Theo tham số ví dụ chính thức của Atomic
     void InitializeCamera() {
         
-        xl9555_->SetOutputState(OV_PWDN_IO, 0); // PWDN=低 (上电)
-        xl9555_->SetOutputState(OV_RESET_IO, 0); // 确保复位
-        vTaskDelay(pdMS_TO_TICKS(50));           // 延长复位保持时间
-        xl9555_->SetOutputState(OV_RESET_IO, 1); // 释放复位
-        vTaskDelay(pdMS_TO_TICKS(50));           // 延长 50ms
+        xl9555_->SetOutputState(OV_PWDN_IO, 0); // PWDN=thấp (cấp điện)
+        xl9555_->SetOutputState(OV_RESET_IO, 0); // Đảm bảo đặt lại
+        vTaskDelay(pdMS_TO_TICKS(50));           // Kéo dài thời gian giữ đặt lại
+        xl9555_->SetOutputState(OV_RESET_IO, 1); // Giải phóng đặt lại
+        vTaskDelay(pdMS_TO_TICKS(50));           // Kéo dài 50ms
 
         camera_config_t config = {};
 
-        config.pin_pwdn = CAM_PIN_PWDN;  // 实际由 XL9555 控制
-        config.pin_reset = CAM_PIN_RESET;// 实际由 XL9555 控制
+        config.pin_pwdn = CAM_PIN_PWDN;  // Thực tế được điều khiển bởi XL9555
+        config.pin_reset = CAM_PIN_RESET;// Thực tế được điều khiển bởi XL9555
         config.pin_xclk = CAM_PIN_XCLK;
         config.pin_sccb_sda = CAM_PIN_SIOD;
         config.pin_sccb_scl = CAM_PIN_SIOC;
@@ -173,15 +173,15 @@ private:
         config.fb_location = CAMERA_FB_IN_PSRAM;
         config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
 
-        esp_err_t err = esp_camera_init(&config); // 测试相机是否存在
+        esp_err_t err = esp_camera_init(&config); // Kiểm tra camera có tồn tại không
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Camera is not plugged in or not supported, error: %s", esp_err_to_name(err));
-            // 如果摄像头初始化失败，设置 camera_ 为 nullptr
+            // Nếu khởi tạo camera thất bại, đặt camera_ thành nullptr
             camera_ = nullptr;
             return;
         }else
         {
-            esp_camera_deinit();// 释放之前的摄像头资源,为正确初始化做准备
+            esp_camera_deinit();// Giải phóng tài nguyên camera trước đó, chuẩn bị cho khởi tạo đúng
             camera_ = new Esp32Camera(config);
         }
         

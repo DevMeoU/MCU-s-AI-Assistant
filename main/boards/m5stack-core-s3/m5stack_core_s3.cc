@@ -196,22 +196,22 @@ private:
     void PollTouchpad() {
         static bool was_touched = false;
         static int64_t touch_start_time = 0;
-        const int64_t TOUCH_THRESHOLD_MS = 500;  // 触摸时长阈值，超过500ms视为长按
+        const int64_t TOUCH_THRESHOLD_MS = 500;  // Touch duration threshold, over 500ms is considered long press
         
         ft6336_->UpdateTouchPoint();
         auto& touch_point = ft6336_->GetTouchPoint();
         
-        // 检测触摸开始
+        // Detect touch start
         if (touch_point.num > 0 && !was_touched) {
             was_touched = true;
-            touch_start_time = esp_timer_get_time() / 1000; // 转换为毫秒
+            touch_start_time = esp_timer_get_time() / 1000; // Convert to milliseconds
         } 
-        // 检测触摸释放
+        // Detect touch release
         else if (touch_point.num == 0 && was_touched) {
             was_touched = false;
             int64_t touch_duration = (esp_timer_get_time() / 1000) - touch_start_time;
             
-            // 只有短触才触发
+            // Only trigger on short touch
             if (touch_duration < TOUCH_THRESHOLD_MS) {
                 auto& app = Application::GetInstance();
                 if (app.GetDeviceState() == kDeviceStateStarting && 

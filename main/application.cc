@@ -9,6 +9,7 @@
 #include "mcp_server.h"
 #include "assets.h"
 #include "settings.h"
+#include "boards/common/alarm.h"
 
 #include <cstring>
 #include <esp_log.h>
@@ -37,6 +38,9 @@ static const char* const STATE_STRINGS[] = {
 
 Application::Application() {
     event_group_ = xEventGroupCreate();
+    
+    // Initialize alarm system
+    alarm_ = std::make_unique<Alarm>();
 
 #if CONFIG_USE_DEVICE_AEC && CONFIG_USE_SERVER_AEC
 #error "CONFIG_USE_DEVICE_AEC and CONFIG_USE_SERVER_AEC cannot be enabled at the same time"
@@ -602,6 +606,18 @@ void Application::MainEventLoop() {
             auto display = Board::GetInstance().GetDisplay();
             display->UpdateStatusBar();
         
+            // Check for alarm triggers every second
+            if (alarm_ && alarm_->IsAlarmTriggered()) {
+                ESP_LOGI("Application", "Processing alarm trigger");
+                // Play alarm sound and blink LED
+                audio_service_.PlaySound(Lang::Sounds::OGG_ALARM);  // Use proper alarm sound
+                
+                // TODO: Add LED blinking or other alarm indicators
+                
+                // Clear the alarm trigger
+                alarm_->ClearAlarmTrigger();
+            }
+            
             // Print the debug info every 10 seconds
             if (clock_ticks_ % 10 == 0) {
                 // SystemInfo::PrintTaskCpuUsage(pdMS_TO_TICKS(1000));

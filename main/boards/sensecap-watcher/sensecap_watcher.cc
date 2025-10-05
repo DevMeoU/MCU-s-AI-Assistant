@@ -56,7 +56,7 @@ class CustomLcdDisplay : public SpiLcdDisplay {
             lv_obj_set_style_pad_top(status_bar_, 10, 0);
             lv_obj_set_style_pad_bottom(status_bar_, 1, 0);
 
-            // 针对圆形屏幕调整位置
+            // Điều chỉnh vị trí cho màn hình tròn
             //      network  battery  mute     //
             //               status            //
             lv_obj_align(battery_label_, LV_ALIGN_TOP_MID, -2.5 * icon_font->line_height, 0);
@@ -223,10 +223,10 @@ private:
     }
 
     void InitializeButton() {
-        // 设置静态实例指针
+        // Thiết lập con trỏ instance tĩnh
         instance_ = this;
         
-        // watcher 是通过长按滚轮进行开机的, 需要等待滚轮释放, 否则用户开机松手时可能会误触成单击
+        // watcher được bật bằng cách nhấn giữ nút xoay, cần đợi nút xoay được thả, nếu không người dùng có thể vô tình chạm vào khi thả tay
         ESP_LOGI(TAG, "waiting for knob button release");
         while(IoExpanderGetLevel(BSP_KNOB_BTN) == 0) {
             vTaskDelay(pdMS_TO_TICKS(50));
@@ -268,8 +268,8 @@ private:
 
         iot_button_register_cb(btns, BUTTON_LONG_PRESS_HOLD, nullptr, [](void* button_handle, void* usr_data) {
             auto self = static_cast<SensecapWatcher*>(usr_data);
-            self->long_press_cnt_++; // 每隔20ms加一
-            // 长按10s 恢复出厂设置: 2+0.02*400 = 10
+            self->long_press_cnt_++; // Tăng mỗi 20ms
+            // Nhấn giữ 10s để khôi phục cài đặt gốc: 2+0.02*400 = 10
             if (self->long_press_cnt_ > 400) {
                 ESP_LOGI(TAG, "Factory reset");
                 nvs_flash_erase();
@@ -343,14 +343,14 @@ private:
         display_ = new CustomLcdDisplay(panel_io_, panel_,
             DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
         
-        // 使每次刷新的起始列数索引是4的倍数且列数总数是4的倍数，以满足SPD2010的要求
+        // Làm cho chỉ số cột bắt đầu của mỗi lần làm mới là bội số của 4 và tổng số cột là bội số của 4, để đáp ứng yêu cầu của SPD2010
         lv_display_add_event_cb(lv_display_get_default(), [](lv_event_t *e) {
             lv_area_t *area = (lv_area_t *)lv_event_get_param(e);
             uint16_t x1 = area->x1;
             uint16_t x2 = area->x2;
-            // round the start of area down to the nearest 4N number
+            // làm tròn điểm bắt đầu xuống số gần nhất là bội số của 4N
             area->x1 = (x1 >> 2) << 2;
-            // round the end of area up to the nearest 4M+3 number
+            // làm tròn điểm kết thúc lên số gần nhất là bội số của 4M+3
             area->x2 = ((x2 >> 2) << 2) + 3;
         }, LV_EVENT_INVALIDATE_AREA, NULL);
         
@@ -525,7 +525,7 @@ public:
         InitializeI2c();
         InitializeSpi();
         InitializeExpander();
-        InitializeCmd();  //工厂生产测试使用
+        InitializeCmd();  // Sử dụng cho kiểm tra sản xuất trong nhà máy
         InitializeButton();
         InitializeKnob();
         Initializespd2010Display();
@@ -559,9 +559,9 @@ public:
         return &backlight;
     }
 
-    // 根据 https://github.com/Seeed-Studio/OSHW-SenseCAP-Watcher/blob/main/Hardware/SenseCAP_Watcher_v1.0_SCH.pdf
-    // RGB LED型号为 ws2813 mini, 连接在GPIO 40，供电电压 3.3v, 没有连接 BIN 双信号线
-    // 可以直接兼容SingleLED采用的ws2812
+    // Theo https://github.com/Seeed-Studio/OSHW-SenseCAP-Watcher/blob/main/Hardware/SenseCAP_Watcher_v1.0_SCH.pdf
+    // LED RGB model ws2813 mini, kết nối với GPIO 40, điện áp cung cấp 3.3v, không có kết nối dây tín hiệu kép BIN
+    // Có thể tương thích trực tiếp với ws2812 được sử dụng trong SingleLED
     virtual Led* GetLed() override {
         static SingleLed led(BUILTIN_LED_GPIO);
         return &led;
@@ -598,5 +598,5 @@ public:
 
 DECLARE_BOARD(SensecapWatcher);
 
-// 定义静态成员变量
+// Định nghĩa biến thành viên tĩnh
 SensecapWatcher* SensecapWatcher::instance_ = nullptr;

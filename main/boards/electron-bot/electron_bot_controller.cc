@@ -1,5 +1,5 @@
 /*
-    Electron Bot机器人控制器 - MCP协议版本
+    Bộ điều khiển robot Electron Bot - Phiên bản giao thức MCP
 */
 
 #include <cJSON.h>
@@ -33,34 +33,34 @@ private:
     bool is_action_in_progress_ = false;
 
     enum ActionType {
-        // 手部动作 1-12
-        ACTION_HAND_LEFT_UP = 1,      // 举左手
-        ACTION_HAND_RIGHT_UP = 2,     // 举右手
-        ACTION_HAND_BOTH_UP = 3,      // 举双手
-        ACTION_HAND_LEFT_DOWN = 4,    // 放左手
-        ACTION_HAND_RIGHT_DOWN = 5,   // 放右手
-        ACTION_HAND_BOTH_DOWN = 6,    // 放双手
-        ACTION_HAND_LEFT_WAVE = 7,    // 挥左手
-        ACTION_HAND_RIGHT_WAVE = 8,   // 挥右手
-        ACTION_HAND_BOTH_WAVE = 9,    // 挥双手
-        ACTION_HAND_LEFT_FLAP = 10,   // 拍打左手
-        ACTION_HAND_RIGHT_FLAP = 11,  // 拍打右手
-        ACTION_HAND_BOTH_FLAP = 12,   // 拍打双手
+        // Hành động tay 1-12
+        ACTION_HAND_LEFT_UP = 1,      // Nâng tay trái
+        ACTION_HAND_RIGHT_UP = 2,     // Nâng tay phải
+        ACTION_HAND_BOTH_UP = 3,      // Nâng cả hai tay
+        ACTION_HAND_LEFT_DOWN = 4,    // Hạ tay trái
+        ACTION_HAND_RIGHT_DOWN = 5,   // Hạ tay phải
+        ACTION_HAND_BOTH_DOWN = 6,    // Hạ cả hai tay
+        ACTION_HAND_LEFT_WAVE = 7,    // Vẫy tay trái
+        ACTION_HAND_RIGHT_WAVE = 8,   // Vẫy tay phải
+        ACTION_HAND_BOTH_WAVE = 9,    // Vẫy cả hai tay
+        ACTION_HAND_LEFT_FLAP = 10,   // Vỗ tay trái
+        ACTION_HAND_RIGHT_FLAP = 11,  // Vỗ tay phải
+        ACTION_HAND_BOTH_FLAP = 12,   // Vỗ cả hai tay
 
-        // 身体动作 13-14
-        ACTION_BODY_TURN_LEFT = 13,    // 左转
-        ACTION_BODY_TURN_RIGHT = 14,   // 右转
-        ACTION_BODY_TURN_CENTER = 15,  // 回中心
+        // Hành động thân 13-14
+        ACTION_BODY_TURN_LEFT = 13,    // Quay trái
+        ACTION_BODY_TURN_RIGHT = 14,   // Quay phải
+        ACTION_BODY_TURN_CENTER = 15,  // Về tâm
 
-        // 头部动作 16-20
-        ACTION_HEAD_UP = 16,          // 抬头
-        ACTION_HEAD_DOWN = 17,        // 低头
-        ACTION_HEAD_NOD_ONCE = 18,    // 点头一次
-        ACTION_HEAD_CENTER = 19,      // 回中心
-        ACTION_HEAD_NOD_REPEAT = 20,  // 连续点头
+        // Hành động đầu 16-20
+        ACTION_HEAD_UP = 16,          // Ngẩng đầu
+        ACTION_HEAD_DOWN = 17,        // Cúi đầu
+        ACTION_HEAD_NOD_ONCE = 18,    // Gật đầu một lần
+        ACTION_HEAD_CENTER = 19,      // Về tâm
+        ACTION_HEAD_NOD_REPEAT = 20,  // Gật đầu liên tục
 
-        // 系统动作 21
-        ACTION_HOME = 21  // 复位到初始位置
+        // Hành động hệ thống 21
+        ACTION_HOME = 21  // Đặt lại về vị trí ban đầu
     };
 
     static void ActionTask(void* arg) {
@@ -70,39 +70,39 @@ private:
 
         while (true) {
             if (xQueueReceive(controller->action_queue_, &params, pdMS_TO_TICKS(1000)) == pdTRUE) {
-                ESP_LOGI(TAG, "执行动作: %d", params.action_type);
-                controller->is_action_in_progress_ = true;  // 开始执行动作
+                ESP_LOGI(TAG, "Thực hiện hành động: %d", params.action_type);
+                controller->is_action_in_progress_ = true;  // Bắt đầu thực hiện hành động
 
-                // 执行相应的动作
+                // Thực hiện hành động tương ứng
                 if (params.action_type >= ACTION_HAND_LEFT_UP &&
                     params.action_type <= ACTION_HAND_BOTH_FLAP) {
-                    // 手部动作
+                    // Hành động tay
                     controller->electron_bot_.HandAction(params.action_type, params.steps,
                                                          params.amount, params.speed);
                 } else if (params.action_type >= ACTION_BODY_TURN_LEFT &&
                            params.action_type <= ACTION_BODY_TURN_CENTER) {
-                    // 身体动作
+                    // Hành động thân
                     int body_direction = params.action_type - ACTION_BODY_TURN_LEFT + 1;
                     controller->electron_bot_.BodyAction(body_direction, params.steps,
                                                          params.amount, params.speed);
                 } else if (params.action_type >= ACTION_HEAD_UP &&
                            params.action_type <= ACTION_HEAD_NOD_REPEAT) {
-                    // 头部动作
+                    // Hành động đầu
                     int head_action = params.action_type - ACTION_HEAD_UP + 1;
                     controller->electron_bot_.HeadAction(head_action, params.steps, params.amount,
                                                          params.speed);
                 } else if (params.action_type == ACTION_HOME) {
-                    // 复位动作
+                    // Hành động đặt lại
                     controller->electron_bot_.Home(true);
                 }
-                controller->is_action_in_progress_ = false;  // 动作执行完毕
+                controller->is_action_in_progress_ = false;  // Hành động thực hiện xong
             }
             vTaskDelay(pdMS_TO_TICKS(20));
         }
     }
 
     void QueueAction(int action_type, int steps, int speed, int direction, int amount) {
-        ESP_LOGI(TAG, "动作控制: 类型=%d, 步数=%d, 速度=%d, 方向=%d, 幅度=%d", action_type, steps,
+        ESP_LOGI(TAG, "Điều khiển hành động: Loại=%d, Số bước=%d, Tốc độ=%d, Hướng=%d, Biên độ=%d", action_type, steps,
                  speed, direction, amount);
 
         ElectronBotActionParams params = {action_type, steps, speed, direction, amount};
@@ -140,20 +140,20 @@ public:
         QueueAction(ACTION_HOME, 1, 1000, 0, 0);
 
         RegisterMcpTools();
-        ESP_LOGI(TAG, "Electron Bot控制器已初始化并注册MCP工具");
+        ESP_LOGI(TAG, "Bộ điều khiển Electron Bot đã được khởi tạo và đăng ký công cụ MCP");
     }
 
     void RegisterMcpTools() {
         auto& mcp_server = McpServer::GetInstance();
 
-        ESP_LOGI(TAG, "开始注册Electron Bot MCP工具...");
+        ESP_LOGI(TAG, "Bắt đầu đăng ký công cụ MCP của Electron Bot...");
 
-        // 手部动作统一工具
+        // Công cụ hành động tay thống nhất
         mcp_server.AddTool(
             "self.electron.hand_action",
-            "手部动作控制。action: 1=举手, 2=放手, 3=挥手, 4=拍打; hand: 1=左手, 2=右手, 3=双手; "
-            "steps: 动作重复次数(1-10); speed: 动作速度(500-1500，数值越小越快); amount: "
-            "动作幅度(10-50，仅举手动作使用)",
+            "Điều khiển hành động tay. action: 1=nâng tay, 2=hạ tay, 3=vẫy tay, 4=vỗ tay; hand: 1=tay trái, 2=tay phải, 3=cả hai tay; "
+            "steps: Số lần lặp lại hành động(1-10); speed: Tốc độ hành động(500-1500, số càng nhỏ càng nhanh); amount: "
+            "Biên độ hành động(10-50, chỉ sử dụng cho hành động nâng tay)",
             PropertyList({Property("action", kPropertyTypeInteger, 1, 1, 4),
                           Property("hand", kPropertyTypeInteger, 3, 1, 3),
                           Property("steps", kPropertyTypeInteger, 1, 1, 10),
@@ -166,24 +166,24 @@ public:
                 int speed = properties["speed"].value<int>();
                 int amount = properties["amount"].value<int>();
 
-                // 根据动作类型和手部类型计算具体动作
+                // Tính toán hành động cụ thể dựa trên loại hành động và loại tay
                 int base_action;
                 switch (action_type) {
                     case 1:
                         base_action = ACTION_HAND_LEFT_UP;
-                        break;  // 举手
+                        break;  // Nâng tay
                     case 2:
                         base_action = ACTION_HAND_LEFT_DOWN;
                         amount = 0;
-                        break;  // 放手
+                        break;  // Hạ tay
                     case 3:
                         base_action = ACTION_HAND_LEFT_WAVE;
                         amount = 0;
-                        break;  // 挥手
+                        break;  // Vẫy tay
                     case 4:
                         base_action = ACTION_HAND_LEFT_FLAP;
                         amount = 0;
-                        break;  // 拍打
+                        break;  // Vỗ tay
                     default:
                         base_action = ACTION_HAND_LEFT_UP;
                 }
@@ -193,11 +193,11 @@ public:
                 return true;
             });
 
-        // 身体动作
+        // Hành động thân
         mcp_server.AddTool(
             "self.electron.body_turn",
-            "身体转向。steps: 转向步数(1-10); speed: 转向速度(500-1500，数值越小越快); direction: "
-            "转向方向(1=左转, 2=右转, 3=回中心); angle: 转向角度(0-90度)",
+            "Xoay thân. steps: Số bước xoay(1-10); speed: Tốc độ xoay(500-1500, số càng nhỏ càng nhanh); direction: "
+            "Hướng xoay(1=trái, 2=phải, 3=về tâm); angle: Góc xoay(0-90 độ)",
             PropertyList({Property("steps", kPropertyTypeInteger, 1, 1, 10),
                           Property("speed", kPropertyTypeInteger, 1000, 500, 1500),
                           Property("direction", kPropertyTypeInteger, 1, 1, 3),
@@ -227,11 +227,11 @@ public:
                 return true;
             });
 
-        // 头部动作
+        // Hành động đầu
         mcp_server.AddTool("self.electron.head_move",
-                           "头部运动。action: 1=抬头, 2=低头, 3=点头, 4=回中心, 5=连续点头; steps: "
-                           "动作重复次数(1-10); speed: 动作速度(500-1500，数值越小越快); angle: "
-                           "头部转动角度(1-15度)",
+                           "Chuyển động đầu. action: 1=ngẩng đầu, 2=cúi đầu, 3=gật đầu, 4=về tâm, 5=gật đầu liên tục; steps: "
+                           "Số lần lặp lại hành động(1-10); speed: Tốc độ hành động(500-1500, số càng nhỏ càng nhanh); angle: "
+                           "Góc quay đầu(1-15 độ)",
                            PropertyList({Property("action", kPropertyTypeInteger, 3, 1, 5),
                                          Property("steps", kPropertyTypeInteger, 1, 1, 10),
                                          Property("speed", kPropertyTypeInteger, 1000, 500, 1500),
@@ -246,37 +246,37 @@ public:
                                return true;
                            });
 
-        // 系统工具
-        mcp_server.AddTool("self.electron.stop", "立即停止", PropertyList(),
+        // Công cụ hệ thống
+        mcp_server.AddTool("self.electron.stop", "Dừng ngay lập tức", PropertyList(),
                            [this](const PropertyList& properties) -> ReturnValue {
-                               // 清空队列但保持任务常驻
+                               // Xóa hàng đợi nhưng giữ tác vụ thường trú
                                xQueueReset(action_queue_);
                                is_action_in_progress_ = false;
                                QueueAction(ACTION_HOME, 1, 1000, 0, 0);
                                return true;
                            });
 
-        mcp_server.AddTool("self.electron.get_status", "获取机器人状态，返回 moving 或 idle",
+        mcp_server.AddTool("self.electron.get_status", "Lấy trạng thái robot, trả về moving hoặc idle",
                            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
                                return is_action_in_progress_ ? "moving" : "idle";
                            });
 
-        // 单个舵机校准工具
+        // Công cụ hiệu chỉnh servo đơn
         mcp_server.AddTool(
             "self.electron.set_trim",
-            "校准单个舵机位置。设置指定舵机的微调参数以调整ElectronBot的初始姿态，设置将永久保存。"
-            "servo_type: 舵机类型(right_pitch:右臂旋转, right_roll:右臂推拉, left_pitch:左臂旋转, "
-            "left_roll:左臂推拉, body:身体, head:头部); "
-            "trim_value: 微调值(-30到30度)",
+            "Hiệu chỉnh vị trí servo đơn. Đặt tham số hiệu chỉnh cho servo được chỉ định để điều chỉnh tư thế ban đầu của ElectronBot, cài đặt sẽ được lưu vĩnh viễn."
+            "servo_type: Loại servo(right_pitch: xoay cánh tay phải, right_roll: kéo đẩy cánh tay phải, left_pitch: xoay cánh tay trái, "
+            "left_roll: kéo đẩy cánh tay trái, body: thân, head: đầu); "
+            "trim_value: Giá trị hiệu chỉnh(-30 đến 30 độ)",
             PropertyList({Property("servo_type", kPropertyTypeString, "right_pitch"),
                           Property("trim_value", kPropertyTypeInteger, 0, -30, 30)}),
             [this](const PropertyList& properties) -> ReturnValue {
                 std::string servo_type = properties["servo_type"].value<std::string>();
                 int trim_value = properties["trim_value"].value<int>();
 
-                ESP_LOGI(TAG, "设置舵机微调: %s = %d度", servo_type.c_str(), trim_value);
+                ESP_LOGI(TAG, "Đặt hiệu chỉnh servo: %s = %d độ", servo_type.c_str(), trim_value);
 
-                // 获取当前所有微调值
+                // Lấy tất cả giá trị hiệu chỉnh hiện tại
                 Settings settings("electron_trims", true);
                 int right_pitch = settings.GetInt("right_pitch", 0);
                 int right_roll = settings.GetInt("right_roll", 0);
@@ -285,7 +285,7 @@ public:
                 int body = settings.GetInt("body", 0);
                 int head = settings.GetInt("head", 0);
 
-                // 更新指定舵机的微调值
+                // Cập nhật giá trị hiệu chỉnh cho servo được chỉ định
                 if (servo_type == "right_pitch") {
                     right_pitch = trim_value;
                     settings.SetInt("right_pitch", right_pitch);
@@ -305,7 +305,7 @@ public:
                     head = trim_value;
                     settings.SetInt("head", head);
                 } else {
-                    return "错误：无效的舵机类型，请使用: right_pitch, right_roll, left_pitch, "
+                    return "Lỗi: Loại servo không hợp lệ, vui lòng sử dụng: right_pitch, right_roll, left_pitch, "
                            "left_roll, body, head";
                 }
 
@@ -313,11 +313,11 @@ public:
 
                 QueueAction(ACTION_HOME, 1, 500, 0, 0);
 
-                return "舵机 " + servo_type + " 微调设置为 " + std::to_string(trim_value) +
-                       " 度，已永久保存";
+                return "Servo " + servo_type + " hiệu chỉnh đặt thành " + std::to_string(trim_value) +
+                       " độ, đã lưu vĩnh viễn";
             });
 
-        mcp_server.AddTool("self.electron.get_trims", "获取当前的舵机微调设置", PropertyList(),
+        mcp_server.AddTool("self.electron.get_trims", "Lấy cài đặt hiệu chỉnh servo hiện tại", PropertyList(),
                            [this](const PropertyList& properties) -> ReturnValue {
                                Settings settings("electron_trims", false);
 
@@ -336,11 +336,11 @@ public:
                                    ",\"body\":" + std::to_string(body) +
                                    ",\"head\":" + std::to_string(head) + "}";
 
-                               ESP_LOGI(TAG, "获取微调设置: %s", result.c_str());
+                               ESP_LOGI(TAG, "Lấy cài đặt hiệu chỉnh: %s", result.c_str());
                                return result;
                            });
 
-        mcp_server.AddTool("self.battery.get_level", "获取机器人电池电量和充电状态", PropertyList(),
+        mcp_server.AddTool("self.battery.get_level", "Lấy mức pin và trạng thái sạc của robot", PropertyList(),
                            [](const PropertyList& properties) -> ReturnValue {
                                auto& board = Board::GetInstance();
                                int level = 0;
@@ -354,7 +354,7 @@ public:
                                return status;
                            });
 
-        ESP_LOGI(TAG, "Electron Bot MCP工具注册完成");
+        ESP_LOGI(TAG, "Công cụ MCP của Electron Bot đăng ký hoàn tất");
     }
 
     ~ElectronBotController() {
@@ -371,6 +371,6 @@ static ElectronBotController* g_electron_controller = nullptr;
 void InitializeElectronBotController() {
     if (g_electron_controller == nullptr) {
         g_electron_controller = new ElectronBotController();
-        ESP_LOGI(TAG, "Electron Bot控制器已初始化并注册MCP工具");
+        ESP_LOGI(TAG, "Electron Bot bộ điều khiển đã được khởi tạo và đăng ký công cụ MCP");
     }
 }

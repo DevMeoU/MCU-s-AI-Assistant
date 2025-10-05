@@ -32,7 +32,7 @@ Robot trò chuyện AI Xiaozhi, với tư cách là một cổng tương tác gi
 - Nhận dạng giọng nói, xác định danh tính người nói hiện tại [3D Speaker](https://github.com/modelscope/3D-Speaker)
 - Màn hình OLED / LCD, hỗ trợ hiển thị biểu cảm
 - Hiển thị pin và quản lý nguồn
-- Hỗ trợ đa ngôn ngữ (tiếng Trung, tiếng Anh, tiếng Nhật, tiếng Việt)
+- Hỗ trợ đa ngôn ngữ (tiếng Trung, tiếng Anh, tiếng Nhật, tiếng Việt) với phông chữ DejaVu Sans cho tiếng Việt
 - Hỗ trợ nền tảng chip ESP32-C3, ESP32-S3, ESP32-P4
 - Điều khiển thiết bị thông qua MCP trên thiết bị (âm lượng, đèn, động cơ, GPIO, v.v.)
 - Mở rộng khả năng của mô hình lớn thông qua MCP đám mây (điều khiển nhà thông minh, thao tác máy tính, tìm kiếm kiến thức, gửi và nhận email, v.v.)

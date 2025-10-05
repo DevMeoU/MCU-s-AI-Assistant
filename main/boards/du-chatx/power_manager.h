@@ -44,7 +44,7 @@ private:
             return;
         }
 
-        // 如果电池电量数据充足，则每 kBatteryAdcInterval 个 tick 读取一次电池电量数据
+        // Nếu dữ liệu điện lượng pin đủ, thì đọc dữ liệu điện lượng pin mỗi kBatteryAdcInterval tick
         ticks_++;
         if (ticks_ % kBatteryAdcInterval == 0) {
             ReadBatteryAdcData();
@@ -55,7 +55,7 @@ private:
         int adc_value;
         ESP_ERROR_CHECK(adc_oneshot_read(adc_handle_, ADC_CHANNEL_5, &adc_value));
         
-        // 将 ADC 值添加到队列中
+        // Thêm giá trị ADC vào hàng đợi
         adc_values_.push_back(adc_value);
         if (adc_values_.size() > kBatteryAdcDataCount) {
             adc_values_.erase(adc_values_.begin());
@@ -127,7 +127,7 @@ public:
         io_conf.pull_up_en = GPIO_PULLUP_DISABLE;     
         gpio_config(&io_conf);
 
-        // 创建电池电量检查定时器
+        // Tạo bộ hẹn giờ kiểm tra điện lượng pin
         esp_timer_create_args_t timer_args = {
             .callback = [](void* arg) {
                 PowerManager* self = static_cast<PowerManager*>(arg);

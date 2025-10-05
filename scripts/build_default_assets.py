@@ -662,18 +662,161 @@ def get_multinet_model_paths(model_names, esp_sr_model_path):
     return valid_paths
 
 
+def convert_dejavu_font(dejavu_zip_path, output_path, font_size=16):
+    """
+    Convert DejaVu Sans font from ZIP to binary format for embedded systems
+    This function extracts the TTF and converts it to LVGL binary font format
+    """
+    try:
+        import zipfile
+        import tempfile
+        import shutil
+        import subprocess
+        import os
+        
+        print(f"Converting DejaVu font: {dejavu_zip_path}")
+        
+        # Extract the ZIP file to get the TTF font
+        with zipfile.ZipFile(dejavu_zip_path, 'r') as zip_ref:
+            # Create temporary directory for extraction
+            with tempfile.TemporaryDirectory() as temp_dir:
+                zip_ref.extractall(temp_dir)
+                
+                # Find the TTF file (usually DejaVuSans.ttf)
+                ttf_files = []
+                for root, dirs, files in os.walk(temp_dir):
+                    for file in files:
+                        if file.lower().endswith('.ttf') and 'dejavu' in file.lower() and 'sans' in file.lower():
+                            ttf_files.append(os.path.join(root, file))
+                
+                if not ttf_files:
+                    print("Warning: No DejaVu Sans TTF files found in ZIP")
+                    # Try any TTF file
+                    for root, dirs, files in os.walk(temp_dir):
+                        for file in files:
+                            if file.lower().endswith('.ttf'):
+                                ttf_files.append(os.path.join(root, file))
+                
+                if not ttf_files:
+                    print("Warning: No TTF files found in DejaVu font ZIP")
+                    return False
+                
+                ttf_file = ttf_files[0]  # Use the first TTF file found
+                print(f"Found TTF font: {ttf_file}")
+                
+                # Check if lv_font_conv is available
+                try:
+                    subprocess.run(['lv_font_conv', '--help'], capture_output=True, check=True)
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    print("Warning: lv_font_conv tool not found, falling back to common font")
+                    # Copy an existing common font as fallback
+                    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    xiaozhi_fonts_path = os.path.join(project_root, "components", "xiaozhi-fonts")
+                    common_font_path = os.path.join(xiaozhi_fonts_path, 'cbin', f'font_puhui_common_{font_size}_4.bin')
+                    
+                    if os.path.exists(common_font_path):
+                        shutil.copy2(common_font_path, output_path)
+                        print(f"Created fallback font file: {output_path}")
+                        return True
+                    else:
+                        print("Warning: Could not find common font for fallback")
+                        return False
+                
+                # Convert TTF to binary font using lv_font_conv
+                # This is the proper way to convert fonts for LVGL
+                try:
+                    cmd = [
+                        'lv_font_conv',
+                        '--size', str(font_size),
+                        '--bpp', '4',  # 4 bits per pixel
+                        '--font', ttf_file,
+                        '--range', '0x20-0x7F,0x80-0x17F,0x190-0x19F,0x1A0-0x1A1,0x1AF-0x1B0,0x1D0-0x1D1,0x1EA0-0x1EF9',  # Include Vietnamese characters
+                        '--range', '0x2C60-0x2C7F',  # Additional Latin Extended characters
+                        '--range', '0x1E00-0x1EFF',  # Latin Extended Additional
+                        '--no-compress',
+                        '--no-prefilter',
+                        '--format', 'bin',
+                        '--output', output_path
+                    ]
+                    
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        print(f"Successfully converted DejaVu font to: {output_path}")
+                        return True
+                    else:
+                        print(f"Error converting font: {result.stderr}")
+                        return False
+                        
+                except Exception as e:
+                    print(f"Error during font conversion: {e}")
+                    return False
+                    
+    except Exception as e:
+        print(f"Error converting DejaVu font: {e}")
+        return False
+
+
 def get_text_font_path(builtin_text_font, xiaozhi_fonts_path):
     """
     Get the text font path if needed
     Returns the font file path or None if no font is needed
     """
-    if not builtin_text_font or 'basic' not in builtin_text_font:
+    if not builtin_text_font:
         return None
     
-    # Convert from basic to common font name
-    # e.g., font_puhui_basic_16_4 -> font_puhui_common_16_4.bin
-    font_name = builtin_text_font.replace('basic', 'common') + '.bin'
-    font_path = os.path.join(xiaozhi_fonts_path, 'cbin', font_name)
+    # Handle custom fonts like DejaVu Sans for Vietnamese
+    if builtin_text_font == "dejavu_sans":
+        # Check if dejavu-sans.zip exists in the assets/fonts directory
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        dejavu_font_path = os.path.join(project_root, "main", "assets", "fonts", "dejavu-sans.zip")
+        if os.path.exists(dejavu_font_path):
+            print(f"Using custom DejaVu Sans font: {dejavu_font_path}")
+            
+            # Create temporary output path for converted font
+            temp_build_dir = os.path.join(project_root, "build", "temp_fonts")
+            os.makedirs(temp_build_dir, exist_ok=True)
+            converted_font_path = os.path.join(temp_build_dir, "dejavu_sans.bin")
+            
+            # Convert the font if not already converted
+            if not os.path.exists(converted_font_path):
+                if convert_dejavu_font(dejavu_font_path, converted_font_path):
+                    print(f"Successfully converted DejaVu font to binary format: {converted_font_path}")
+                    return converted_font_path
+                else:
+                    print("Warning: Failed to convert DejaVu font, falling back to common fonts")
+                    # Fall back to common fonts
+                    font_name = "font_puhui_common_16_4.bin"
+                    font_path = os.path.join(xiaozhi_fonts_path, 'cbin', font_name)
+                    if os.path.exists(font_path):
+                        return font_path
+                    else:
+                        print(f"Warning: Fallback font not found: {font_path}")
+                        return None
+            else:
+                print(f"Using previously converted DejaVu font: {converted_font_path}")
+                return converted_font_path
+        else:
+            print("Warning: DejaVu Sans font file not found, falling back to common fonts")
+            font_name = "font_puhui_common_16_4.bin"
+            font_path = os.path.join(xiaozhi_fonts_path, 'cbin', font_name)
+            if os.path.exists(font_path):
+                return font_path
+            else:
+                print(f"Warning: Fallback font not found: {font_path}")
+                return None
+    elif 'common' in builtin_text_font:
+        # Use common fonts that support international characters
+        font_name = builtin_text_font + '.bin'
+        font_path = os.path.join(xiaozhi_fonts_path, 'cbin', font_name)
+    elif 'basic' in builtin_text_font:
+        # Convert from basic to common font name for better international support
+        # e.g., font_puhui_basic_16_4 -> font_puhui_common_16_4.bin
+        font_name = builtin_text_font.replace('basic', 'common') + '.bin'
+        font_path = os.path.join(xiaozhi_fonts_path, 'cbin', font_name)
+    else:
+        # Fallback to original logic for other font names
+        font_name = builtin_text_font + '.bin'
+        font_path = os.path.join(xiaozhi_fonts_path, 'cbin', font_name)
     
     if os.path.exists(font_path):
         return font_path

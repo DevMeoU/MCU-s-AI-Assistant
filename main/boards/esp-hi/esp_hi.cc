@@ -245,7 +245,7 @@ private:
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         esp_lcd_panel_handle_t panel = nullptr;
 
-        // 液晶屏控制IO初始化
+        // Khởi tạo IO điều khiển màn hình LCD
         ESP_LOGD(TAG, "Install panel IO");
         esp_lcd_panel_io_spi_config_t io_config = {};
         io_config.cs_gpio_num = DISPLAY_CS_PIN;
@@ -257,7 +257,7 @@ private:
         io_config.lcd_param_bits = 8;
         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI2_HOST, &io_config, &panel_io));
 
-        // 初始化液晶屏驱动芯片
+        // Khởi tạo chip điều khiển màn hình LCD
         ESP_LOGD(TAG, "Install LCD driver");
         const ili9341_vendor_config_t vendor_config = {
             .init_cmds = &vendor_specific_init[0],
@@ -301,9 +301,9 @@ private:
     {
         auto& mcp_server = McpServer::GetInstance();
         
-        // 基础动作控制
-        mcp_server.AddTool("self.dog.basic_control", "机器人的基础动作。机器人可以做以下基础动作：\n"
-            "forward: 向前移动\nbackward: 向后移动\nturn_left: 向左转\nturn_right: 向右转\nstop: 立即停止当前动作", 
+        // Điều khiển chuyển động cơ bản
+        mcp_server.AddTool("self.dog.basic_control", "Các hành động cơ bản của robot. Robot có thể thực hiện các hành động cơ bản sau:\n"
+            "forward: Di chuyển về phía trước\nbackward: Di chuyển về phía sau\nturn_left: Rẽ trái\nturn_right: Rẽ phải\nstop: Dừng ngay lập tức hành động hiện tại", 
             PropertyList({
                 Property("action", kPropertyTypeString),
             }), [this](const PropertyList& properties) -> ReturnValue {
@@ -324,10 +324,10 @@ private:
                 return true;
             });
         
-        // 扩展动作控制
-        mcp_server.AddTool("self.dog.advanced_control", "机器人的扩展动作。机器人可以做以下扩展动作：\n"
-            "sway_back_forth: 前后摇摆\nlay_down: 趴下\nsway: 左右摇摆\nretract_legs: 收回腿部\n"
-            "shake_hand: 握手\nshake_back_legs: 伸懒腰\njump_forward: 向前跳跃", 
+        // Điều khiển chuyển động mở rộng
+        mcp_server.AddTool("self.dog.advanced_control", "Các hành động mở rộng của robot. Robot có thể thực hiện các hành động mở rộng sau:\n"
+            "sway_back_forth: Đu đưa trước sau\nlay_down: Nằm xuống\nsway: Đu đưa qua lại\nretract_legs: Rút chân vào\n"
+            "shake_hand: Bắt tay\nshake_back_legs: Duỗi chân\njump_forward: Nhảy về phía trước", 
             PropertyList({
                 Property("action", kPropertyTypeString),
             }), [this](const PropertyList& properties) -> ReturnValue {
@@ -355,24 +355,24 @@ private:
                 return true;
             });
 
-        // 灯光控制
-        mcp_server.AddTool("self.light.get_power", "获取灯是否打开", PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+        // Điều khiển đèn
+        mcp_server.AddTool("self.light.get_power", "Kiểm tra đèn có đang bật không", PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
             return led_on_;
         });
 
-        mcp_server.AddTool("self.light.turn_on", "打开灯", PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+        mcp_server.AddTool("self.light.turn_on", "Bật đèn", PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
             SetLedColor(0xFF, 0xFF, 0xFF);
             led_on_ = true;
             return true;
         });
 
-        mcp_server.AddTool("self.light.turn_off", "关闭灯", PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+        mcp_server.AddTool("self.light.turn_off", "Tắt đèn", PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
             SetLedColor(0x00, 0x00, 0x00);
             led_on_ = false;
             return true;
         });
 
-        mcp_server.AddTool("self.light.set_rgb", "设置RGB颜色", PropertyList({
+        mcp_server.AddTool("self.light.set_rgb", "Đặt màu RGB", PropertyList({
             Property("r", kPropertyTypeInteger, 0, 255),
             Property("g", kPropertyTypeInteger, 0, 255),
             Property("b", kPropertyTypeInteger, 0, 255)

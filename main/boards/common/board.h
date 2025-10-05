@@ -12,21 +12,24 @@
 #include "backlight.h"
 #include "camera.h"
 #include "assets.h"
+#include "boards/common/music.h"
 
-
-void* create_board();
+// Khai báo trước
 class AudioCodec;
 class Display;
+class Music;
+
+void* create_board();
 class Board {
 private:
-    Board(const Board&) = delete; // Disable copy constructor
-    Board& operator=(const Board&) = delete; // Disable assignment operator
+    Board(const Board&) = delete; // Vô hiệu hóa hàm tạo sao chép
+    Board& operator=(const Board&) = delete; // Vô hiệu hóa toán tử gán
 
 protected:
     Board();
     std::string GenerateUuid();
 
-    // Software generated device unique identifier
+    // Mã định danh duy nhất của thiết bị được tạo bởi phần mềm
     std::string uuid_;
 
 public:
@@ -52,6 +55,12 @@ public:
     virtual void SetPowerSaveMode(bool enabled) = 0;
     virtual std::string GetBoardJson() = 0;
     virtual std::string GetDeviceStatusJson() = 0;
+    
+    // Truy cập trình phát nhạc
+    virtual Music* GetMusicPlayer();
+
+    // Khởi tạo công cụ
+    virtual void InitializeTools() {}
 };
 
 #define DECLARE_BOARD(BOARD_CLASS_NAME) \

@@ -8,7 +8,7 @@
 
 class PowerManager {
 private:
-    // 电池电量区间-分压电阻为2个100k
+    // Phạm vi pin - điện trở phân áp là 2 điện trở 100k
     static constexpr struct {
         uint16_t adc;
         uint8_t level;
@@ -51,7 +51,7 @@ private:
 
         CalculateBatteryLevel(average_adc);
 
-        // ESP_LOGI("PowerManager", "ADC值: %d 平均值: %ld 电量: %u%%", adc_value, average_adc,
+        // ESP_LOGI("PowerManager", "Giá trị ADC: %d Giá trị trung bình: %ld Pin: %u%%", adc_value, average_adc,
         //          battery_level_);
     }
 

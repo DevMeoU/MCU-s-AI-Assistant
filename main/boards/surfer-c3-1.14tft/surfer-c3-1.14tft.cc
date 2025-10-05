@@ -68,7 +68,7 @@ private:
     }
 
     void InitializePowerSaveTimer() {
-        // Timer, adjust device to modem-sleep mode and screen brightness (定时器，调整设备为modem-sleep模式和屏幕亮度)
+        // Bộ hẹn giờ, điều chỉnh thiết bị sang chế độ modem-sleep và độ sáng màn hình
         power_save_timer_ = new PowerSaveTimer(-1, 60, -1);
         power_save_timer_->OnEnterSleepMode([this]() {
             ESP_LOGI(TAG, "Enabling modem-sleep mode");
@@ -79,14 +79,14 @@ private:
         power_save_timer_->OnExitSleepMode([this]() {
             GetDisplay()->SetPowerSaveMode(false);
             GetBacklight()->RestoreBrightness();            
-            esp_wifi_set_ps(WIFI_PS_NONE);  // Turn off Wi-Fi power saving, resume normal operation (关闭Wi-Fi省电，恢复正常)
-            // esp_lcd_panel_disp_on_off(panel_, true); // Re-open display (重新打开显示)
+            esp_wifi_set_ps(WIFI_PS_NONE);  // Tắt tiết kiệm điện Wi-Fi, trở lại hoạt động bình thường
+            // esp_lcd_panel_disp_on_off(panel_, true); // Mở lại hiển thị
         });
         power_save_timer_->OnShutdownRequest([this]() {
             ESP_LOGI(TAG, "Shutting down display");            
             GetBacklight()->SetBrightness(1);
-            // esp_lcd_panel_disp_on_off(panel_, false);   // Turn off display (关闭显示)
-            // power_save_timer_->SetEnabled(false);   // Disable timer, prevent repetition (禁用定时器，防止重复)
+            // esp_lcd_panel_disp_on_off(panel_, false);   // Tắt hiển thị
+            // power_save_timer_->SetEnabled(false);   // Vô hiệu hóa bộ hẹn giờ, ngăn chặn lặp lại
             
         });
         power_save_timer_->SetEnabled(true);
@@ -115,7 +115,7 @@ private:
 
     void InitializeSt7789Display() {
         
-        // LCD screen control IO initialization (液晶屏控制IO初始化)
+        // Khởi tạo IO điều khiển màn hình LCD
         ESP_LOGD(TAG, "Install panel IO");
         esp_lcd_panel_io_spi_config_t io_config = {};
         io_config.cs_gpio_num = DISPLAY_SPI_CS_PIN;
@@ -127,7 +127,7 @@ private:
         io_config.lcd_param_bits = 8;
         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI2_HOST, &io_config, &panel_io_));
 
-        // Initialize LCD driver chip ST7789 (初始化液晶屏驱动芯片ST7789)
+        // Khởi tạo chip điều khiển màn hình LCD ST7789
         ESP_LOGD(TAG, "Install LCD driver");
         esp_lcd_panel_dev_config_t panel_config = {};
         panel_config.reset_gpio_num = GPIO_NUM_NC;
@@ -157,7 +157,7 @@ public:
         
         GetBacklight()->RestoreBrightness();
 
-        // 把 ESP32C3 的 VDD SPI 引脚作为普通 GPIO 口使用
+        // Sử dụng chân VDD SPI của ESP32C3 như chân GPIO thông thường
         esp_efuse_write_field_bit(ESP_EFUSE_VDD_SPI_AS_GPIO);
     }
 

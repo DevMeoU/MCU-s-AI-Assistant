@@ -1,41 +1,41 @@
-# An MCP-based Chatbot
+# An MCP-based Chatbot | Một chatbot dựa trên MCP
 
-(English | [中文](README.md) | [日本語](README_ja.md) | [Tiếng Việt](README_vi.md))
+（中文 | [English](README_en.md) | [日本語](README_ja.md) | [Tiếng Việt](README_vi.md)）
 
 ## Video
 
-👉 [Human: Give AI a camera vs AI: Instantly finds out the owner hasn't washed hair for three days【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)
+👉 [Human: Install camera for AI vs AI: Detect owner who hasn't washed hair for three days on the spot【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)
 
-👉 [Handcraft your AI girlfriend, beginner's guide【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
+👉 [Make your AI girlfriend by hand, beginner's guide【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
 
 ## Introduction
 
-This is an open-source ESP32 project, released under the MIT license, allowing anyone to use it for free, including for commercial purposes.
+This is an ESP32 open-source project by Xiaoge, released under the MIT license, allowing anyone to use it freely or for commercial purposes.
 
-We hope this project helps everyone understand AI hardware development and apply rapidly evolving large language models to real hardware devices.
+We hope that through this project, we can help people understand AI hardware development and apply the rapidly developing large language models to actual hardware devices.
 
-If you have any ideas or suggestions, please feel free to raise Issues or join the QQ group: 1011329060
+If you have any ideas or suggestions, please submit Issues or join the QQ group: 1011329060
 
-### Control Everything with MCP
+### Control Everything Based on MCP
 
-As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabilities of large models like Qwen / DeepSeek, and achieves multi-terminal control via the MCP protocol.
+Xiaozhi AI chatbot, as a voice interaction portal, uses the AI capabilities of large models such as Qwen/DeepSeek to implement multi-device control through the MCP protocol.
 
-![Control everything via MCP](docs/mcp-based-graph.jpg)
+![Control Everything with MCP](docs/mcp-based-graph.jpg)
 
-### Features Implemented
+### Implemented Features
 
 - Wi-Fi / ML307 Cat.1 4G
 - Offline voice wake-up [ESP-SR](https://github.com/espressif/esp-sr)
-- Supports two communication protocols ([Websocket](docs/websocket.md) or MQTT+UDP)
-- Uses OPUS audio codec
-- Voice interaction based on streaming ASR + LLM + TTS architecture
-- Speaker recognition, identifies the current speaker [3D Speaker](https://github.com/modelscope/3D-Speaker)
-- OLED / LCD display, supports emoji display
+- Support for two communication protocols ([Websocket](docs/websocket.md) or MQTT+UDP)
+- Use OPUS audio encoding and decoding
+- Stream-based voice interaction architecture (ASR + LLM + TTS)
+- Voice recognition, identify current speaker identity [3D Speaker](https://github.com/modelscope/3D-Speaker)
+- OLED / LCD display, support emoji display
 - Battery display and power management
-- Multi-language support (Chinese, English, Japanese, Vietnamese)
-- Supports ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
-- Device-side MCP for device control (Speaker, LED, Servo, GPIO, etc.)
-- Cloud-side MCP to extend large model capabilities (smart home control, PC desktop operation, knowledge search, email, etc.)
+- Multi-language support (Chinese, English, Japanese, Vietnamese) with DejaVu Sans font for Vietnamese
+- Support for ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
+- Device control through on-device MCP (volume, lights, motors, GPIO, etc.)
+- Extend large model capabilities through cloud MCP (smart home control, computer operations, knowledge search, email sending/receiving, etc.)
 
 ## Hardware
 

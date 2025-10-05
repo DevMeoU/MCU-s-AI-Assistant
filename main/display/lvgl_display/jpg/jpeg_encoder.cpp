@@ -1,5 +1,5 @@
 // jpeg_encoder.cpp - C++ class for JPEG compression with class member arrays.
-// 简单版本：直接使用类成员变量，必须在堆上创建实例
+// Phiên bản đơn giản: sử dụng trực tiếp các biến thành viên lớp, phải tạo đối tượng trên heap
 // Modified from jpge.cpp to use class member variables instead of static variables
 // Public domain, Rich Geldreich <richgel99@gmail.com>
 
@@ -134,12 +134,12 @@ namespace jpge2_simple {
     }
 
     // Compute the actual canonical Huffman codes/code sizes given the JPEG huff bits and val arrays.
-    // 简化版本：直接使用成员变量，不需要动态分配
+    // Phiên bản đơn giản: sử dụng trực tiếp các biến thành viên, không cần phân bổ động
     void jpeg_encoder::compute_huffman_table(uint *codes, uint8 *code_sizes, uint8 *bits, uint8 *val)
     {
         int i, l, last_p, si;
-        uint8 *huff_size = m_huff_size_temp;      // 直接使用成员变量
-        uint *huff_code = m_huff_code_temp;       // 直接使用成员变量
+        uint8 *huff_size = m_huff_size_temp;      // Sử dụng trực tiếp các biến thành viên
+        uint *huff_code = m_huff_code_temp;       // Sử dụng trực tiếp các biến thành viên
         uint code;
 
         int p = 0;
@@ -669,7 +669,7 @@ namespace jpge2_simple {
         m_pass_num = 0;
         m_all_stream_writes_succeeded = true;
         
-        // 简单版本：成员变量自动初始化，不需要额外处理
+        // Phiên bản đơn giản: các biến thành viên được khởi tạo tự động, không cần xử lý bổ sung
         m_last_quality = 0;
         m_huff_initialized = false;
     }
@@ -689,7 +689,7 @@ namespace jpge2_simple {
         deinit();
         if (((!pStream) || (width < 1) || (height < 1)) || ((src_channels != 1) && (src_channels != 3) && (src_channels != 4)) || (!comp_params.check())) return false;
         
-        // 简单版本：不需要动态分配内存，成员变量已经存在
+        // Phiên bản đơn giản: không cần phân bổ bộ nhớ động, các biến thành viên đã tồn tại
         m_pStream = pStream;
         m_params = comp_params;
         return jpg_open(width, height, src_channels);
@@ -699,7 +699,7 @@ namespace jpge2_simple {
     {
         jpge_free(m_mcu_lines[0]);
         clear();
-        // Simple version: No need to free member variable memory
+        // Phiên bản đơn giản: Không cần giải phóng bộ nhớ các biến thành viên
     }
 
     bool jpeg_encoder::process_scanline(const void* pScanline)

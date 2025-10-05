@@ -147,7 +147,7 @@ private:
         });
     }
 
-    // 物联网初始化，逐步迁移到 MCP 协议
+    // Khởi tạo IoT, dần dần chuyển sang giao thức MCP
     void InitializeTools() {
         static LampController lamp(LAMP_GPIO);
     }

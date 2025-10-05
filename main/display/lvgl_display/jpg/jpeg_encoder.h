@@ -74,7 +74,7 @@ namespace jpge2_simple
             uint8 m_pass_num;
             bool m_all_stream_writes_succeeded;
 
-            // 直接声明为类成员变量（约8KB）
+            // Declare directly as class member variables (about 8KB)
             int32 m_last_quality;
             int32 m_quantization_tables[2][64];      // 512 bytes
             bool m_huff_initialized;
@@ -83,7 +83,7 @@ namespace jpge2_simple
             uint8 m_huff_bits[4][17];                // 68 bytes
             uint8 m_huff_val[4][256];                // 1024 bytes
             
-            // compute_huffman_table的临时缓冲区也作为成员变量
+            // Temporary buffers for compute_huffman_table are also member variables
             uint8 m_huff_size_temp[257];             // 257 bytes
             uint m_huff_code_temp[257];              // 1028 bytes
 

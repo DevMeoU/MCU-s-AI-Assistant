@@ -523,50 +523,119 @@ endif()
 # Select language directory according to Kconfig
 if(CONFIG_LANGUAGE_ZH_CN)
     set(LANG_DIR "zh-CN")
+    # Use Chinese fonts for Chinese language
+    set(BUILTIN_TEXT_FONT_LANG "zh")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_ZH_TW)
     set(LANG_DIR "zh-TW")
+    # Use Chinese fonts for Traditional Chinese language
+    set(BUILTIN_TEXT_FONT_LANG "zh")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_EN_US)
     set(LANG_DIR "en-US")
+    # Use international fonts for English language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_JA_JP)
     set(LANG_DIR "ja-JP")
+    # Use Japanese fonts for Japanese language
+    set(BUILTIN_TEXT_FONT_LANG "ja")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_KO_KR)
     set(LANG_DIR "ko-KR")
+    # Use Korean fonts for Korean language
+    set(BUILTIN_TEXT_FONT_LANG "ko")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_VI_VN)
     set(LANG_DIR "vi-VN")
+    # Use DejaVu Sans font for Vietnamese language to support Vietnamese characters
+    set(BUILTIN_TEXT_FONT_LANG "custom")
+    set(CUSTOM_FONT_NAME "dejavu_sans")
 elseif(CONFIG_LANGUAGE_TH_TH)
     set(LANG_DIR "th-TH")
+    # Use international fonts for Thai language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_DE_DE)
     set(LANG_DIR "de-DE")
+    # Use international fonts for German language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_FR_FR)
     set(LANG_DIR "fr-FR")
+    # Use international fonts for French language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_ES_ES)
     set(LANG_DIR "es-ES")
+    # Use international fonts for Spanish language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_IT_IT)
     set(LANG_DIR "it-IT")
+    # Use international fonts for Italian language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_RU_RU)
     set(LANG_DIR "ru-RU")
+    # Use international fonts for Russian language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_AR_SA)
     set(LANG_DIR "ar-SA")
+    # Use international fonts for Arabic language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_HI_IN)
     set(LANG_DIR "hi-IN")
+    # Use international fonts for Hindi language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_PT_PT)
     set(LANG_DIR "pt-PT")
+    # Use international fonts for Portuguese language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_PL_PL)
     set(LANG_DIR "pl-PL")
+    # Use international fonts for Polish language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_CS_CZ)
     set(LANG_DIR "cs-CZ")
+    # Use international fonts for Czech language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_FI_FI)
     set(LANG_DIR "fi-FI")
+    # Use international fonts for Finnish language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_TR_TR)
     set(LANG_DIR "tr-TR")
+    # Use international fonts for Turkish language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_ID_ID)
     set(LANG_DIR "id-ID")
+    # Use international fonts for Indonesian language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_UK_UA)
     set(LANG_DIR "uk-UA")
+    # Use international fonts for Ukrainian language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_RO_RO)
     set(LANG_DIR "ro-RO")
+    # Use international fonts for Romanian language
+    set(BUILTIN_TEXT_FONT_LANG "intl")
+    set(CUSTOM_FONT_NAME "")
 elseif(CONFIG_LANGUAGE_VI)
     set(LANG_DIR "vi-VN")
+    # Use DejaVu Sans font for Vietnamese language
+    set(BUILTIN_TEXT_FONT_LANG "custom")
+    set(CUSTOM_FONT_NAME "dejavu_sans")
 endif()
 
 # Define generation path
@@ -595,10 +664,40 @@ idf_component_register(SRCS ${SOURCES}
 if(NOT BOARD_NAME)
     set(BOARD_NAME ${BOARD_TYPE})
 endif()
-target_compile_definitions(${COMPONENT_LIB}
-                    PRIVATE BOARD_TYPE=\"${BOARD_TYPE}\" BOARD_NAME=\"${BOARD_NAME}\"
-                    PRIVATE BUILTIN_TEXT_FONT=${BUILTIN_TEXT_FONT} BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
-                    )
+
+# Modify font selection based on language
+if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
+    # Use DejaVu Sans font for Vietnamese and other languages that need custom font support
+    target_compile_definitions(${COMPONENT_LIB}
+                        PRIVATE BOARD_TYPE=\"${BOARD_TYPE}\" BOARD_NAME=\"${BOARD_NAME}\"
+                        PRIVATE BUILTIN_TEXT_FONT=dejavu_sans BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
+                        PRIVATE CUSTOM_FONT_NAME=\"dejavu_sans\"
+                        )
+elseif(BUILTIN_TEXT_FONT_LANG STREQUAL "intl")
+    # Use international fonts that support multiple languages including Vietnamese
+    target_compile_definitions(${COMPONENT_LIB}
+                        PRIVATE BOARD_TYPE=\"${BOARD_TYPE}\" BOARD_NAME=\"${BOARD_NAME}\"
+                        PRIVATE BUILTIN_TEXT_FONT=font_puhui_common_16_4 BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
+                        )
+else()
+    # Use language-specific fonts for Chinese, Japanese, Korean
+    target_compile_definitions(${COMPONENT_LIB}
+                        PRIVATE BOARD_TYPE=\"${BOARD_TYPE}\" BOARD_NAME=\"${BOARD_NAME}\"
+                        PRIVATE BUILTIN_TEXT_FONT=${BUILTIN_TEXT_FONT} BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
+                        )
+endif()
+
+# Add custom font file to assets if needed
+if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
+    # Add DejaVu Sans font to embedded files
+    set(DEJAVU_FONT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts/dejavu-sans.zip")
+    if(EXISTS ${DEJAVU_FONT_FILE})
+        list(APPEND COMMON_SOUNDS ${DEJAVU_FONT_FILE})
+        message(STATUS "Added DejaVu Sans font to embedded files: ${DEJAVU_FONT_FILE}")
+    else()
+        message(WARNING "DejaVu Sans font file not found: ${DEJAVU_FONT_FILE}")
+    endif()
+endif()
 
 # Add generation rules
 add_custom_command(

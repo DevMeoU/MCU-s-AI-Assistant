@@ -75,11 +75,11 @@ public:
     void Crusaito(float steps = 1, int period = 900, int height = 20, int dir = FORWARD);
     void Flapping(float steps = 1, int period = 1000, int height = 20, int dir = FORWARD);
 
-    // -- 手部动作
-    void HandsUp(int period = 1000, int dir = 0);      // 双手举起
-    void HandsDown(int period = 1000, int dir = 0);    // 双手放下
-    void HandWave(int period = 1000, int dir = LEFT);  // 挥手
-    void HandWaveBoth(int period = 1000);              // 双手同时挥手
+    // -- Động tác tay
+    void HandsUp(int period = 1000, int dir = 0);      // Giơ cả hai tay
+    void HandsDown(int period = 1000, int dir = 0);    // Hạ cả hai tay
+    void HandWave(int period = 1000, int dir = LEFT);  // Vẫy tay
+    void HandWaveBoth(int period = 1000);              // Vẫy cả hai tay cùng lúc
 
     // -- Servo limiter
     void EnableServoLimit(int speed_limit_degree_per_sec = SERVO_LIMIT_DEFAULT);
@@ -96,7 +96,7 @@ private:
     float increment_[SERVO_COUNT];
 
     bool is_otto_resting_;
-    bool has_hands_;  // 是否有手部舵机
+    bool has_hands_;  // Có servo tay không
 
     void Execute(int amplitude[SERVO_COUNT], int offset[SERVO_COUNT], int period,
                  double phase_diff[SERVO_COUNT], float steps);

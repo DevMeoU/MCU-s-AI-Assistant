@@ -15,10 +15,10 @@ def play_p3_file(input_file):
     channels = 1  # Mono channel
     decoder = opuslib.Decoder(sample_rate, channels)
     
-    # 帧大小 (60ms)
+    # Kích thước khung (60ms)
     frame_size = int(sample_rate * 60 / 1000)
     
-    # 打开音频流
+    # Mở luồng âm thanh
     stream = sd.OutputStream(
         samplerate=sample_rate,
         channels=channels,

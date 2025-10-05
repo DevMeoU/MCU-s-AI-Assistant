@@ -155,7 +155,7 @@ choice BOARD_TYPE
     prompt "Board Type"
     default BOARD_TYPE_BREAD_COMPACT_WIFI
     help
-        Board type. (开发板类型)
+        Board type. (Loại bảng phát triển)
         # Chọn loại board phát triển. Điều này quan trọng để định cấu hình đúng các chân GPIO và ngoại vi.
         # Select development board type. This is important for correct GPIO and peripheral configuration.
     config BOARD_TYPE_BREAD_COMPACT_WIFI
@@ -335,7 +335,7 @@ choice BOARD_TYPE
         bool "Waveshare ESP32-P4-WIFI6-Touch-LCD-3.4C or ESP32-P4-WIFI6-Touch-LCD-4C"
         depends on IDF_TARGET_ESP32P4
     config BOARD_TYPE_TUDOUZI
-        bool "土豆子"
+        bool "Khoai tây con"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_LILYGO_T_CIRCLE_S3
         bool "LILYGO T-Circle-S3"
@@ -353,34 +353,34 @@ choice BOARD_TYPE
         bool "LILYGO T-Display-S3-Pro-MVSRLora_No_Battery"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_MOVECALL_MOJI_ESP32S3
-        bool "Movecall Moji Xiaozhi AI Derivative Version (Movecall Moji 小智AI衍生版)"
+        bool "Movecall Moji Xiaozhi AI Derivative Version (Movecall Moji Phiên bản dẫn xuất Xiao Zhi AI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_MOVECALL_CUICAN_ESP32S3
-        bool "Movecall CuiCan · AI Pendant (Movecall CuiCan 璀璨·AI吊坠)"
+        bool "Movecall CuiCan · AI Pendant (Movecall CuiCan Rực rỡ·Dây chuyền AI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ATK_DNESP32S3
-        bool "Zhengdian Atom DNESP32S3 Development Board (正点原子DNESP32S3开发板)"
+        bool "Zhengdian Atom DNESP32S3 Development Board (Nguyên tử Zhengdian DNESP32S3 Bảng phát triển)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ATK_DNESP32S3_BOX
-        bool "Zhengdian Atom DNESP32S3-BOX (正点原子DNESP32S3-BOX)"
+        bool "Zhengdian Atom DNESP32S3-BOX (Nguyên tử Zhengdian DNESP32S3-BOX)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ATK_DNESP32S3_BOX0
-        bool "Zhengdian Atom DNESP32S3-BOX0 (正点原子DNESP32S3-BOX0)"
+        bool "Zhengdian Atom DNESP32S3-BOX0 (Nguyên tử Zhengdian DNESP32S3-BOX0)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ATK_DNESP32S3_BOX2_WIFI
-        bool "Zhengdian Atom DNESP32S3-BOX2-WIFI (正点原子DNESP32S3-BOX2-WIFI)"
+        bool "Zhengdian Atom DNESP32S3-BOX2-WIFI (Nguyên tử Zhengdian DNESP32S3-BOX2-WIFI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ATK_DNESP32S3_BOX2_4G
-        bool "Zhengdian Atom DNESP32S3-BOX2-4G (正点原子DNESP32S3-BOX2-4G)" 
+        bool "Zhengdian Atom DNESP32S3-BOX2-4G (Nguyên tử Zhengdian DNESP32S3-BOX2-4G)" 
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ATK_DNESP32S3M_WIFI
-        bool "Zhengdian Atom DNESP32S3M-WIFI (正点原子DNESP32S3M-WIFI)"
+        bool "Zhengdian Atom DNESP32S3M-WIFI (Nguyên tử Zhengdian DNESP32S3M-WIFI)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ATK_DNESP32S3M_4G
-        bool "Zhengdian Atom DNESP32S3M-4G (正点原子DNESP32S3M-4G)"
+        bool "Zhengdian Atom DNESP32S3M-4G (Nguyên tử Zhengdian DNESP32S3M-4G)"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_DU_CHATX
-        bool "Dudu Development Board CHATX (wifi) (嘟嘟开发板CHATX(wifi))"
+        bool "Dudu Development Board CHATX (wifi) (Bảng phát triển Dudu CHATX(wifi))"
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32S3_Taiji_Pi
         bool "Taiji Xiaopai ESP32-S3"
@@ -468,9 +468,9 @@ choice ESP_S3_LCD_EV_Board_Version_TYPE
     prompt "EV_BOARD Type"
     default ESP_S3_LCD_EV_Board_1p4
     config ESP_S3_LCD_EV_Board_1p4
-        bool "Lexin ESP32_S3_LCD_EV_Board-MB_V1.4 (乐鑫ESP32_S3_LCD_EV_Board-MB_V1.4)"
+        bool "Lexin ESP32_S3_LCD_EV_Board-MB_V1.4 (Lexin ESP32_S3_LCD_EV_Board-MB_V1.4)"
     config ESP_S3_LCD_EV_Board_1p5
-        bool "Lexin ESP32_S3_LCD_EV_Board-MB_V1.5 (乐鑫ESP32_S3_LCD_EV_Board-MB_V1.5)"
+        bool "Lexin ESP32_S3_LCD_EV_Board-MB_V1.5 (Lexin ESP32_S3_LCD_EV_Board-MB_V1.5)"
 endchoice
 
 # Lựa chọn loại màn hình OLED đơn sắc
@@ -546,7 +546,7 @@ choice DISPLAY_LCD_TYPE
     config LCD_TYPE_720_720_4_INCH
         bool "Waveshare ESP32-P4-WIFI6-Touch-LCD-4C with 720*720 4inch round display"
     config LCD_CUSTOM
-        bool "Custom LCD (自定义屏幕参数)"
+        bool "Custom LCD (Tham số màn hình tùy chỉnh)"
 endchoice
 
 choice DISPLAY_ESP32S3_KORVO2_V3
@@ -622,7 +622,7 @@ choice WAKE_WORD_TYPE
         bool "Wakenet model without AFE"
         depends on IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C5 || IDF_TARGET_ESP32C6 || (IDF_TARGET_ESP32 && SPIRAM)
         help
-            Support ESP32 C3、ESP32 C5 与 ESP32 C6, and (ESP32 with PSRAM)
+            Hỗ trợ ESP32 C3, ESP32 C5 và ESP32 C6, và (ESP32 với PSRAM)
             # Mô hình Wakenet không có AFE - Hỗ trợ ESP32-C3, C5, C6 và ESP32 với PSRAM
             # Wakenet model without AFE - Support ESP32-C3, C5, C6 and ESP32 with PSRAM
 
@@ -657,7 +657,7 @@ config CUSTOM_WAKE_WORD
 
 config CUSTOM_WAKE_WORD_DISPLAY
     string "Custom Wake Word Display"
-    default "小土豆"
+    default "Khoai tây nhỏ"
     depends on USE_CUSTOM_WAKE_WORD
     help
         Greeting sent to the server after wake word detection

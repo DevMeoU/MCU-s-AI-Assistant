@@ -175,9 +175,9 @@ void WifiBoard::ResetWifiConfiguration() {
 
 std::string WifiBoard::GetDeviceStatusJson() {
     /*
-     * 返回设备状态JSON
+     * Trả về JSON trạng thái thiết bị
      * 
-     * 返回的JSON结构如下：
+     * Cấu trúc JSON trả về như sau:
      * {
      *     "audio_speaker": {
      *         "volume": 70

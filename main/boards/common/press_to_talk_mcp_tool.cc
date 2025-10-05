@@ -15,7 +15,7 @@ void PressToTalkMcpTool::Initialize() {
     // Đăng ký công cụ MCP
     auto& mcp_server = McpServer::GetInstance();
     mcp_server.AddTool("self.set_press_to_talk",
-        "Switch between press to talk mode (长按说话) and click to talk mode (单击说话).\n"
+        "Switch between press to talk mode (Nhấn và giữ để nói) and click to talk mode (Nhấn để nói).\n"
         "The mode can be `press_to_talk` or `click_to_talk`.",
         PropertyList({
             Property("mode", kPropertyTypeString)

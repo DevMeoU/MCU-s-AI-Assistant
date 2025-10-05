@@ -376,7 +376,7 @@ public:
         InitializeTouch();
         InitializeButtons();
         InitializeTools();
-        InitializeKeyMonitor();  // 启动按键监听
+        InitializeKeyMonitor();  // Khởi động lắng nghe phím
         GetBacklight()->SetBrightness(100);
     }
 

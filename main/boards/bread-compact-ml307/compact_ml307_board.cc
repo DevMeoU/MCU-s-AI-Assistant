@@ -149,7 +149,7 @@ private:
         });
     }
 
-    // 物联网初始化，添加对 AI 可见设备
+    // Khởi tạo IoT, thêm thiết bị có thể nhìn thấy cho AI
     void InitializeTools() {
         static LampController lamp(LAMP_GPIO);
     }

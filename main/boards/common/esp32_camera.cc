@@ -13,14 +13,14 @@
 #define TAG "Esp32Camera"
 
 Esp32Camera::Esp32Camera(const camera_config_t& config) {
-    // camera init
-    esp_err_t err = esp_camera_init(&config); // Định cấu hình các tham số đã xác định ở trên
+    // Khởi tạo camera
+    esp_err_t err = esp_camera_init(&config); // Khởi tạo camera với các tham số đã cấu hình ở trên
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Camera init failed with error 0x%x", err);
         return;
     }
 
-    sensor_t *s = esp_camera_sensor_get(); // Lấy mẫu camera
+    sensor_t *s = esp_camera_sensor_get(); // Lấy cảm biến camera
     if (s->id.PID == GC0308_PID) {
         s->set_hmirror(s, 0);  // Tại đây điều khiển gương camera ghi 1 gương ghi 0 không gương
     }
@@ -46,7 +46,7 @@ bool Esp32Camera::Capture() {
 
     auto start_time = esp_timer_get_time();
     int frames_to_get = 2;
-    // Try to get a stable frame
+    // Cố gắng lấy một khung hình ổn định
     for (int i = 0; i < frames_to_get; i++) {
         if (fb_ != nullptr) {
             esp_camera_fb_return(fb_);
@@ -169,7 +169,7 @@ std::string Esp32Camera::Explain(const std::string& question) {
 
     auto network = Board::GetInstance().GetNetwork();
     auto http = network->CreateHttp(3);
-    // 构造multipart/form-data请求体
+    // Xây dựng phần thân yêu cầu multipart/form-data
     std::string boundary = "----ESP32_CAMERA_BOUNDARY";
 
     // Cấu hình máy khách HTTP, sử dụng mã hóa truyền tải theo khối
@@ -232,16 +232,16 @@ std::string Esp32Camera::Explain(const std::string& question) {
     }
     // Wait for the encoder thread to finish
     encoder_thread_.join();
-    // 清理队列
+    // Dọn dẹp hàng đợi
     vQueueDelete(jpeg_queue);
 
     {
-        // 第四块：multipart尾部
+        // Khối thứ tư: phần cuối multipart
         std::string multipart_footer;
         multipart_footer += "\r\n--" + boundary + "--\r\n";
         http->Write(multipart_footer.c_str(), multipart_footer.size());
     }
-    // 结束块
+    // Khối kết thúc
     http->Write("", 0);
 
     if (http->GetStatusCode() != 200) {

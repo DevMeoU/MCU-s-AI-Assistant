@@ -20,7 +20,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
     spi_io_config.cs_gpio_num = BSP_SSCMA_CLIENT_SPI_CS;
     spi_io_config.pclk_hz = BSP_SSCMA_CLIENT_SPI_CLK;
     spi_io_config.spi_mode = 0;
-    spi_io_config.wait_delay = 10; //两个transfer之间至少延时4ms,但当前 FREERTOS_HZ=100, 延时精度只能达到10ms, 
+    spi_io_config.wait_delay = 10; // Ít nhất 4ms giữa hai transfer, nhưng hiện tại FREERTOS_HZ=100, độ chính xác chỉ đạt 10ms, 
     spi_io_config.user_ctx = NULL;
     spi_io_config.io_expander = io_exp_handle;
     spi_io_config.flags.sync_use_expander = BSP_SSCMA_CLIENT_RST_USE_EXPANDER;
@@ -55,12 +55,12 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
         if (sscma_utils_fetch_image_from_reply(reply, &img, &img_size) == ESP_OK)
         {
             ESP_LOGI(TAG, "image_size: %d\n", img_size);
-            // 将数据通过队列发送出去
+            // Gửi dữ liệu qua hàng đợi
             SscmaData data;
             data.img = (uint8_t*)img;
             data.len = img_size;
 
-            // 清空队列，保证只保存最新的数据
+            // Xóa hàng đợi, đảm bảo chỉ lưu dữ liệu mới nhất
             SscmaData dummy;
             while (xQueueReceive(self->sscma_data_queue_, &dummy, 0) == pdPASS) {
                 if (dummy.img) {
@@ -68,7 +68,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
                 }
             }
             xQueueSend(self->sscma_data_queue_, &data, 0);
-            // 注意：img 的释放由接收方负责
+            // Lưu ý: việc giải phóng img do bên nhận phụ trách
         }
     };
     callback.on_connect = [](sscma_client_handle_t client, const sscma_client_reply_t *reply, void *user_ctx) {
@@ -84,7 +84,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
     sscma_client_init(sscma_client_handle_);
 
     ESP_LOGI(TAG, "SSCMA client initialized");
-    // 设置分辨率
+    // Thiết lập độ phân giải
     // 3 = 640x480
     if (sscma_client_set_sensor(sscma_client_handle_, 1, 3, true)) {
         ESP_LOGE(TAG, "Failed to set sensor");
@@ -196,12 +196,12 @@ bool SscmaCamera::Capture() {
 
     ESP_LOGI(TAG, "Capturing image...");
 
-    // himax 有缓存数据,需要拍两张照片, 只获取最新的照片即可.
+    // himax có dữ liệu cache, cần chụp hai ảnh, chỉ lấy ảnh mới nhất.
     if (sscma_client_sample(sscma_client_handle_, 2) ) {
         ESP_LOGE(TAG, "Failed to capture image from SSCMA client");
         return false;
     }
-    vTaskDelay(pdMS_TO_TICKS(500)); // 等待SSCMA客户端处理数据
+    vTaskDelay(pdMS_TO_TICKS(500)); // Đợi SSCMA client xử lý dữ liệu
     if (xQueueReceive(sscma_data_queue_, &data, pdMS_TO_TICKS(1000)) != pdPASS) {
         ESP_LOGE(TAG, "Failed to receive JPEG data from SSCMA client");
         return false;
@@ -220,7 +220,7 @@ bool SscmaCamera::Capture() {
     }
     heap_caps_free(data.img);
 
-    //DECODE JPEG
+    //GIẢI MÃ JPEG
     if (!jpeg_dec_ || !jpeg_io_ || !jpeg_out_ || !preview_image_.data) {
         return true;
     }
@@ -242,7 +242,7 @@ bool SscmaCamera::Capture() {
         return true;
     }
 
-    // 显示预览图片
+    // Hiển thị ảnh xem trước
     auto display = dynamic_cast<LvglDisplay*>(Board::GetInstance().GetDisplay());
     if (display != nullptr) {
         auto image = std::make_unique<LvglSourceImage>(&preview_image_);

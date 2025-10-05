@@ -211,15 +211,15 @@ private:
         config.fb_location = CAMERA_FB_IN_PSRAM;
         config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
 
-        esp_err_t err = esp_camera_init(&config); // 测试相机是否存在
+        esp_err_t err = esp_camera_init(&config); // Kiểm tra xem camera có tồn tại không
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Camera is not plugged in or not supported, error: %s", esp_err_to_name(err));
-            // 如果摄像头初始化失败，设置 camera_ 为 nullptr
+            // Nếu khởi tạo camera thất bại, đặt camera_ thành nullptr
             camera_ = nullptr;
             return;
         }else
         {
-            esp_camera_deinit();// 释放之前的摄像头资源,为正确初始化做准备
+            esp_camera_deinit();// Giải phóng tài nguyên camera trước đó, chuẩn bị cho việc khởi tạo đúng
             camera_ = new Esp32Camera(config);
         }
         
@@ -228,7 +228,7 @@ private:
     void InitializeLcdDisplay() {
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         esp_lcd_panel_handle_t panel = nullptr;
-        // 液晶屏控制IO初始化
+        // Khởi tạo IO điều khiển màn hình LCD
         ESP_LOGI(TAG, "Install panel IO");
         esp_lcd_panel_io_spi_config_t io_config = AXS15231B_PANEL_IO_QSPI_CONFIG(
             DISPLAY_CS_PIN,
@@ -236,10 +236,10 @@ private:
             NULL);
         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI2_HOST, &io_config, &panel_io));
 
-        // 初始化液晶屏驱动芯片
+        // Khởi tạo chip điều khiển màn hình LCD
         ESP_LOGI(TAG, "Install LCD driver");
         const axs15231b_vendor_config_t vendor_config = {
-            .init_cmds = lcd_init_cmds, // Uncomment these line if use custom initialization commands
+            .init_cmds = lcd_init_cmds, // Bỏ chú thích dòng này nếu sử dụng lệnh khởi tạo tùy chỉnh
             .init_cmds_size = sizeof(lcd_init_cmds) / sizeof(lcd_init_cmds[0]),
             .flags = {
                 .use_qspi_interface = 1,

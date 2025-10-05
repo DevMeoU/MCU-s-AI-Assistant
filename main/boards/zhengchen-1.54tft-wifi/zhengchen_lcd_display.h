@@ -11,7 +11,7 @@ protected:
     lv_obj_t* high_temp_label_ = nullptr;  // High temperature warning label
 
 public:
-    // 继承构造函数
+    // Kế thừa hàm tạo
     using SpiLcdDisplay::SpiLcdDisplay;
 
     void SetupHighTempWarningPopup() {
@@ -31,7 +31,7 @@ public:
         lv_obj_set_style_text_color(high_temp_label_, lv_color_white(), 0);
         lv_obj_center(high_temp_label_);
         
-        // 默认隐藏
+        // Ẩn theo mặc định
         lv_obj_add_flag(high_temp_popup_, LV_OBJ_FLAG_HIDDEN);
     }
 

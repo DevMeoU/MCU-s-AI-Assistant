@@ -50,7 +50,7 @@ static IRAM_ATTR void convert_line_format(uint8_t * src, pixformat_t format, uin
             dst[o++] = (src[i+1] & 0x1F) << 3;
         }
     } else if(format == PIXFORMAT_YUV422) {
-        // YUV422转RGB的简化实现
+        // Triển khai đơn giản hóa YUV422 sang RGB
         l = width * 2;
         src += l * line;
         for(i=0; i<l; i+=4) {
@@ -59,7 +59,7 @@ static IRAM_ATTR void convert_line_format(uint8_t * src, pixformat_t format, uin
             int y1 = src[i+2];
             int v = src[i+3];
 
-            // 简化的YUV到RGB转换
+            // Chuyển đổi YUV sang RGB đơn giản hóa
             int c = y0 - 16;
             int d = u - 128;
             int e = v - 128;
@@ -85,7 +85,7 @@ static IRAM_ATTR void convert_line_format(uint8_t * src, pixformat_t format, uin
     }
 }
 
-// 回调流实现 - 用于回调版本的JPEG编码
+// Triển khai luồng callback - dùng cho phiên bản mã hóa JPEG callback
 class callback_stream : public jpge2_simple::output_stream {
 protected:
     jpg_out_cb ocb;
@@ -106,7 +106,7 @@ public:
     }
 };
 
-// 内存流实现 - 用于直接内存输出
+// Triển khai luồng bộ nhớ - dùng cho xuất trực tiếp bộ nhớ
 class memory_stream : public jpge2_simple::output_stream {
 protected:
     uint8_t *out_buf;
@@ -161,7 +161,7 @@ static bool convert_image(uint8_t *src, uint16_t width, uint16_t height, pixform
     comp_params.m_subsampling = subsampling;
     comp_params.m_quality = quality;
 
-    // ⚠️ 关键：必须在堆上创建编码器！约8KB内存从堆分配
+    // ⚠️ Quan trọng: phải tạo bộ mã hóa trên heap! Khoảng 8KB bộ nhớ được phân bổ từ heap
     auto dst_image = std::make_unique<jpge2_simple::jpeg_encoder>();
 
     if (!dst_image->init(dst_stream, width, height, num_channels, comp_params)) {
@@ -194,7 +194,7 @@ static bool convert_image(uint8_t *src, uint16_t width, uint16_t height, pixform
     return true;
 }
 
-// 🚀 主要函数：高效的图像到JPEG转换实现，节省8KB SRAM
+// 🚀 Hàm chính: triển khai chuyển đổi hình ảnh sang JPEG hiệu quả, tiết kiệm 8KB SRAM
 bool image_to_jpeg(uint8_t *src, size_t src_len, uint16_t width, uint16_t height, pixformat_t format, uint8_t quality, uint8_t ** out, size_t * out_len)
 {
     ESP_LOGI(TAG, "Using optimized JPEG encoder (saves ~8KB SRAM)");
@@ -219,7 +219,7 @@ bool image_to_jpeg(uint8_t *src, size_t src_len, uint16_t width, uint16_t height
     return true;
 }
 
-// 🚀 回调版本：使用回调函数处理JPEG数据流，适合流式传输
+// 🚀 Phiên bản callback: sử dụng hàm callback để xử lý luồng dữ liệu JPEG, phù hợp cho truyền phát luồng
 bool image_to_jpeg_cb(uint8_t *src, size_t src_len, uint16_t width, uint16_t height, pixformat_t format, uint8_t quality, jpg_out_cb cb, void *arg)
 {
     callback_stream dst_stream(cb, arg);

@@ -138,7 +138,7 @@ void LvglDisplay::UpdateStatusBar(bool update_all) {
     }
 
     esp_pm_lock_acquire(pm_lock_);
-    // 更新电池图标
+    // Cập nhật biểu tượng pin
     int battery_level;
     bool charging, discharging;
     const char* icon = nullptr;
@@ -164,20 +164,20 @@ void LvglDisplay::UpdateStatusBar(bool update_all) {
 
         if (low_battery_popup_ != nullptr) {
             if (strcmp(icon, FONT_AWESOME_BATTERY_EMPTY) == 0 && discharging) {
-                if (lv_obj_has_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN)) { // 如果低电量提示框隐藏，则显示
+                if (lv_obj_has_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN)) { // Nếu hộp thông báo pin yếu bị ẩn, thì hiển thị
                     lv_obj_remove_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN);
                     app.PlaySound(Lang::Sounds::OGG_LOW_BATTERY);
                 }
             } else {
-                // Hide the low battery popup when the battery is not empty
-                if (!lv_obj_has_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN)) { // 如果低电量提示框显示，则隐藏
+                // Ẩn hộp thông báo pin yếu khi pin không trống
+                if (!lv_obj_has_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN)) { // Nếu hộp thông báo pin yếu hiển thị, thì ẩn
                     lv_obj_add_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN);
                 }
             }
         }
     }
 
-    // 每 10 秒更新一次网络图标
+    // Cập nhật biểu tượng mạng mỗi 10 giây
     static int seconds_counter = 0;
     if (update_all || seconds_counter++ % 10 == 0) {
         // When upgrading firmware, do not read 4G network status to avoid occupying UART resources

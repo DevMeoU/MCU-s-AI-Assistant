@@ -129,7 +129,7 @@ private:
         };
         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI2_HOST, &io_config, &io_handle));
         sh8601_vendor_config_t vendor_config = {
-            .init_cmds = lcd_init_cmds,             // Uncomment these line if use custom initialization commands
+            .init_cmds = lcd_init_cmds,             // Bỏ chú thích các dòng này nếu sử dụng lệnh khởi tạo tùy chỉnh
             .init_cmds_size = sizeof(lcd_init_cmds) / sizeof(lcd_init_cmds[0]), // sizeof(axs15231b_lcd_init_cmd_t),
             .flags = 
             {

@@ -1,6 +1,6 @@
 /*
- * MCP Server Implementation
- * Reference: https://modelcontextprotocol.io/specification/2024-11-05
+ * Triển khai máy chủ MCP
+ * Tham khảo: https://modelcontextprotocol.io/specification/2024-11-05
  */
 
 #include "mcp_server.h"
@@ -17,6 +17,7 @@
 #include "settings.h"
 #include "lvgl_theme.h"
 #include "lvgl_display.h"
+#include "boards/common/music.h"
 
 #define TAG "MCP"
 
@@ -31,29 +32,29 @@ McpServer::~McpServer() {
 }
 
 void McpServer::AddCommonTools() {
-    // *Important* To speed up the response time, we add the common tools to the beginning of
-    // the tools list to utilize the prompt cache.
-    // **Important** To improve response speed, we place commonly used tools at the beginning to leverage the prompt cache feature.
+    // *Quan trọng* Để tăng tốc độ phản hồi, chúng tôi thêm các công cụ phổ biến vào đầu
+    // danh sách công cụ để sử dụng bộ đệm prompt.
+    // **Quan trọng** Để cải thiện tốc độ phản hồi, chúng tôi đặt các công cụ thường dùng ở đầu để tận dụng tính năng bộ đệm prompt.
 
-    // Backup the original tools list and restore it after adding the common tools.
+    // Sao lưu danh sách công cụ gốc và khôi phục sau khi thêm các công cụ phổ biến.
     auto original_tools = std::move(tools_);
     auto& board = Board::GetInstance();
 
-    // Do not add custom tools here.
-    // Custom tools must be added in the board's InitializeTools function.
+    // Không thêm công cụ tùy chỉnh ở đây.
+    // Các công cụ tùy chỉnh phải được thêm trong hàm InitializeTools của bo mạch.
 
     AddTool("self.get_device_status",
-        "Provides the real-time information of the device, including the current status of the audio speaker, screen, battery, network, etc.\n"
-        "Use this tool for: \n"
-        "1. Answering questions about current condition (e.g. what is the current volume of the audio speaker?)\n"
-        "2. As the first step to control the device (e.g. turn up / down the volume of the audio speaker, etc.)",
+        "Cung cấp thông tin thời gian thực của thiết bị, bao gồm trạng thái hiện tại của loa âm thanh, màn hình, pin, mạng, v.v.\n"
+        "Sử dụng công cụ này để: \n"
+        "1. Trả lời các câu hỏi về điều kiện hiện tại (ví dụ: âm lượng hiện tại của loa âm thanh là gì?)\n"
+        "2. Là bước đầu tiên để điều khiển thiết bị (ví dụ: tăng / giảm âm lượng của loa âm thanh, v.v.)",
         PropertyList(),
         [&board](const PropertyList& properties) -> ReturnValue {
             return board.GetDeviceStatusJson();
         });
 
     AddTool("self.audio_speaker.set_volume", 
-        "Set the volume of the audio speaker. If the current volume is unknown, you must call `self.get_device_status` tool first and then call this tool.",
+        "Đặt âm lượng của loa âm thanh. Nếu không biết âm lượng hiện tại, bạn phải gọi công cụ `self.get_device_status` trước rồi mới gọi công cụ này.",
         PropertyList({
             Property("volume", kPropertyTypeInteger, 0, 100)
         }), 
@@ -63,10 +64,55 @@ void McpServer::AddCommonTools() {
             return true;
         });
     
+    // Thêm công cụ nhạc
+    auto music_player = board.GetMusicPlayer();
+    if (music_player) {
+        AddTool("music_player.search_and_play",
+            "Tìm kiếm bài hát và bắt đầu phát. Tìm bài hát theo tên và tự động bắt đầu phát. "
+            "Sử dụng công cụ này để phát các bài hát cụ thể do người dùng yêu cầu.",
+            PropertyList({
+                Property("song_name", kPropertyTypeString)
+            }),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                auto song_name = properties["song_name"].value<std::string>();
+                bool result = music_player->Download(song_name, "");
+                if (result) {
+                    return "Đã bắt đầu phát: " + song_name;
+                } else {
+                    return "Không tìm thấy hoặc phát: " + song_name;
+                }
+            });
+
+        AddTool("music_player.stop",
+            "Hoàn toàn dừng phát nhạc. Điều này sẽ dừng bài hát hiện tại và đặt lại vị trí về đầu. "
+            "Sử dụng công cụ này khi người dùng muốn dừng nhạc hoàn toàn.",
+            PropertyList(),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                bool result = music_player->StopStreaming();
+                if (result) {
+                    return "Đã dừng phát nhạc thành công";
+                } else {
+                    return "Không thể dừng phát nhạc";
+                }
+            });
+
+        AddTool("music_player.get_status",
+            "Lấy trạng thái hiện tại của trình phát nhạc bao gồm bài hát hiện tại và trạng thái phát. "
+            "Sử dụng công cụ này để kiểm tra những gì đang phát hoặc nhận thông tin phát lại chi tiết.",
+            PropertyList(),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                cJSON* json = cJSON_CreateObject();
+                cJSON_AddStringToObject(json, "current_song", music_player->GetDownloadResult().c_str());
+                cJSON_AddBoolToObject(json, "is_playing", music_player->IsDownloading());
+                cJSON_AddNumberToObject(json, "buffer_size", music_player->GetBufferSize());
+                return json;
+            });
+    }
+    
     auto backlight = board.GetBacklight();
     if (backlight) {
         AddTool("self.screen.set_brightness",
-            "Set the brightness of the screen.",
+            "Đặt độ sáng của màn hình.",
             PropertyList({
                 Property("brightness", kPropertyTypeInteger, 0, 100)
             }),
@@ -81,7 +127,7 @@ void McpServer::AddCommonTools() {
     auto display = board.GetDisplay();
     if (display && display->GetTheme() != nullptr) {
         AddTool("self.screen.set_theme",
-            "Set the theme of the screen. The theme can be `light` or `dark`.",
+            "Đặt chủ đề của màn hình. Chủ đề có thể là `light` hoặc `dark`.",
             PropertyList({
                 Property("theme", kPropertyTypeString)
             }),
@@ -100,20 +146,20 @@ void McpServer::AddCommonTools() {
     auto camera = board.GetCamera();
     if (camera) {
         AddTool("self.camera.take_photo",
-            "Take a photo and explain it. Use this tool after the user asks you to see something.\n"
-            "Args:\n"
-            "  `question`: The question that you want to ask about the photo.\n"
-            "Return:\n"
-            "  A JSON object that provides the photo information.",
+            "Chụp ảnh và giải thích nó. Sử dụng công cụ này sau khi người dùng yêu cầu xem điều gì đó.\n"
+            "Tham số:\n"
+            "  `question`: Câu hỏi bạn muốn đặt ra về ảnh.\n"
+            "Trả về:\n"
+            "  Một đối tượng JSON cung cấp thông tin ảnh.",
             PropertyList({
                 Property("question", kPropertyTypeString)
             }),
             [camera](const PropertyList& properties) -> ReturnValue {
-                // Lower the priority to do the camera capture
+                // Giảm mức độ ưu tiên để chụp ảnh
                 TaskPriorityReset priority_reset(1);
 
                 if (!camera->Capture()) {
-                    throw std::runtime_error("Failed to capture photo");
+                    throw std::runtime_error("Không thể chụp ảnh");
                 }
                 auto question = properties["question"].value<std::string>();
                 return camera->Explain(question);
@@ -121,26 +167,26 @@ void McpServer::AddCommonTools() {
     }
 #endif
 
-    // Restore the original tools list to the end of the tools list
+    // Khôi phục danh sách công cụ gốc về cuối danh sách công cụ
     tools_.insert(tools_.end(), original_tools.begin(), original_tools.end());
 }
 
 void McpServer::AddUserOnlyTools() {
-    // System tools
+    // Công cụ hệ thống
     AddUserOnlyTool("self.get_system_info",
-        "Get the system information",
+        "Lấy thông tin hệ thống",
         PropertyList(),
         [this](const PropertyList& properties) -> ReturnValue {
             auto& board = Board::GetInstance();
             return board.GetSystemInfoJson();
         });
 
-    AddUserOnlyTool("self.reboot", "Reboot the system",
+    AddUserOnlyTool("self.reboot", "Khởi động lại hệ thống",
         PropertyList(),
         [this](const PropertyList& properties) -> ReturnValue {
             auto& app = Application::GetInstance();
             app.Schedule([&app]() {
-                ESP_LOGW(TAG, "User requested reboot");
+                ESP_LOGW(TAG, "Người dùng yêu cầu khởi động lại");
                 vTaskDelay(pdMS_TO_TICKS(1000));
 
                 app.Reboot();
@@ -148,14 +194,14 @@ void McpServer::AddUserOnlyTools() {
             return true;
         });
 
-    // Firmware upgrade
-    AddUserOnlyTool("self.upgrade_firmware", "Upgrade firmware from a specific URL. This will download and install the firmware, then reboot the device.",
+    // Nâng cấp firmware
+    AddUserOnlyTool("self.upgrade_firmware", "Nâng cấp firmware từ một URL cụ thể. Điều này sẽ tải xuống và cài đặt firmware, sau đó khởi động lại thiết bị.",
         PropertyList({
-            Property("url", kPropertyTypeString, "The URL of the firmware binary file to download and install")
+            Property("url", kPropertyTypeString, "URL của tệp firmware nhị phân để tải xuống và cài đặt")
         }),
         [this](const PropertyList& properties) -> ReturnValue {
             auto url = properties["url"].value<std::string>();
-            ESP_LOGI(TAG, "User requested firmware upgrade from URL: %s", url.c_str());
+            ESP_LOGI(TAG, "Người dùng yêu cầu nâng cấp firmware từ URL: %s", url.c_str());
             
             auto& app = Application::GetInstance();
             app.Schedule([url, &app]() {
@@ -163,18 +209,18 @@ void McpServer::AddUserOnlyTools() {
                 
                 bool success = app.UpgradeFirmware(*ota, url);
                 if (!success) {
-                    ESP_LOGE(TAG, "Firmware upgrade failed");
+                    ESP_LOGE(TAG, "Nâng cấp firmware thất bại");
                 }
             });
             
             return true;
         });
 
-    // Display control
+    // Điều khiển hiển thị
 #ifdef HAVE_LVGL
     auto display = dynamic_cast<LvglDisplay*>(Board::GetInstance().GetDisplay());
     if (display) {
-        AddUserOnlyTool("self.screen.get_info", "Information about the screen, including width, height, etc.",
+        AddUserOnlyTool("self.screen.get_info", "Thông tin về màn hình, bao gồm chiều rộng, chiều cao, v.v.",
             PropertyList(),
             [display](const PropertyList& properties) -> ReturnValue {
                 cJSON *json = cJSON_CreateObject();
@@ -189,7 +235,7 @@ void McpServer::AddUserOnlyTools() {
             });
 
 #if CONFIG_LV_USE_SNAPSHOT
-        AddUserOnlyTool("self.screen.snapshot", "Snapshot the screen and upload it to a specific URL",
+        AddUserOnlyTool("self.screen.snapshot", "Chụp ảnh màn hình và tải lên một URL cụ thể",
             PropertyList({
                 Property("url", kPropertyTypeString),
                 Property("quality", kPropertyTypeInteger, 80, 1, 100)
@@ -200,21 +246,21 @@ void McpServer::AddUserOnlyTools() {
 
                 std::string jpeg_data;
                 if (!display->SnapshotToJpeg(jpeg_data, quality)) {
-                    throw std::runtime_error("Failed to snapshot screen");
+                    throw std::runtime_error("Không thể chụp ảnh màn hình");
                 }
 
-                ESP_LOGI(TAG, "Upload snapshot %u bytes to %s", jpeg_data.size(), url.c_str());
+                ESP_LOGI(TAG, "Tải ảnh chụp màn hình %u byte lên %s", jpeg_data.size(), url.c_str());
                 
-                // Construct multipart/form-data request body
+                // Xây dựng yêu cầu multipart/form-data
                 std::string boundary = "----ESP32_SCREEN_SNAPSHOT_BOUNDARY";
                 
                 auto http = Board::GetInstance().GetNetwork()->CreateHttp(3);
                 http->SetHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
                 if (!http->Open("POST", url)) {
-                    throw std::runtime_error("Failed to open URL: " + url);
+                    throw std::runtime_error("Không thể mở URL: " + url);
                 }
                 {
-                    // File field header
+                    // Tiêu đề trường tệp
                     std::string file_header;
                     file_header += "--" + boundary + "\r\n";
                     file_header += "Content-Disposition: form-data; name=\"file\"; filename=\"screenshot.jpg\"\r\n";
@@ -223,11 +269,11 @@ void McpServer::AddUserOnlyTools() {
                     http->Write(file_header.c_str(), file_header.size());
                 }
 
-                // JPEG data
+                // Dữ liệu JPEG
                 http->Write((const char*)jpeg_data.data(), jpeg_data.size());
 
                 {
-                    // Multipart footer
+                    // Chân multipart
                     std::string multipart_footer;
                     multipart_footer += "\r\n--" + boundary + "--\r\n";
                     http->Write(multipart_footer.c_str(), multipart_footer.size());
@@ -235,15 +281,15 @@ void McpServer::AddUserOnlyTools() {
                 http->Write("", 0);
 
                 if (http->GetStatusCode() != 200) {
-                    throw std::runtime_error("Unexpected status code: " + std::to_string(http->GetStatusCode()));
+                    throw std::runtime_error("Mã trạng thái không mong đợi: " + std::to_string(http->GetStatusCode()));
                 }
                 std::string result = http->ReadAll();
                 http->Close();
-                ESP_LOGI(TAG, "Snapshot screen result: %s", result.c_str());
+                ESP_LOGI(TAG, "Kết quả chụp màn hình: %s", result.c_str());
                 return true;
             });
         
-        AddUserOnlyTool("self.screen.preview_image", "Preview an image on the screen",
+        AddUserOnlyTool("self.screen.preview_image", "Xem trước hình ảnh trên màn hình",
             PropertyList({
                 Property("url", kPropertyTypeString)
             }),
@@ -252,24 +298,24 @@ void McpServer::AddUserOnlyTools() {
                 auto http = Board::GetInstance().GetNetwork()->CreateHttp(3);
 
                 if (!http->Open("GET", url)) {
-                    throw std::runtime_error("Failed to open URL: " + url);
+                    throw std::runtime_error("Không thể mở URL: " + url);
                 }
                 int status_code = http->GetStatusCode();
                 if (status_code != 200) {
-                    throw std::runtime_error("Unexpected status code: " + std::to_string(status_code));
+                    throw std::runtime_error("Mã trạng thái không mong đợi: " + std::to_string(status_code));
                 }
 
                 size_t content_length = http->GetBodyLength();
                 char* data = (char*)heap_caps_malloc(content_length, MALLOC_CAP_8BIT);
                 if (data == nullptr) {
-                    throw std::runtime_error("Failed to allocate memory for image: " + url);
+                    throw std::runtime_error("Không thể cấp phát bộ nhớ cho hình ảnh: " + url);
                 }
                 size_t total_read = 0;
                 while (total_read < content_length) {
                     int ret = http->Read(data + total_read, content_length - total_read);
                     if (ret < 0) {
                         heap_caps_free(data);
-                        throw std::runtime_error("Failed to download image: " + url);
+                        throw std::runtime_error("Không thể tải xuống hình ảnh: " + url);
                     }
                     if (ret == 0) {
                         break;
@@ -286,10 +332,10 @@ void McpServer::AddUserOnlyTools() {
     }
 #endif // HAVE_LVGL
 
-    // Assets download url
+    // URL tải xuống tài sản
     auto& assets = Assets::GetInstance();
     if (assets.partition_valid()) {
-        AddUserOnlyTool("self.assets.set_download_url", "Set the download url for the assets",
+        AddUserOnlyTool("self.assets.set_download_url", "Đặt url tải xuống cho tài sản",
             PropertyList({
                 Property("url", kPropertyTypeString)
             }),
@@ -303,13 +349,13 @@ void McpServer::AddUserOnlyTools() {
 }
 
 void McpServer::AddTool(McpTool* tool) {
-    // Prevent adding duplicate tools
+    // Ngăn chặn việc thêm công cụ trùng lặp
     if (std::find_if(tools_.begin(), tools_.end(), [tool](const McpTool* t) { return t->name() == tool->name(); }) != tools_.end()) {
-        ESP_LOGW(TAG, "Tool %s already added", tool->name().c_str());
+        ESP_LOGW(TAG, "Công cụ %s đã được thêm", tool->name().c_str());
         return;
     }
 
-    ESP_LOGI(TAG, "Add tool: %s%s", tool->name().c_str(), tool->user_only() ? " [user]" : "");
+    ESP_LOGI(TAG, "Thêm công cụ: %s%s", tool->name().c_str(), tool->user_only() ? " [người dùng]" : "");
     tools_.push_back(tool);
 }
 
@@ -326,7 +372,7 @@ void McpServer::AddUserOnlyTool(const std::string& name, const std::string& desc
 void McpServer::ParseMessage(const std::string& message) {
     cJSON* json = cJSON_Parse(message.c_str());
     if (json == nullptr) {
-        ESP_LOGE(TAG, "Failed to parse MCP message: %s", message.c_str());
+        ESP_LOGE(TAG, "Không thể phân tích tin nhắn MCP: %s", message.c_str());
         return;
     }
     ParseMessage(json);
@@ -353,17 +399,17 @@ void McpServer::ParseCapabilities(const cJSON* capabilities) {
 }
 
 void McpServer::ParseMessage(const cJSON* json) {
-    // Check JSONRPC version
+    // Kiểm tra phiên bản JSONRPC
     auto version = cJSON_GetObjectItem(json, "jsonrpc");
     if (version == nullptr || !cJSON_IsString(version) || strcmp(version->valuestring, "2.0") != 0) {
-        ESP_LOGE(TAG, "Invalid JSONRPC version: %s", version ? version->valuestring : "null");
+        ESP_LOGE(TAG, "Phiên bản JSONRPC không hợp lệ: %s", version ? version->valuestring : "null");
         return;
     }
     
-    // Check method
+    // Kiểm tra phương thức
     auto method = cJSON_GetObjectItem(json, "method");
     if (method == nullptr || !cJSON_IsString(method)) {
-        ESP_LOGE(TAG, "Missing method");
+        ESP_LOGE(TAG, "Thiếu phương thức");
         return;
     }
     
@@ -372,16 +418,16 @@ void McpServer::ParseMessage(const cJSON* json) {
         return;
     }
     
-    // Check params
+    // Kiểm tra tham số
     auto params = cJSON_GetObjectItem(json, "params");
     if (params != nullptr && !cJSON_IsObject(params)) {
-        ESP_LOGE(TAG, "Invalid params for method: %s", method_str.c_str());
+        ESP_LOGE(TAG, "Tham số không hợp lệ cho phương thức: %s", method_str.c_str());
         return;
     }
 
     auto id = cJSON_GetObjectItem(json, "id");
     if (id == nullptr || !cJSON_IsNumber(id)) {
-        ESP_LOGE(TAG, "Invalid id for method: %s", method_str.c_str());
+        ESP_LOGE(TAG, "ID không hợp lệ cho phương thức: %s", method_str.c_str());
         return;
     }
     auto id_int = id->valueint;
@@ -414,26 +460,26 @@ void McpServer::ParseMessage(const cJSON* json) {
         GetToolsList(id_int, cursor_str, list_user_only_tools);
     } else if (method_str == "tools/call") {
         if (!cJSON_IsObject(params)) {
-            ESP_LOGE(TAG, "tools/call: Missing params");
-            ReplyError(id_int, "Missing params");
+            ESP_LOGE(TAG, "tools/call: Thiếu tham số");
+            ReplyError(id_int, "Thiếu tham số");
             return;
         }
         auto tool_name = cJSON_GetObjectItem(params, "name");
         if (!cJSON_IsString(tool_name)) {
-            ESP_LOGE(TAG, "tools/call: Missing name");
-            ReplyError(id_int, "Missing name");
+            ESP_LOGE(TAG, "tools/call: Thiếu tên");
+            ReplyError(id_int, "Thiếu tên");
             return;
         }
         auto tool_arguments = cJSON_GetObjectItem(params, "arguments");
         if (tool_arguments != nullptr && !cJSON_IsObject(tool_arguments)) {
-            ESP_LOGE(TAG, "tools/call: Invalid arguments");
-            ReplyError(id_int, "Invalid arguments");
+            ESP_LOGE(TAG, "tools/call: Tham số không hợp lệ");
+            ReplyError(id_int, "Tham số không hợp lệ");
             return;
         }
         DoToolCall(id_int, std::string(tool_name->valuestring), tool_arguments);
     } else {
-        ESP_LOGE(TAG, "Method not implemented: %s", method_str.c_str());
-        ReplyError(id_int, "Method not implemented: " + method_str);
+        ESP_LOGE(TAG, "Phương thức chưa được triển khai: %s", method_str.c_str());
+        ReplyError(id_int, "Phương thức chưa được triển khai: " + method_str);
     }
 }
 
@@ -463,7 +509,7 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     std::string next_cursor = "";
     
     while (it != tools_.end()) {
-        // 如果我们还没有找到起始位置，继续搜索
+        // Nếu chúng ta chưa tìm thấy vị trí bắt đầu, tiếp tục tìm kiếm
         if (!found_cursor) {
             if ((*it)->name() == cursor) {
                 found_cursor = true;
@@ -478,10 +524,10 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
             continue;
         }
         
-        // 添加tool前检查大小
+        // Thêm công cụ trước khi kiểm tra kích thước
         std::string tool_json = (*it)->to_json() + ",";
         if (json.length() + tool_json.length() + 30 > max_payload_size) {
-            // 如果添加这个tool会超出大小限制，设置next_cursor并退出循环
+            // Nếu thêm công cụ này sẽ vượt quá giới hạn kích thước, đặt next_cursor và thoát khỏi vòng lặp
             next_cursor = (*it)->name();
             break;
         }
@@ -495,9 +541,9 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     }
     
     if (json.back() == '[' && !tools_.empty()) {
-        // 如果没有添加任何tool，返回错误
-        ESP_LOGE(TAG, "tools/list: Failed to add tool %s because of payload size limit", next_cursor.c_str());
-        ReplyError(id, "Failed to add tool " + next_cursor + " because of payload size limit");
+        // Nếu không thêm được công cụ nào, trả về lỗi
+        ESP_LOGE(TAG, "tools/list: Không thể thêm công cụ %s vì giới hạn kích thước payload", next_cursor.c_str());
+        ReplyError(id, "Không thể thêm công cụ " + next_cursor + " vì giới hạn kích thước payload");
         return;
     }
 
@@ -517,8 +563,8 @@ void McpServer::DoToolCall(int id, const std::string& tool_name, const cJSON* to
                                  });
     
     if (tool_iter == tools_.end()) {
-        ESP_LOGE(TAG, "tools/call: Unknown tool: %s", tool_name.c_str());
-        ReplyError(id, "Unknown tool: " + tool_name);
+        ESP_LOGE(TAG, "tools/call: Công cụ không xác định: %s", tool_name.c_str());
+        ReplyError(id, "Công cụ không xác định: " + tool_name);
         return;
     }
 
@@ -541,8 +587,8 @@ void McpServer::DoToolCall(int id, const std::string& tool_name, const cJSON* to
             }
 
             if (!argument.has_default_value() && !found) {
-                ESP_LOGE(TAG, "tools/call: Missing valid argument: %s", argument.name().c_str());
-                ReplyError(id, "Missing valid argument: " + argument.name());
+                ESP_LOGE(TAG, "tools/call: Thiếu tham số hợp lệ: %s", argument.name().c_str());
+                ReplyError(id, "Thiếu tham số hợp lệ: " + argument.name());
                 return;
             }
         }
@@ -552,7 +598,7 @@ void McpServer::DoToolCall(int id, const std::string& tool_name, const cJSON* to
         return;
     }
 
-    // Use main thread to call the tool
+    // Sử dụng luồng chính để gọi công cụ
     auto& app = Application::GetInstance();
     app.Schedule([this, id, tool_iter, arguments = std::move(arguments)]() {
         try {

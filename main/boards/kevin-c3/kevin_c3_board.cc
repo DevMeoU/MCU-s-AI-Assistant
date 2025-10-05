@@ -59,7 +59,7 @@ private:
         });
     }
 
-    // 物联网初始化，添加对 AI 可见设备
+    // IoT initialization, add support for AI visible devices
     void InitializeTools() {
         led_strip_ = new CircularStrip(BUILTIN_LED_GPIO, 8);
         new LedStripControl(led_strip_);
@@ -71,7 +71,7 @@ public:
         InitializeButtons();
         InitializeTools();
         
-        // 把 ESP32C3 的 VDD SPI 引脚作为普通 GPIO 口使用
+        // Use ESP32C3's VDD SPI pin as a regular GPIO pin
         esp_efuse_write_field_bit(ESP_EFUSE_VDD_SPI_AS_GPIO);
     }
 

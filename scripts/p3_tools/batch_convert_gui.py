@@ -108,8 +108,8 @@ class AudioConverterApp:
 
     def select_files(self):
         file_types = [
-            ("音频文件", "*.wav *.mp3 *.ogg *.flac") if self.mode.get() == "audio_to_p3" 
-            else ("P3文件", "*.p3")
+            ("Tệp âm thanh", "*.wav *.mp3 *.ogg *.flac") if self.mode.get() == "audio_to_p3" 
+            else ("Tệp P3", "*.p3")
         ]
         
         files = filedialog.askopenfilenames(filetypes=file_types)

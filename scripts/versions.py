@@ -185,27 +185,27 @@ def post_info_to_server(info):
     # Args:
     #     info: Từ điển chứa thông tin firmware (Vietnamese)
     try:
-        # 从环境变量获取服务器URL和token
+        # Lấy URL máy chủ và token từ biến môi trường
         server_url = os.environ.get('VERSIONS_SERVER_URL')
         server_token = os.environ.get('VERSIONS_TOKEN')
         
         if not server_url or not server_token:
             raise Exception("Missing SERVER_URL or TOKEN in environment variables")
 
-        # 准备请求头和数据
+        # Chuẩn bị tiêu đề và dữ liệu yêu cầu
         headers = {
             'Authorization': f'Bearer {server_token}',
             'Content-Type': 'application/json'
         }
         
-        # 发送POST请求
+        # Gửi yêu cầu POST
         response = requests.post(
             server_url,
             headers=headers,
             json={'jsonData': json.dumps(info)}
         )
         
-        # 检查响应状态
+        # Kiểm tra trạng thái phản hồi
         response.raise_for_status()
         
         print(f"Successfully uploaded version info for tag: {info['tag']}")

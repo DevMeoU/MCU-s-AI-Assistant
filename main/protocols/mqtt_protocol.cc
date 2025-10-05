@@ -212,7 +212,7 @@ bool MqttProtocol::OpenAudioChannel() {
         return false;
     }
 
-    // 等待服务器响应
+    // Đợi phản hồi từ máy chủ
     EventBits_t bits = xEventGroupWaitBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT, pdTRUE, pdFALSE, pdMS_TO_TICKS(10000));
     if (!(bits & MQTT_PROTOCOL_SERVER_HELLO_EVENT)) {
         ESP_LOGE(TAG, "Failed to receive server hello");
@@ -278,7 +278,7 @@ bool MqttProtocol::OpenAudioChannel() {
 }
 
 std::string MqttProtocol::GetHelloMessage() {
-    // 发送 hello 消息申请 UDP 通道
+    // Gửi tin nhắn hello để yêu cầu kênh UDP
     cJSON* root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "type", "hello");
     cJSON_AddNumberToObject(root, "version", 3);

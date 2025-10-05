@@ -56,18 +56,17 @@ public:
     bool GetRestState();
     void SetRestState(bool state);
 
-    // -- 手部动作
+    // -- Hành động tay
     void HandAction(int action, int times = 1, int amount = 30, int period = 1000);
-    // action: 1=举左手, 2=举右手, 3=举双手, 4=放左手, 5=放右手, 6=放双手, 7=挥左手, 8=挥右手,
-    // 9=挥双手, 10=拍打左手, 11=拍打右手, 12=拍打双手
+    // action: 1=nâng tay trái, 2=nâng tay phải, 3=nâng cả hai tay, 4=hạ tay trái, 5=hạ tay phải, 6=hạ cả hai tay, 7=vẫy tay trái, 8=vẫy tay phải, 9=vẫy cả hai tay, 10=vỗ tay trái, 11=vỗ tay phải, 12=vỗ cả hai tay
 
-    //-- 身体动作
+    //-- Hành động thân
     void BodyAction(int action, int times = 1, int amount = 30, int period = 1000);
-    // action: 1=左转, 2=右转
+    // action: 1=quay trái, 2=quay phải
 
-    //-- 头部动作
+    //-- Hành động đầu
     void HeadAction(int action, int times = 1, int amount = 10, int period = 500);
-    // action: 1=抬头, 2=低头, 3=点头, 4=回中心, 5=连续点头
+    // action: 1=ngẩng đầu, 2=cúi đầu, 3=gật đầu, 4=về tâm, 5=gật đầu liên tục
 
 private:
     Oscillator servo_[SERVO_COUNT];

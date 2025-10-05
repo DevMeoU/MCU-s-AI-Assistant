@@ -410,9 +410,9 @@ std::string Ota::GetActivationPayload() {
 
     std::string hmac_hex;
 #ifdef SOC_HMAC_SUPPORTED
-    uint8_t hmac_result[32]; // SHA-256 output is 32 bytes (SHA-256 输出为32字节)
+    uint8_t hmac_result[32]; // SHA-256 output is 32 bytes (Đầu ra SHA-256 là 32 byte)
     
-    // Calculate HMAC using Key0 (使用Key0计算HMAC)
+    // Calculate HMAC using Key0 (Tính toán HMAC bằng Key0)
     esp_err_t ret = esp_hmac_calculate(HMAC_KEY0, (uint8_t*)activation_challenge_.data(), activation_challenge_.size(), hmac_result);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "HMAC calculation failed: %s", esp_err_to_name(ret));

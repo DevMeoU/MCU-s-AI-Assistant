@@ -31,6 +31,10 @@ public:
     inline bool checksum_valid() const { return checksum_valid_; }
     inline std::string default_assets_url() const { return default_assets_url_; }
 
+    // MCP server integration methods
+    cJSON* GetAssetsInfoJson();             /* Get assets information as JSON for MCP server */
+    bool SetAssetProperty(const std::string& property, const std::string& value); /* Set asset properties via MCP */
+
 private:
     Assets();
     Assets(const Assets&) = delete;

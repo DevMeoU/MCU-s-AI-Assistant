@@ -1050,14 +1050,14 @@ void LcdDisplay::SetTheme(Theme* theme) {
             // User and system message containers are transparent
             lv_opa_t bg_opa = lv_obj_get_style_bg_opa(obj, 0);
             if (bg_opa == LV_OPA_TRANSP) {
-                // 这是用户或系统消息的容器
+                // Đây là container của tin nhắn người dùng hoặc hệ thống
                 bubble = lv_obj_get_child(obj, 0);
             } else {
-                // 这可能是助手消息的气泡自身
+                // Đây có thể là bong bóng tin nhắn trợ lý
                 bubble = obj;
             }
         } else {
-            // 没有子元素，可能是其他UI元素，跳过
+            // Không có phần tử con, có thể là các phần tử UI khác, bỏ qua
             continue;
         }
         

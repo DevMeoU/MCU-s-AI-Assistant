@@ -80,7 +80,7 @@ private:
     void InitializeLcdDisplay() {
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         esp_lcd_panel_handle_t panel = nullptr;
-        // 液晶屏控制IO初始化
+        // Khởi tạo IO điều khiển màn hình LCD
         ESP_LOGD(TAG, "Install panel IO");
         esp_lcd_panel_io_spi_config_t io_config = {};
         io_config.cs_gpio_num = DISPLAY_CS_PIN;
@@ -92,7 +92,7 @@ private:
         io_config.lcd_param_bits = 8;
         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI3_HOST, &io_config, &panel_io));
 
-        // 初始化液晶屏驱动芯片
+        // Khởi tạo chip điều khiển màn hình LCD
         ESP_LOGD(TAG, "Install LCD driver");
         esp_lcd_panel_dev_config_t panel_config = {};
         panel_config.reset_gpio_num = DISPLAY_RESET_PIN;
@@ -134,13 +134,13 @@ private:
         });
 
         asr_button_.OnClick([this]() {
-            std::string wake_word="你好小智";
+            std::string wake_word="Xin chào Xiao Zhi";
             Application::GetInstance().WakeWordInvoke(wake_word);
         });
 
     }
 
-    // 物联网初始化，添加对 AI 可见设备
+    // Khởi tạo IoT, thêm thiết bị hiển thị cho AI
     void InitializeTools() {
         static LampController lamp(LAMP_GPIO);
     }

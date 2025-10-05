@@ -10,14 +10,14 @@
 
 #define TAG "ElectronEmojiDisplay"
 
-// 表情映射表 - 将多种表情映射到现有6个GIF
+// Bảng ánh xạ biểu cảm - Ánh xạ nhiều biểu cảm vào 6 GIF hiện có
 const ElectronEmojiDisplay::EmotionMap ElectronEmojiDisplay::emotion_maps_[] = {
-    // 中性/平静类表情 -> staticstate
+    // Biểu cảm trung tính/bình tĩnh -> staticstate
     {"neutral", &staticstate},
     {"relaxed", &staticstate},
     {"sleepy", &staticstate},
 
-    // 积极/开心类表情 -> happy
+    // Biểu cảm tích cực/vui vẻ -> happy
     {"happy", &happy},
     {"laughing", &happy},
     {"funny", &happy},
@@ -29,23 +29,23 @@ const ElectronEmojiDisplay::EmotionMap ElectronEmojiDisplay::emotion_maps_[] = {
     {"kissy", &happy},
     {"silly", &happy},
 
-    // 悲伤类表情 -> sad
+    // Biểu cảm buồn -> sad
     {"sad", &sad},
     {"crying", &sad},
 
-    // 愤怒类表情 -> anger
+    // Biểu cảm tức giận -> anger
     {"angry", &anger},
 
-    // 惊讶类表情 -> scare
+    // Biểu cảm ngạc nhiên -> scare
     {"surprised", &scare},
     {"shocked", &scare},
 
-    // 思考/困惑类表情 -> buxue
+    // Biểu cảm suy nghĩ/lúng túng -> buxue
     {"thinking", &buxue},
     {"confused", &buxue},
     {"embarrassed", &buxue},
 
-    {nullptr, nullptr}  // 结束标记
+    {nullptr, nullptr}  // Dấu hiệu kết thúc
 };
 
 ElectronEmojiDisplay::ElectronEmojiDisplay(esp_lcd_panel_io_handle_t panel_io,
@@ -123,13 +123,13 @@ void ElectronEmojiDisplay::SetEmotion(const char* emotion) {
     for (const auto& map : emotion_maps_) {
         if (map.name && strcmp(map.name, emotion) == 0) {
             lv_gif_set_src(emotion_gif_, map.gif);
-            ESP_LOGI(TAG, "设置表情: %s", emotion);
+            ESP_LOGI(TAG, "Đặt biểu cảm: %s", emotion);
             return;
         }
     }
 
     lv_gif_set_src(emotion_gif_, &staticstate);
-    ESP_LOGI(TAG, "未知表情'%s'，使用默认", emotion);
+    ESP_LOGI(TAG, "Biểu cảm không xác định '%s'，sử dụng mặc định", emotion);
 }
 
 void ElectronEmojiDisplay::SetChatMessage(const char* role, const char* content) {
@@ -146,5 +146,5 @@ void ElectronEmojiDisplay::SetChatMessage(const char* role, const char* content)
     lv_label_set_text(chat_message_label_, content);
     lv_obj_remove_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
 
-    ESP_LOGI(TAG, "设置聊天消息 [%s]: %s", role, content);
+    ESP_LOGI(TAG, "Đặt tin nhắn trò chuyện [%s]: %s", role, content);
 }

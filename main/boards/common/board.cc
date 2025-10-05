@@ -4,6 +4,8 @@
 #include "display/display.h"
 #include "display/oled_display.h"
 #include "assets/lang_config.h"
+#include "boards/common/music.h"
+#include "boards/common/esp32_music.h"
 
 #include <esp_log.h>
 #include <esp_ota_ops.h>
@@ -23,17 +25,17 @@ Board::Board() {
 }
 
 std::string Board::GenerateUuid() {
-    // UUID v4 requires 16 bytes of random data
+    // UUID v4 yêu cầu 16 byte dữ liệu ngẫu nhiên
     uint8_t uuid[16];
     
-    // Use ESP32's hardware random number generator
+    // Sử dụng bộ tạo số ngẫu nhiên phần cứng của ESP32
     esp_fill_random(uuid, sizeof(uuid));
     
-    // Set version (version 4) and variant bits
-    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // Version 4
-    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // Variant 1
+    // Đặt phiên bản (phiên bản 4) và bit biến thể
+    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // Phiên bản 4
+    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // Biến thể 1
     
-    // Convert bytes to standard UUID string format
+    // Chuyển đổi byte sang định dạng chuỗi UUID tiêu chuẩn
     char uuid_str[37];
     snprintf(uuid_str, sizeof(uuid_str),
         "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
@@ -65,6 +67,11 @@ Camera* Board::GetCamera() {
 Led* Board::GetLed() {
     static NoLed led;
     return &led;
+}
+
+Music* Board::GetMusicPlayer() {
+    static Esp32Music music_player;
+    return &music_player;
 }
 
 std::string Board::GetSystemInfoJson() {
@@ -147,7 +154,7 @@ std::string Board::GetSystemInfoJson() {
         json += R"("size":)" + std::to_string(partition->size) + R"(},)";;
         it = esp_partition_next(it);
     }
-    json.pop_back(); // Remove the last comma
+    json.pop_back(); // Xóa dấu phẩy cuối cùng
     json += R"(],)";
 
     json += R"("ota":{)";
@@ -155,7 +162,7 @@ std::string Board::GetSystemInfoJson() {
     json += R"("label":")" + std::string(ota_partition->label) + R"(")";
     json += R"(},)";
 
-    // Append display info
+    // Thêm thông tin hiển thị
     auto display = GetDisplay();
     if (display) {
         json += R"("display":{)";
@@ -166,13 +173,13 @@ std::string Board::GetSystemInfoJson() {
         }
         json += R"("width":)" + std::to_string(display->width()) + R"(,)";
         json += R"("height":)" + std::to_string(display->height()) + R"(,)";
-        json.pop_back(); // Remove the last comma
+        json.pop_back(); // Xóa dấu phẩy cuối cùng
     }
     json += R"(},)";
 
     json += R"("board":)" + GetBoardJson();
 
-    // Close the JSON object
+    // Đóng đối tượng JSON
     json += R"(})";
     return json;
 }

@@ -12,14 +12,14 @@
 
 #define TAG "OttoEmojiDisplay"
 
-// 表情映射表 - 将原版21种表情映射到现有6个GIF
+// Bảng ánh xạ biểu cảm - Ánh xạ 21 biểu cảm gốc sang 6 GIF hiện có
 const OttoEmojiDisplay::EmotionMap OttoEmojiDisplay::emotion_maps_[] = {
-    // 中性/平静类表情 -> staticstate
+    // Biểu cảm trung tính/bình tĩnh -> staticstate
     {"neutral", &staticstate},
     {"relaxed", &staticstate},
     {"sleepy", &staticstate},
 
-    // 积极/开心类表情 -> happy
+    // Biểu cảm tích cực/vui vẻ -> happy
     {"happy", &happy},
     {"laughing", &happy},
     {"funny", &happy},
@@ -31,23 +31,23 @@ const OttoEmojiDisplay::EmotionMap OttoEmojiDisplay::emotion_maps_[] = {
     {"kissy", &happy},
     {"silly", &happy},
 
-    // 悲伤类表情 -> sad
+    // Biểu cảm buồn -> sad
     {"sad", &sad},
     {"crying", &sad},
 
-    // 愤怒类表情 -> anger
+    // Biểu cảm tức giận -> anger
     {"angry", &anger},
 
-    // 惊讶类表情 -> scare
+    // Biểu cảm ngạc nhiên -> scare
     {"surprised", &scare},
     {"shocked", &scare},
 
-    // 思考/困惑类表情 -> buxue
+    // Biểu cảm suy nghĩ/lúng túng -> buxue
     {"thinking", &buxue},
     {"confused", &buxue},
     {"embarrassed", &buxue},
 
-    {nullptr, nullptr}  // 结束标记
+    {nullptr, nullptr}  // Dấu hiệu kết thúc
 };
 
 OttoEmojiDisplay::OttoEmojiDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,

@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <esp_camera.h>  // 包含ESP32相机驱动的定义，避免重复定义pixformat_t和camera_fb_t
+#include <esp_camera.h>  // Bao gồm định nghĩa của trình điều khiển camera ESP32, tránh định nghĩa lại pixformat_t và camera_fb_t
 
 #ifdef __cplusplus
 extern "C" {

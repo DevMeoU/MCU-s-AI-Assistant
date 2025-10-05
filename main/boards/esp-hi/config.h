@@ -6,7 +6,7 @@
 #define AUDIO_INPUT_SAMPLE_RATE  16000
 #define AUDIO_OUTPUT_SAMPLE_RATE 24000
 
-// 配置PDM上采样fs参数（取值范围<=480）。部分设备在441时表现更稳定
+// Cấu hình tham số fs lấy mẫu lên PDM (phạm vi giá trị <= 480). Một số thiết bị hoạt động ổn định hơn ở 441
 #define AUDIO_PDM_UPSAMPLE_FS    441
 
 #define AUDIO_ADC_MIC_CHANNEL       2

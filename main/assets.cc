@@ -152,6 +152,13 @@ bool Assets::Apply() {
     if (cJSON_IsString(font)) {
         std::string fonts_text_file = font->valuestring;
         if (GetAssetData(fonts_text_file, ptr, size)) {
+            // Check if this is the custom DejaVu font
+            if (fonts_text_file == "dejavu_sans.bin") {
+                ESP_LOGI(TAG, "Loading custom DejaVu Sans font");
+                // For custom fonts, we might need special handling
+                // For now, use the same loading mechanism
+            }
+            
             auto text_font = std::make_shared<LvglCBinFont>(ptr);
             if (text_font->font() == nullptr) {
                 ESP_LOGE(TAG, "Failed to load fonts.bin");
@@ -257,6 +264,13 @@ bool Assets::Apply() {
     if (cJSON_IsString(font)) {
         std::string fonts_text_file = font->valuestring;
         if (GetAssetData(fonts_text_file, ptr, size)) {
+            // Check if this is the custom DejaVu font
+            if (fonts_text_file == "dejavu_sans.bin") {
+                ESP_LOGI(TAG, "Loading custom DejaVu Sans font for EMOTE display");
+                // For custom fonts, we might need special handling
+                // For now, use the same loading mechanism
+            }
+            
             auto text_font = std::make_shared<LvglCBinFont>(ptr);
             if (text_font->font() == nullptr) {
                 ESP_LOGE(TAG, "Failed to load fonts.bin");
@@ -370,7 +384,7 @@ bool Assets::Apply() {
 bool Assets::Download(std::string url, std::function<void(int progress, size_t speed)> progress_callback) {
     ESP_LOGI(TAG, "Downloading new version of assets from %s", url.c_str());
     
-    // 取消当前资源分区的内存映射
+    // Hủy bỏ ánh xạ bộ nhớ của phân vùng tài nguyên hiện tại
     if (mmap_handle_ != 0) {
         esp_partition_munmap(mmap_handle_);
         mmap_handle_ = 0;
@@ -379,7 +393,7 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
     checksum_valid_ = false;
     assets_.clear();
 
-    // 下载新的资源文件
+    // Tải xuống tệp tài nguyên mới
     auto network = Board::GetInstance().GetNetwork();
     auto http = network->CreateHttp(0);
     
@@ -404,17 +418,17 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
         return false;
     }
 
-    // 定义扇区大小为4KB（ESP32的标准扇区大小）
+    // Định nghĩa kích thước sector là 4KB (kích thước sector tiêu chuẩn của ESP32)
     const size_t SECTOR_SIZE = esp_partition_get_main_flash_sector_size();
     
-    // 计算需要擦除的扇区数量
-    size_t sectors_to_erase = (content_length + SECTOR_SIZE - 1) / SECTOR_SIZE; // 向上取整
+    // Tính toán số lượng sector cần xóa
+    size_t sectors_to_erase = (content_length + SECTOR_SIZE - 1) / SECTOR_SIZE; // Làm tròn lên
     size_t total_erase_size = sectors_to_erase * SECTOR_SIZE;
     
     ESP_LOGI(TAG, "Sector size: %u, content length: %u, sectors to erase: %u, total erase size: %u", 
              SECTOR_SIZE, content_length, sectors_to_erase, total_erase_size);
     
-    // 写入新的资源文件到分区，一边erase一边写入
+    // Ghi tệp tài nguyên mới vào phân vùng, vừa xóa vừa ghi
     char buffer[512];
     size_t total_written = 0;
     size_t recent_written = 0;
@@ -432,16 +446,16 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
             break;
         }
 
-        // 检查是否需要擦除新的扇区
+        // Kiểm tra xem có cần xóa sector mới không
         size_t write_end_offset = total_written + ret;
         size_t needed_sectors = (write_end_offset + SECTOR_SIZE - 1) / SECTOR_SIZE;
         
-        // 擦除需要的新扇区
+        // Xóa các sector mới cần thiết
         while (current_sector < needed_sectors) {
             size_t sector_start = current_sector * SECTOR_SIZE;
             size_t sector_end = (current_sector + 1) * SECTOR_SIZE;
             
-            // 确保擦除范围不超过分区大小
+            // Đảm bảo phạm vi xóa không vượt quá kích thước phân vùng
             if (sector_end > partition_->size) {
                 ESP_LOGE(TAG, "Sector end (%u) exceeds partition size (%lu)", sector_end, partition_->size);
                 return false;
@@ -457,7 +471,7 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
             current_sector++;
         }
 
-        // 写入数据到分区
+        // Ghi dữ liệu vào phân vùng
         esp_err_t err = esp_partition_write(partition_, total_written, buffer, ret);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Failed to write to assets partition at offset %u: %s", total_written, esp_err_to_name(err));
@@ -467,7 +481,7 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
         total_written += ret;
         recent_written += ret;
 
-        // 计算进度和速度
+        // Tính toán tiến độ và tốc độ
         if (esp_timer_get_time() - last_calc_time >= 1000000 || total_written == content_length || ret == 0) {
             size_t progress = total_written * 100 / content_length;
             size_t speed = recent_written; // Bytes per second
@@ -491,13 +505,48 @@ bool Assets::Download(std::string url, std::function<void(int progress, size_t s
     ESP_LOGI(TAG, "Assets download completed, total written: %u bytes, total sectors erased: %u", 
              total_written, current_sector);
 
-    // 重新初始化资源分区
+    // Khởi tạo lại phân vùng tài nguyên
     if (!InitializePartition()) {
         ESP_LOGE(TAG, "Failed to re-initialize assets partition");
         return false;
     }
 
     return true;
+}
+
+cJSON* Assets::GetAssetsInfoJson() {
+    cJSON* root = cJSON_CreateObject();
+    
+    // Add basic asset information
+    cJSON_AddStringToObject(root, "partition_valid", partition_valid_ ? "true" : "false");
+    cJSON_AddStringToObject(root, "checksum_valid", checksum_valid_ ? "true" : "false");
+    cJSON_AddStringToObject(root, "default_assets_url", default_assets_url_.c_str());
+    
+    // Add asset count
+    cJSON_AddNumberToObject(root, "asset_count", assets_.size());
+    
+    // Add asset list
+    cJSON* assets_array = cJSON_CreateArray();
+    for (const auto& pair : assets_) {
+        cJSON* asset_obj = cJSON_CreateObject();
+        cJSON_AddStringToObject(asset_obj, "name", pair.first.c_str());
+        cJSON_AddNumberToObject(asset_obj, "size", pair.second.size);
+        cJSON_AddNumberToObject(asset_obj, "offset", pair.second.offset);
+        cJSON_AddItemToArray(assets_array, asset_obj);
+    }
+    cJSON_AddItemToObject(root, "assets", assets_array);
+    
+    return root;
+}
+
+bool Assets::SetAssetProperty(const std::string& property, const std::string& value) {
+    // Handle asset properties that can be set via MCP
+    if (property == "default_assets_url") {
+        default_assets_url_ = value;
+        return true;
+    }
+    // Add more properties as needed
+    return false;
 }
 
 bool Assets::GetAssetData(const std::string& name, void*& ptr, size_t& size) {

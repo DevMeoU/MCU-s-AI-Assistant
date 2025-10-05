@@ -27,7 +27,7 @@ private:
     const int kBatteryAdcInterval = 60;
     const int kBatteryAdcDataCount = 3;
     const int kLowBatteryLevel = 20;
-    const int kTemperatureReadInterval = 10; // 每 10 秒读取一次温度
+    const int kTemperatureReadInterval = 10; // Đọc nhiệt độ mỗi 10 giây
 
     adc_oneshot_unit_handle_t adc_handle_;
     temperature_sensor_handle_t temp_sensor_ = NULL;  
@@ -50,7 +50,7 @@ private:
             return;
         }
 
-        // 如果电池电量数据充足，则每 kBatteryAdcInterval 个 tick 读取一次电池电量数据
+        // Nếu dữ liệu mức pin đủ, thì đọc dữ liệu mức pin mỗi kBatteryAdcInterval tick
         ticks_++;
         if (ticks_ % kBatteryAdcInterval == 0) {
             ReadBatteryAdcData();
@@ -63,12 +63,12 @@ private:
     }
 
     void ReadBatteryAdcData() {
-        // 读取 ADC 值
+        // Đọc giá trị ADC
         int adc_value;
         ESP_ERROR_CHECK(adc_oneshot_read(adc_handle_, ADC_CHANNEL_7, &adc_value));
        
         
-        // Add ADC value to the queue
+        // Thêm giá trị ADC vào hàng đợi
         adc_values_.push_back(adc_value);
         if (adc_values_.size() > kBatteryAdcDataCount) {
             adc_values_.erase(adc_values_.begin());
@@ -80,7 +80,7 @@ private:
         average_adc /= adc_values_.size();
 
        
-        // Define battery level ranges
+        // Định nghĩa phạm vi mức pin
         const struct {
             uint16_t adc;
             uint8_t level;
@@ -92,15 +92,15 @@ private:
             {2488, 80},
             {2606, 100}
         };
-        // Below the minimum value
+        // Dưới giá trị tối thiểu
         if (average_adc < levels[0].adc) {
             battery_level_ = 0;
         }
-        // Above the maximum value
+        // Trên giá trị tối đa
         else if (average_adc >= levels[5].adc) {
             battery_level_ = 100;
         } else {
-            // Linear interpolation to calculate intermediate values
+            // Nội suy tuyến tính để tính giá trị trung gian
             for (int i = 0; i < 5; i++) {
                 if (average_adc >= levels[i].adc && average_adc < levels[i+1].adc) {
                     float ratio = static_cast<float>(average_adc - levels[i].adc) / (levels[i+1].adc - levels[i].adc);
@@ -109,7 +109,7 @@ private:
                 }
             }
         }
-        // Check if low battery threshold is reached
+        // Kiểm tra ngưỡng pin yếu
         if (adc_values_.size() >= kBatteryAdcDataCount) {
             bool new_low_battery_status = battery_level_ <= kLowBatteryLevel;
             if (new_low_battery_status != is_low_battery_) {
@@ -127,7 +127,7 @@ private:
         float temperature = 0.0f;
         ESP_ERROR_CHECK(temperature_sensor_get_celsius(temp_sensor_, &temperature));
         
-        if (abs(temperature - current_temperature_) >= 3.5f) {  // 温度变化超过3.5°C才触发回调
+        if (abs(temperature - current_temperature_) >= 3.5f) {  // Chỉ kích hoạt callback khi nhiệt độ thay đổi vượt quá 3.5°C
             current_temperature_ = temperature;
             if (on_temperature_changed_) {
                 on_temperature_changed_(current_temperature_);
@@ -149,7 +149,7 @@ public:
         io_conf.pull_up_en = GPIO_PULLUP_DISABLE;     
         gpio_config(&io_conf);
 
-        // 创建电池电量检查定时器
+        // Tạo bộ hẹn giờ kiểm tra mức pin
         esp_timer_create_args_t timer_args = {
             .callback = [](void* arg) {
                 PowerManager* self = static_cast<PowerManager*>(arg);
@@ -163,7 +163,7 @@ public:
         ESP_ERROR_CHECK(esp_timer_create(&timer_args, &timer_handle_));
         ESP_ERROR_CHECK(esp_timer_start_periodic(timer_handle_, 1000000));
 
-        // 初始化 ADC
+        // Khởi tạo ADC
         adc_oneshot_unit_init_cfg_t init_config = {
             .unit_id = ADC_UNIT_1,
             .ulp_mode = ADC_ULP_MODE_DISABLE,
@@ -176,7 +176,7 @@ public:
         };
         ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle_, ADC_CHANNEL_7, &chan_config));
 
-        // 初始化温度传感器
+        // Khởi tạo cảm biến nhiệt độ
         temperature_sensor_config_t temp_config = {
             .range_min = 10,
             .range_max = 80,
@@ -212,13 +212,13 @@ public:
     }
 
     bool IsDischarging() {
-        // 没有区分充电和放电，所以直接返回相反状态
+        // Không phân biệt giữa sạc và xả, nên trả về trạng thái ngược lại
         return !is_charging_;
     }
 
-    // Get battery level
+    // Lấy mức pin
     uint8_t GetBatteryLevel() {
-        // Return battery level
+        // Trả về mức pin
         return battery_level_;
     }
 

@@ -14,8 +14,8 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Program interrupted by user")
-        # -- Dịch từ: 程序被用户中断
+        # -- Dịch từ: Chương trình bị người dùng gián đoạn
     except Exception as e:
         print(f"Program execution error: {e}")
-        # -- Dịch từ: 程序执行出错
+        # -- Dịch từ: Chương trình thực thi bị lỗi
         sys.exit(1)

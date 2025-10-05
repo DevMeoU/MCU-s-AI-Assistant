@@ -26,7 +26,7 @@ private:
     Button boot_button_;
     LcdDisplay* display_;
 
-    //add support ev board lcd
+    // thêm hỗ trợ lcd bảng ev
     esp_io_expander_handle_t expander = NULL;
 
     void InitializeRGB_GC9503V_Display() {
@@ -34,7 +34,7 @@ private:
 
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         
-         //add support ev board lcd
+         // thêm hỗ trợ lcd bảng ev
         gpio_config_t io_conf = {
             .pin_bit_mask = BIT64(GC9503V_PIN_NUM_VSYNC),
             .mode = GPIO_MODE_OUTPUT,
@@ -64,7 +64,7 @@ private:
         esp_lcd_rgb_panel_config_t rgb_config = {
             .clk_src = LCD_CLK_SRC_PLL160M,
             //.timings = GC9503_376_960_PANEL_60HZ_RGB_TIMING(),
-            //add support ev board
+            // thêm hỗ trợ bảng ev
             .timings = GC9503_480_480_PANEL_60HZ_RGB_TIMING(),
             .data_width = 16, // RGB565 in parallel mode, thus 16bit in width
             .bits_per_pixel = 16,
@@ -112,7 +112,7 @@ private:
             .reset_gpio_num = -1,
             .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
             // .bits_per_pixel = 16,
-            //add surpport ev board
+            // thêm hỗ trợ bảng ev
             .bits_per_pixel = 18,
             .vendor_config = &vendor_config,
         };
@@ -141,8 +141,8 @@ private:
         };
         ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_cfg, &codec_i2c_bus_));
 
-         //add support ev board lcd amp
-        //初始化扩展io口
+         // thêm hỗ trợ amp lcd bảng ev
+        // Khởi tạo cổng IO mở rộng
         esp_io_expander_new_i2c_tca9554(codec_i2c_bus_, 0x20, &expander);
         /* Setup power amplifier pin, set default to enable */
         esp_io_expander_set_dir(expander, BSP_POWER_AMP_IO, IO_EXPANDER_OUTPUT);
@@ -193,7 +193,7 @@ public:
         return display_;
     }
     
-    //添加彩灯显示状态，如果亮度太暗可以去更改默认亮度值 DEFAULT_BRIGHTNESS 在led的sigle_led.cc中
+    // Thêm trạng thái hiển thị đèn màu, nếu độ sáng quá tối có thể thay đổi giá trị độ sáng mặc định DEFAULT_BRIGHTNESS trong led/single_led.cc
     virtual Led* GetLed() override {
         static SingleLed led(BUILTIN_LED_GPIO);
         return &led;
