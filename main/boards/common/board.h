@@ -19,6 +19,7 @@
 class AudioCodec;
 class Display;
 class Music;
+class Alarm;
 
 void* create_board();
 class Board {
@@ -61,7 +62,7 @@ public:
     virtual Music* GetMusicPlayer();
 
     // Truy cập Alarm
-    virtual Alarm* GetAlarm();
+    virtual Alarm* GetAlarm() = 0;
 
     // Khởi tạo công cụ
     virtual void InitializeTools() {}

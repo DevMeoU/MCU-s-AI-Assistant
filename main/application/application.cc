@@ -359,6 +359,7 @@ void Application::Start() {
     // Print board name/version info
     display->SetChatMessage("system", SystemInfo::GetUserAgent().c_str());
 
+    ESP_LOGD(TAG, "Starting %s", board.GetBoardType().c_str());
     /* Setup the audio service */
     auto codec = board.GetAudioCodec();
 
