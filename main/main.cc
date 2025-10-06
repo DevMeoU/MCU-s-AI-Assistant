@@ -58,9 +58,11 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "Freeing memory...");
     MemoryManager::freeMemory(internalPtr);
     MemoryManager::freeMemory(psramPtr);
-    // MemoryManager::freeMemory(rtcPtr);
+    MemoryManager::freeMemory(rtcPtr);
 
-    // MemoryManager::logMemoryInfo();
+    // Log memory info after freeing
+    ESP_LOGI(TAG, "Memory info after freeing:");
+    MemoryManager::logMemoryInfo();
 
     // Launch the application
     auto& app = Application::GetInstance();

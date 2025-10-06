@@ -31,19 +31,7 @@ class MemoryManager {
 
         static void freeMemory(void* ptr) {
             if (ptr == nullptr) return;
-
-            // Kiểm tra nếu con trỏ thuộc internal RAM
-            if (esp_ptr_internal(ptr)) {
-                heap_caps_free(ptr);
-                return;
-            }
-
-            // Kiểm tra nếu con trỏ thuộc PSRAM (external RAM)
-            if (esp_ptr_external_ram(ptr)) {
-                heap_caps_free(ptr);
-                return;
-            }
-
+            
             // Kiểm tra nếu con trỏ thuộc RTC fast/slow memory
             #if CONFIG_IDF_TARGET_ESP32
                 // RTC memory thường không quản lý bằng heap_caps_malloc
@@ -53,13 +41,29 @@ class MemoryManager {
                 if (esp_ptr_in_rtc_fast(ptr) || esp_ptr_in_rtc_slow(ptr)) {
                     // RTC memory
                     ESP_LOGW(TAG, "RTC memory is statically allocated, not freed");
+                    return;
                 }
             #else
                 if (esp_ptr_in_rtc_slow(ptr)) {
                     // RTC memory (chỉ slow)
                     ESP_LOGW(TAG, "RTC memory is statically allocated, not freed");
+                    return;
                 }
             #endif
+
+            // Kiểm tra nếu con trỏ thuộc internal RAM
+            if (esp_ptr_internal(ptr)) {
+                ESP_LOGD(TAG, "Freeing memory in Internal RAM: %p", ptr);
+                heap_caps_free(ptr);
+                return;
+            }
+
+            // Kiểm tra nếu con trỏ thuộc PSRAM (external RAM)
+            if (esp_ptr_external_ram(ptr)) {
+                ESP_LOGD(TAG, "Freeing memory in PSRAM: %p", ptr);
+                heap_caps_free(ptr);
+                return;
+            }
 
             // Nếu không thuộc heap nào
             ESP_LOGW("MemoryManager", "Pointer %p is outside known heap areas", ptr);
