@@ -1,3 +1,4 @@
+[NEED_CHANGE] ./main/assets/fonts/dejavu-sans.zip
 [NEED_CHANGE] ./main/assets/lang_config.h
 [NEED_CHANGE] ./main/boards/atk-dnesp32s3-box2-wifi/atk_dnesp32s3_box2.cc
 [NEED_CHANGE] ./main/boards/jiuchuan-s3/jiuchuan_dev_board.cc

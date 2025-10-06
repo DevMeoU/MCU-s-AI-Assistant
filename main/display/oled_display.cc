@@ -194,7 +194,7 @@ void OledDisplay::SetupUI_128x64() {
     lv_obj_add_flag(content_right_, LV_OBJ_FLAG_HIDDEN);
 
     chat_message_label_ = lv_label_create(content_right_);
-    lv_label_set_text(chat_message_label_, "");
+    lv_label_set_text(chat_message_label_, "Xin chào, đây là nội dung chat!");
     lv_label_set_long_mode(chat_message_label_, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_align(chat_message_label_, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_width(chat_message_label_, width_ - 32);
