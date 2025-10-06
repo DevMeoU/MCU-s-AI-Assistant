@@ -1,48 +1,51 @@
 # Define source files
-set(SOURCES "audio/audio_codec.cc"
-            "audio/audio_service.cc"
-            "audio/codecs/no_audio_codec.cc"
-            "audio/codecs/box_audio_codec.cc"
-            "audio/codecs/es8311_audio_codec.cc"
-            "audio/codecs/es8374_audio_codec.cc"
-            "audio/codecs/es8388_audio_codec.cc"
-            "audio/codecs/es8389_audio_codec.cc"
-            "audio/codecs/dummy_audio_codec.cc"
-            "audio/processors/audio_debugger.cc"
-            "audio/processors/afe_audio_processor.cc"
-            "audio/processors/no_audio_processor.cc"
-            "audio/wake_words/afe_wake_word.cc"
-            "audio/wake_words/custom_wake_word.cc"
-            "audio/wake_words/esp_wake_word.cc"
-            "led/single_led.cc"
-            "led/circular_strip.cc"
-            "led/gpio_led.cc"
-            "display/display.cc"
-            "display/lcd_display.cc"
-            "display/oled_display.cc"
-            "display/lvgl_display/lvgl_display.cc"
-            "display/emote_display.cc"
-            "display/lvgl_display/emoji_collection.cc"
-            "display/lvgl_display/lvgl_theme.cc"
-            "display/lvgl_display/lvgl_font.cc"
-            "display/lvgl_display/lvgl_image.cc"
-            "display/lvgl_display/gif/lvgl_gif.cc"
-            "display/lvgl_display/gif/gifdec.c"
-            "display/lvgl_display/jpg/image_to_jpeg.cpp"
-            "display/lvgl_display/jpg/jpeg_encoder.cpp"
-            "protocols/protocol.cc"
-            "protocols/mqtt_protocol.cc"
-            "protocols/websocket_protocol.cc"
-            "mcp_server/mcp_server.cc"
-            "system/system_info.cc"
-            "system/system_establish.cc"
-            "system/setting/settings.cc"
-            "application/application.cc"
-            "ota/ota.cc"
-            "device_state_event/device_state_event.cc"
-            "assets/fonts/assets.cc"
-            "main.cc"
-            )
+set(SOURCES
+    "audio/audio_codec.cc"
+    "audio/audio_service.cc"
+    "audio/codecs/no_audio_codec.cc"
+    "audio/codecs/box_audio_codec.cc"
+    "audio/codecs/es8311_audio_codec.cc"
+    "audio/codecs/es8374_audio_codec.cc"
+    "audio/codecs/es8388_audio_codec.cc"
+    "audio/codecs/es8389_audio_codec.cc"
+    "audio/codecs/dummy_audio_codec.cc"
+    "audio/processors/audio_debugger.cc"
+    "audio/processors/afe_audio_processor.cc"
+    "audio/processors/no_audio_processor.cc"
+    "audio/wake_words/afe_wake_word.cc"
+    "audio/wake_words/custom_wake_word.cc"
+    "audio/wake_words/esp_wake_word.cc"
+    "led/single_led.cc"
+    "led/circular_strip.cc"
+    "led/gpio_led.cc"
+    "display/display.cc"
+    "display/lcd_display.cc"
+    "display/oled_display.cc"
+    "display/lvgl_display/lvgl_display.cc"
+    "display/emote_display.cc"
+    "display/lvgl_display/emoji_collection.cc"
+    "display/lvgl_display/lvgl_theme.cc"
+    "display/lvgl_display/lvgl_font.cc"
+    "display/lvgl_display/lvgl_image.cc"
+    "display/lvgl_display/gif/lvgl_gif.cc"
+    "display/lvgl_display/gif/gifdec.c"
+    "display/lvgl_display/jpg/image_to_jpeg.cpp"
+    "display/lvgl_display/jpg/jpeg_encoder.cpp"
+    "protocols/protocol.cc"
+    "protocols/mqtt_protocol.cc"
+    "protocols/websocket_protocol.cc"
+    "mcp_server/mcp_server.cc"
+    "system/system_info.cc"
+    "system/system_establish.cc"
+    "system/setting/settings.cc"
+    "application/application.cc"
+    "ota/ota.cc"
+    "device_state_event/device_state_event.cc"
+    "assets/fonts/assets.cc"
+    "assets/fonts/dejavu_sans_12.c"
+    "assets/fonts/dejavu_sans_14.c"
+    "main.cc"
+)
 
 set(INCLUDE_DIRS 
     "." 
@@ -75,6 +78,7 @@ list(APPEND SOURCES ${BOARD_COMMON_SOURCES})
 list(APPEND INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/boards/common)
 
 idf_build_get_property(build_components BUILD_COMPONENTS)
+
 # Function to find component dynamically by pattern
 function(find_component_by_pattern PATTERN COMPONENT_VAR PATH_VAR)
     foreach(COMPONENT ${build_components})
@@ -88,14 +92,16 @@ function(find_component_by_pattern PATTERN COMPONENT_VAR PATH_VAR)
 endfunction()
 
 # Set default BUILTIN_TEXT_FONT and BUILTIN_ICON_FONT
-set(BUILTIN_TEXT_FONT font_puhui_14_1)
-set(BUILTIN_ICON_FONT font_awesome_14_1)
+set(DEFAULT_BUILTIN_TEXT_FONT font_puhui_basic_14_1)
+set(DEFAULT_BUILTIN_ICON_FONT font_awesome_14_1)
+set(BUILTIN_TEXT_FONT ${DEFAULT_BUILTIN_TEXT_FONT})
+set(BUILTIN_ICON_FONT ${DEFAULT_BUILTIN_ICON_FONT})
 
-# Add board files according to BOARD_TYPE
-# Set default assets if the board uses partition table V2
+# Add board files according to BOARD_TYPE and set board-specific fonts
 if(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI)
     set(BOARD_TYPE "bread-compact-wifi")
-    set(BUILTIN_TEXT_FONT font_puhui_basic_14_1)
+    set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_12 "dejavu_sans_12")
+    set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_14 "dejavu_sans_14")
     set(BUILTIN_ICON_FONT font_awesome_14_1)
 elseif(CONFIG_BOARD_TYPE_BREAD_COMPACT_ML307)
     set(BOARD_TYPE "bread-compact-ml307")
@@ -549,7 +555,7 @@ else()
     list(APPEND SOURCES "audio/wake_words/esp_wake_word.cc")
 endif()
 
-# Select language directory according to Kconfig
+# Select language directory and font according to Kconfig
 if(CONFIG_LANGUAGE_ZH_CN)
     set(LANG_DIR "zh-CN")
     # Use Chinese fonts for Chinese language
@@ -660,7 +666,18 @@ elseif(CONFIG_LANGUAGE_RO_RO)
     # Use international fonts for Romanian language
     set(BUILTIN_TEXT_FONT_LANG "intl")
     set(CUSTOM_FONT_NAME "")
-# Note: CONFIG_LANGUAGE_VI_VN is handled above - this is a duplicate check
+endif()
+
+# Override BUILTIN_TEXT_FONT based on language
+if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
+    set(BUILTIN_TEXT_FONT "${CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_14}")
+elseif(BUILTIN_TEXT_FONT_LANG STREQUAL "intl")
+    set(BUILTIN_TEXT_FONT "font_puhui_common_16_4")
+elseif(BUILTIN_TEXT_FONT_LANG MATCHES "zh|ja|ko")
+    # Use board-specific font for Chinese, Japanese, Korean unless not set
+    if(NOT BUILTIN_TEXT_FONT OR BUILTIN_TEXT_FONT STREQUAL "${DEFAULT_BUILTIN_TEXT_FONT}")
+        set(BUILTIN_TEXT_FONT "font_puhui_${BUILTIN_TEXT_FONT_LANG}_16_4")
+    endif()
 endif()
 
 # Define generation path
@@ -671,69 +688,79 @@ file(GLOB COMMON_SOUNDS ${CMAKE_CURRENT_SOURCE_DIR}/assets/common/*.ogg)
 
 # If target chip is ESP32, exclude specific files to avoid build errors
 if(CONFIG_IDF_TARGET_ESP32)
-    list(REMOVE_ITEM SOURCES "audio/codecs/box_audio_codec.cc"
-                             "audio/codecs/es8388_audio_codec.cc"
-                             "audio/codecs/es8389_audio_codec.cc"
-                             "led/gpio_led.cc"
-                             )
+    list(REMOVE_ITEM SOURCES
+        "audio/codecs/box_audio_codec.cc"
+        "audio/codecs/es8388_audio_codec.cc"
+        "audio/codecs/es8389_audio_codec.cc"
+        "led/gpio_led.cc"
+    )
 endif()
 
-# Add custom font file to sources if needed - must be done BEFORE idf_component_register
-if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
-    list(APPEND SOURCES "${CMAKE_BINARY_DIR}/temp_fonts/dejavu_sans.c")
+# Add custom font file to sources if needed
+if(BUILTIN_TEXT_FONT STREQUAL "dejavu_sans")
+    message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+    list(APPEND SOURCES "${CMAKE_SOURCE_DIR}/main/assets/fonts/dejavu_sans_12.c")
+    list(APPEND SOURCES "${CMAKE_SOURCE_DIR}/main/assets/fonts/dejavu_sans_14.c")
+    # list(APPEND SOURCES "${CMAKE_BINARY_DIR}/temp_fonts/dejavu_sans_12.c")
 endif()
 
-list(APPEND SRCS ${SOURCES})
-
-list(APPEND SRCS "system/management/memory_management.cc")
+list(APPEND SRCS ${SOURCES} "system/management/memory_management.cc")
 
 idf_component_register(SRCS ${SRCS}
-                    EMBED_FILES ${LANG_SOUNDS} ${COMMON_SOUNDS}
-                    INCLUDE_DIRS ${INCLUDE_DIRS}
-                    WHOLE_ARCHIVE
-                    )
+                      EMBED_FILES ${LANG_SOUNDS} ${COMMON_SOUNDS}
+                      INCLUDE_DIRS ${INCLUDE_DIRS}
+                      WHOLE_ARCHIVE)
 
-# Use target_compile_definitions to define BOARD_TYPE, BOARD_NAME
-# If BOARD_NAME is empty, use BOARD_TYPE
+# Set compile definitions for BOARD_TYPE and fonts
 if(NOT BOARD_NAME)
     set(BOARD_NAME ${BOARD_TYPE})
 endif()
 
-# Modify font selection based on language
-if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
-    # Use DejaVu Sans font for Vietnamese and other languages that need custom font support
-    target_compile_definitions(${COMPONENT_LIB}
-                        PRIVATE BOARD_TYPE=\"${BOARD_TYPE}\" BOARD_NAME=\"${BOARD_NAME}\"
-                        PRIVATE BUILTIN_TEXT_FONT=dejavu_sans BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
-                        PRIVATE CUSTOM_FONT_NAME=\"dejavu_sans\"
-                        )
-elseif(BUILTIN_TEXT_FONT_LANG STREQUAL "intl")
-    # Use international fonts that support multiple languages including Vietnamese
-    target_compile_definitions(${COMPONENT_LIB}
-                        PRIVATE BOARD_TYPE=\"${BOARD_TYPE}\" BOARD_NAME=\"${BOARD_NAME}\"
-                        PRIVATE BUILTIN_TEXT_FONT=font_puhui_common_16_4 BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
-                        )
+target_compile_definitions(${COMPONENT_LIB}
+    PRIVATE
+        BOARD_TYPE=\"${BOARD_TYPE}\"
+        BOARD_NAME=\"${BOARD_NAME}\"
+        $<$<STREQUAL:${BUILTIN_TEXT_FONT},dejavu_sans>:CUSTOM_FONT_NAME=\"dejavu_sans\">
+)
+
+if(DEFINED BUILTIN_TEXT_FONT)
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    BUILTIN_TEXT_FONT=${BUILTIN_TEXT_FONT}                 # identifier, NO quotes
+    BUILTIN_TEXT_FONT_STR=\"${BUILTIN_TEXT_FONT}\"         # string literal for printing (optional)
+  )
 else()
-    # Use language-specific fonts for Chinese, Japanese, Korean
-    target_compile_definitions(${COMPONENT_LIB}
-                        PRIVATE BOARD_TYPE=\"${BOARD_TYPE}\" BOARD_NAME=\"${BOARD_NAME}\"
-                        PRIVATE BUILTIN_TEXT_FONT=${BUILTIN_TEXT_FONT} BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
-                        )
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    BUILTIN_TEXT_FONT=dejavu_sans_14
+    BUILTIN_TEXT_FONT_STR=\"dejavu_sans_14\"
+  )
+endif()
+
+if(DEFINED BUILTIN_ICON_FONT)
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    BUILTIN_ICON_FONT=${BUILTIN_ICON_FONT}
+    BUILTIN_ICON_FONT_STR=\"${BUILTIN_ICON_FONT}\"
+  )
+else()
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    BUILTIN_ICON_FONT=font_awesome_14_1
+    BUILTIN_ICON_FONT_STR=\"font_awesome_14_1\"
+  )
 endif()
 
 # Add custom font file to assets if needed
-if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
-    # Add DejaVu Sans font to embedded files
+if(BUILTIN_TEXT_FONT STREQUAL "dejavu_sans")
     set(DEJAVU_FONT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts/dejavu-sans.zip")
     if(EXISTS ${DEJAVU_FONT_FILE})
         list(APPEND COMMON_SOUNDS ${DEJAVU_FONT_FILE})
+        message(STATUS "CONFIG_LANGUAGE_VI_VN: ${CONFIG_LANGUAGE_VI_VN}")
+        message(STATUS "BUILTIN_TEXT_FONT: ${BUILTIN_TEXT_FONT}")
         message(STATUS "Added DejaVu Sans font to embedded files: ${DEJAVU_FONT_FILE}")
     else()
         message(WARNING "DejaVu Sans font file not found: ${DEJAVU_FONT_FILE}")
     endif()
 endif()
 
-# Add generation rules
+# Add generation rules for language header
 add_custom_command(
     OUTPUT ${LANG_HEADER}
     COMMAND python ${PROJECT_DIR}/scripts/gen_lang.py
@@ -745,10 +772,7 @@ add_custom_command(
     COMMENT "Generating ${LANG_DIR} language config"
 )
 
-# Force build generation dependencies
-add_custom_target(lang_header ALL
-    DEPENDS ${LANG_HEADER}
-)
+add_custom_target(lang_header ALL DEPENDS ${LANG_HEADER})
 
 # Find ESP-SR component dynamically
 find_component_by_pattern("espressif__esp-sr" ESP_SR_COMPONENT ESP_SR_COMPONENT_PATH)
@@ -762,74 +786,60 @@ if(XIAOZHI_FONTS_COMPONENT_PATH)
     set(XIAOZHI_FONTS_PATH "${XIAOZHI_FONTS_COMPONENT_PATH}")
 endif()
 
+# Handle ESP_HI emoji downloads
 if(CONFIG_BOARD_TYPE_ESP_HI)
-set(URL "https://github.com/espressif2022/image_player/raw/main/test_apps/test_8bit")
-set(EMOJI_DIR "${CMAKE_BINARY_DIR}/emoji")
-file(MAKE_DIRECTORY ${EMOJI_DIR})
+    set(URL "https://github.com/espressif2022/image_player/raw/main/test_apps/test_8bit")
+    set(EMOJI_DIR "${CMAKE_BINARY_DIR}/emoji")
+    file(MAKE_DIRECTORY ${EMOJI_DIR})
 
-# List all files to download
-set(FILES_TO_DOWNLOAD "")
-list(APPEND FILES_TO_DOWNLOAD "Anger_enter.aaf" "Anger_loop.aaf" "Anger_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "happy_enter.aaf" "happy_loop.aaf" "happ_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "sad_enter.aaf" "sad_loop.aaf" "sad_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "scorn_enter.aaf" "scorn_loop.aaf" "scorn_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "left_enter.aaf" "left_loop.aaf" "left_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "right_enter.aaf" "right_loop.aaf" "right_return.aaf")
-list(APPEND FILES_TO_DOWNLOAD "asking.aaf" "blink_once.aaf" "blink_quick.aaf")
-list(APPEND FILES_TO_DOWNLOAD "connecting.aaf" "panic_enter.aaf" "panic_loop.aaf")
-list(APPEND FILES_TO_DOWNLOAD "panic_return.aaf" "wake.aaf")
+    set(FILES_TO_DOWNLOAD
+        "Anger_enter.aaf" "Anger_loop.aaf" "Anger_return.aaf"
+        "happy_enter.aaf" "happy_loop.aaf" "happ_return.aaf"
+        "sad_enter.aaf" "sad_loop.aaf" "sad_return.aaf"
+        "scorn_enter.aaf" "scorn_loop.aaf" "scorn_return.aaf"
+        "left_enter.aaf" "left_loop.aaf" "left_return.aaf"
+        "right_enter.aaf" "right_loop.aaf" "right_return.aaf"
+        "asking.aaf" "blink_once.aaf" "blink_quick.aaf"
+        "connecting.aaf" "panic_enter.aaf" "panic_loop.aaf"
+        "panic_return.aaf" "wake.aaf"
+    )
 
-foreach(FILENAME IN LISTS FILES_TO_DOWNLOAD)
-    set(REMOTE_FILE "${URL}/${FILENAME}")
-    set(LOCAL_FILE "${EMOJI_DIR}/${FILENAME}")
-    
-    # Check if local file exists
-    if(EXISTS ${LOCAL_FILE})
-        message(STATUS "File ${FILENAME} already exists, skipping download")
-    else()
-        message(STATUS "Downloading ${FILENAME}")
-        file(DOWNLOAD ${REMOTE_FILE} ${LOCAL_FILE}
-             STATUS DOWNLOAD_STATUS)
-        list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-        if(NOT STATUS_CODE EQUAL 0)
-            message(FATAL_ERROR "Failed to download ${FILENAME} from ${URL}")
+    foreach(FILENAME IN LISTS FILES_TO_DOWNLOAD)
+        set(REMOTE_FILE "${URL}/${FILENAME}")
+        set(LOCAL_FILE "${EMOJI_DIR}/${FILENAME}")
+        if(EXISTS ${LOCAL_FILE})
+            message(STATUS "File ${FILENAME} already exists, skipping download")
+        else()
+            message(STATUS "Downloading ${FILENAME}")
+            file(DOWNLOAD ${REMOTE_FILE} ${LOCAL_FILE} STATUS DOWNLOAD_STATUS)
+            list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+            if(NOT STATUS_CODE EQUAL 0)
+                message(FATAL_ERROR "Failed to download ${FILENAME} from ${URL}")
+            endif()
         endif()
-    endif()
-endforeach()
-
+    endforeach()
 endif()
-
 
 # Function to build default assets based on configuration
 function(build_default_assets_bin)
-    # Set output path for generated assets.bin
     set(GENERATED_ASSETS_BIN "${CMAKE_BINARY_DIR}/generated_assets.bin")
-    
-    # Prepare arguments for build script
     set(BUILD_ARGS
         "--sdkconfig" "${SDKCONFIG}"
         "--output" "${GENERATED_ASSETS_BIN}"
+        "--builtin_text_font" "${BUILTIN_TEXT_FONT}"
     )
-    
-    # Add builtin text font if defined
-    if(BUILTIN_TEXT_FONT)
-        list(APPEND BUILD_ARGS "--builtin_text_font" "${BUILTIN_TEXT_FONT}")
-    endif()
-    
-    # Add default emoji collection if defined
     if(DEFAULT_EMOJI_COLLECTION)
         list(APPEND BUILD_ARGS "--emoji_collection" "${DEFAULT_EMOJI_COLLECTION}")
     endif()
-    
-    # Add default assets extra files if defined
     if(DEFAULT_ASSETS_EXTRA_FILES)
         list(APPEND BUILD_ARGS "--extra_files" "${DEFAULT_ASSETS_EXTRA_FILES}")
     endif()
-    
-    list(APPEND BUILD_ARGS "--esp_sr_model_path" "${ESP_SR_MODEL_PATH}")
-    list(APPEND BUILD_ARGS "--xiaozhi_fonts_path" "${XIAOZHI_FONTS_PATH}")
-    
-    # Create custom command to build assets
+    list(APPEND BUILD_ARGS
+        "--esp_sr_model_path" "${ESP_SR_MODEL_PATH}"
+        "--xiaozhi_fonts_path" "${XIAOZHI_FONTS_PATH}"
+    )
+
+    message(STATUS "CMD: python ${PROJECT_DIR}/scripts/build_default_assets.py ${BUILD_ARGS}")
     add_custom_command(
         OUTPUT ${GENERATED_ASSETS_BIN}
         COMMAND python ${PROJECT_DIR}/scripts/build_default_assets.py ${BUILD_ARGS}
@@ -839,86 +849,59 @@ function(build_default_assets_bin)
         COMMENT "Building default assets.bin based on configuration"
         VERBATIM
     )
-    
-    # Create target for generated assets
-    add_custom_target(generated_default_assets ALL
-        DEPENDS ${GENERATED_ASSETS_BIN}
-    )
-    
-    # Set the generated file path in parent scope
+
+    add_custom_target(generated_default_assets ALL DEPENDS ${GENERATED_ASSETS_BIN})
     set(GENERATED_ASSETS_LOCAL_FILE ${GENERATED_ASSETS_BIN} PARENT_SCOPE)
-    
     message(STATUS "Default assets build configured: ${GENERATED_ASSETS_BIN}")
 endfunction()
 
-
-# Function to get local assets file path (handles both URL and local file)
+# Function to get local assets file path
 function(get_assets_local_file assets_source assets_local_file_var)
-    # Check if it's a URL (starts with http:// or https://)
     if(assets_source MATCHES "^https?://")
-        # It's a URL, download it
         get_filename_component(ASSETS_FILENAME "${assets_source}" NAME)
         set(ASSETS_LOCAL_FILE "${CMAKE_BINARY_DIR}/${ASSETS_FILENAME}")
         set(ASSETS_TEMP_FILE "${CMAKE_BINARY_DIR}/${ASSETS_FILENAME}.tmp")
-        
-        # Check if local file exists
         if(EXISTS ${ASSETS_LOCAL_FILE})
             message(STATUS "Assets file ${ASSETS_FILENAME} already exists, skipping download")
         else()
             message(STATUS "Downloading ${ASSETS_FILENAME}")
-            
-            # Clean up any existing temp file
             if(EXISTS ${ASSETS_TEMP_FILE})
                 file(REMOVE ${ASSETS_TEMP_FILE})
             endif()
-            
-            # Download to temporary file first
-            file(DOWNLOAD ${assets_source} ${ASSETS_TEMP_FILE}
-                 STATUS DOWNLOAD_STATUS)
+            file(DOWNLOAD ${assets_source} ${ASSETS_TEMP_FILE} STATUS DOWNLOAD_STATUS)
             list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
             if(NOT STATUS_CODE EQUAL 0)
-                # Clean up temp file on failure
                 if(EXISTS ${ASSETS_TEMP_FILE})
                     file(REMOVE ${ASSETS_TEMP_FILE})
                 endif()
                 message(FATAL_ERROR "Failed to download ${ASSETS_FILENAME} from ${assets_source}")
             endif()
-            
-            # Move temp file to final location (atomic operation)
             file(RENAME ${ASSETS_TEMP_FILE} ${ASSETS_LOCAL_FILE})
             message(STATUS "Successfully downloaded ${ASSETS_FILENAME}")
         endif()
     else()
-        # It's a local file path
         if(IS_ABSOLUTE "${assets_source}")
             set(ASSETS_LOCAL_FILE "${assets_source}")
         else()
             set(ASSETS_LOCAL_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${assets_source}")
         endif()
-        
-        # Check if local file exists
         if(NOT EXISTS ${ASSETS_LOCAL_FILE})
             message(FATAL_ERROR "Assets file not found: ${ASSETS_LOCAL_FILE}")
         endif()
-        
         message(STATUS "Using assets file: ${ASSETS_LOCAL_FILE}")
     endif()
-    
     set(${assets_local_file_var} ${ASSETS_LOCAL_FILE} PARENT_SCOPE)
 endfunction()
 
-
+# Flash assets to partition
 partition_table_get_partition_info(size "--partition-name assets" "size")
 partition_table_get_partition_info(offset "--partition-name assets" "offset")
-if ("${size}" AND "${offset}")
-    # Flash assets based on configuration
+if(size AND offset)
     if(CONFIG_FLASH_DEFAULT_ASSETS)
-        # Build default assets based on configuration
         build_default_assets_bin()
         esptool_py_flash_to_partition(flash "assets" "${GENERATED_ASSETS_LOCAL_FILE}")
         message(STATUS "Generated default assets flash configured: ${GENERATED_ASSETS_LOCAL_FILE} -> assets partition")
     elseif(CONFIG_FLASH_CUSTOM_ASSETS)
-        # Flash custom assets
         get_assets_local_file("${CONFIG_CUSTOM_ASSETS_FILE}" ASSETS_LOCAL_FILE)
         esptool_py_flash_to_partition(flash "assets" "${ASSETS_LOCAL_FILE}")
         message(STATUS "Custom assets flash configured: ${ASSETS_LOCAL_FILE} -> assets partition")

@@ -25,8 +25,6 @@
 #include "board.h"
 #include "gfx.h"
 
-LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
-
 namespace emote {
 
 // ============================================================================

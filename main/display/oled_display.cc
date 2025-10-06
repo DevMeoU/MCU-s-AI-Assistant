@@ -13,10 +13,6 @@
 
 #define TAG "OledDisplay"
 
-LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
-LV_FONT_DECLARE(BUILTIN_ICON_FONT);
-LV_FONT_DECLARE(font_awesome_30_1);
-
 OledDisplay::OledDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
     int width, int height, bool mirror_x, bool mirror_y)
     : panel_io_(panel_io), panel_(panel) {

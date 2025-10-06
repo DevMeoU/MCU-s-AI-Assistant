@@ -2,6 +2,10 @@
 
 #include <lvgl.h>
 
+LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
+LV_FONT_DECLARE(BUILTIN_ICON_FONT);
+LV_FONT_DECLARE(font_awesome_30_1);
+LV_FONT_DECLARE(font_awesome_30_4);
 
 class LvglFont {
 public:
