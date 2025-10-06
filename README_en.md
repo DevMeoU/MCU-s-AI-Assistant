@@ -34,8 +34,9 @@ Xiaozhi AI chatbot, as a voice interaction portal, uses the AI capabilities of l
 - Battery display and power management
 - Multi-language support (Chinese, English, Japanese, Vietnamese) with DejaVu Sans font for Vietnamese
 - Support for ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
-- Device control through on-device MCP (volume, lights, motors, GPIO, etc.)
+- Device control through on-device MCP (volume, lights, motors, GPIO, alarm system, etc.)
 - Extend large model capabilities through cloud MCP (smart home control, computer operations, knowledge search, email sending/receiving, etc.)
+- Alarm system with up to 5 configurable alarms, persistent storage, and natural language control
 
 ## Hardware
 

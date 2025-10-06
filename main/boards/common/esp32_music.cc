@@ -1254,7 +1254,7 @@ void Esp32Music::CleanupMp3Decoder() {
 // Đặt lại tần số lấy mẫu về giá trị gốc
 void Esp32Music::ResetSampleRate() {
     auto& board = Board::GetInstance();
-    auto codec = board.GetAudioCodec();
+    // auto codec = board.GetAudioCodec();  // Commented out to fix unused variable warning
     // if (codec && codec->original_output_sample_rate() > 0 && 
     //     codec->output_sample_rate() != codec->original_output_sample_rate()) {
     //     ESP_LOGI(TAG, "Đặt lại tần số lấy mẫu: từ %d Hz đặt lại về giá trị gốc %d Hz", 

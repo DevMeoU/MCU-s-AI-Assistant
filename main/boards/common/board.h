@@ -12,7 +12,8 @@
 #include "backlight.h"
 #include "camera.h"
 #include "assets.h"
-#include "boards/common/music.h"
+#include "music.h"
+#include "alarm.h"
 
 // Khai báo trước
 class AudioCodec;
@@ -58,6 +59,9 @@ public:
     
     // Truy cập trình phát nhạc
     virtual Music* GetMusicPlayer();
+
+    // Truy cập Alarm
+    virtual Alarm* GetAlarm();
 
     // Khởi tạo công cụ
     virtual void InitializeTools() {}

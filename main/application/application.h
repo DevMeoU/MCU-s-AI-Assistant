@@ -15,6 +15,7 @@
 #include "ota.h"
 #include "audio_service.h"
 #include "device_state_event.h"
+#include "boards/common/alarm.h"
 
 // Forward declaration for Alarm class
 class Alarm;

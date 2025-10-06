@@ -18,6 +18,7 @@
 #include "lvgl_theme.h"
 #include "lvgl_display.h"
 #include "boards/common/music.h"
+#include "boards/common/alarm.h"
 
 #define TAG "MCP"
 
@@ -42,6 +43,75 @@ void McpServer::AddCommonTools() {
 
     // Không thêm công cụ tùy chỉnh ở đây.
     // Các công cụ tùy chỉnh phải được thêm trong hàm InitializeTools của bo mạch.
+    
+    // Add alarm tools
+    auto alarm = board.GetAlarm();
+    if (alarm) {
+        AddTool("self.alarm.set",
+            "Đặt báo thức. index: số báo thức (0-4); hour: giờ (0-23); minute: phút (0-59)",
+            PropertyList({
+                Property("index", kPropertyTypeInteger, 0, 0, 4),
+                Property("hour", kPropertyTypeInteger, 0, 0, 23),
+                Property("minute", kPropertyTypeInteger, 0, 0, 59)
+            }),
+            [alarm](const PropertyList& properties) -> ReturnValue {
+                int index = properties["index"].value<int>();
+                int hour = properties["hour"].value<int>();
+                int minute = properties["minute"].value<int>();
+                alarm->AlarmSet(index, hour, minute);
+                return true;
+            });
+
+        AddTool("self.alarm.clear",
+            "Xóa báo thức. index: số báo thức (0-4)",
+            PropertyList({
+                Property("index", kPropertyTypeInteger, 0, 0, 4)
+            }),
+            [alarm](const PropertyList& properties) -> ReturnValue {
+                int index = properties["index"].value<int>();
+                alarm->AlarmClear(index);
+                return true;
+            });
+
+        AddTool("self.alarm.clear_all",
+            "Xóa tất cả báo thức",
+            PropertyList(),
+            [alarm](const PropertyList& properties) -> ReturnValue {
+                alarm->AlarmClearAll();
+                return true;
+            });
+
+        AddTool("self.alarm.is_set",
+            "Kiểm tra báo thức đã được đặt chưa. index: số báo thức (0-4)",
+            PropertyList({
+                Property("index", kPropertyTypeInteger, 0, 0, 4)
+            }),
+            [alarm](const PropertyList& properties) -> ReturnValue {
+                int index = properties["index"].value<int>();
+                return alarm->AlarmIsSet(index);
+            });
+
+        AddTool("self.alarm.get_status",
+            "Lấy thông tin về tất cả các báo thức đã đặt",
+            PropertyList(),
+            [alarm](const PropertyList& properties) -> ReturnValue {
+                cJSON* json = cJSON_CreateObject();
+                cJSON* alarms = cJSON_CreateArray();
+                
+                for (int i = 0; i < 5; i++) {
+                    if (alarm->AlarmIsSet(i)) {
+                        cJSON* alarm_info = cJSON_CreateObject();
+                        cJSON_AddNumberToObject(alarm_info, "index", i);
+                        // Note: We don't have a direct way to get the time, but we can indicate it's set
+                        cJSON_AddBoolToObject(alarm_info, "is_set", true);
+                        cJSON_AddItemToArray(alarms, alarm_info);
+                    }
+                }
+                
+                cJSON_AddItemToObject(json, "alarms", alarms);
+                return json;
+            });
+    }
 
     AddTool("self.get_device_status",
         "Cung cấp thông tin thời gian thực của thiết bị, bao gồm trạng thái hiện tại của loa âm thanh, màn hình, pin, mạng, v.v.\n"

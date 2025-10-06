@@ -74,6 +74,10 @@ Music* Board::GetMusicPlayer() {
     return &music_player;
 }
 
+Alarm* Board::GetAlarm() {
+    return &NoAlarm::GetInstance();
+}
+
 std::string Board::GetSystemInfoJson() {
     /* 
         {
