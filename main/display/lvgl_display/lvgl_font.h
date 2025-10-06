@@ -2,10 +2,31 @@
 
 #include <lvgl.h>
 
-LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
-LV_FONT_DECLARE(BUILTIN_ICON_FONT);
-LV_FONT_DECLARE(font_awesome_30_1);
-LV_FONT_DECLARE(font_awesome_30_4);
+#ifdef BUILTIN_TEXT_FONT
+    LV_FONT_DECLARE(BUILTIN_TEXT_FONT);
+#else
+    #error "Please define BUILTIN_TEXT_FONT"
+#endif
+
+#ifdef BUILTIN_ICON_FONT
+    LV_FONT_DECLARE(BUILTIN_ICON_FONT);
+#else
+    #error "Please define BUILTIN_ICON_FONT"
+#endif
+
+#ifdef BUILTIN_FONT_AWESOME_30_1
+    LV_FONT_DECLARE(BUILTIN_FONT_AWESOME_30_1);
+#else
+    #define BUILTIN_FONT_AWESOME_30_1   font_awesome_30_1
+    LV_FONT_DECLARE(BUILTIN_FONT_AWESOME_30_1)
+#endif
+
+#ifdef BUILTIN_FONT_AWESOME_30_4
+    LV_FONT_DECLARE(BUILTIN_FONT_AWESOME_30_4);
+#else
+    #define BUILTIN_FONT_AWESOME_30_4   font_awesome_30_4
+    LV_FONT_DECLARE(BUILTIN_FONT_AWESOME_30_4)
+#endif
 
 class LvglFont {
 public:

@@ -720,6 +720,14 @@ CONFIG_USE_AUDIO_PROCESSOR=y
 # end of Xiaozhi Assistant (Custom by Deesol)
 
 #
+# Font configuration
+#
+CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_12=y
+# CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_14 is not set
+# CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_FULL is not set
+# end of Font configuration
+
+#
 # ESP Speech Recognition
 #
 CONFIG_MODEL_IN_FLASH=y

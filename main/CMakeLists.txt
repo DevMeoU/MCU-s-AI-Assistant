@@ -44,6 +44,7 @@ set(SOURCES
     "assets/fonts/assets.cc"
     "assets/fonts/dejavu_sans_12.c"
     "assets/fonts/dejavu_sans_14.c"
+    "assets/fonts/dejavu_sans_full.c"
     "main.cc"
 )
 
@@ -100,8 +101,14 @@ set(BUILTIN_ICON_FONT ${DEFAULT_BUILTIN_ICON_FONT})
 # Add board files according to BOARD_TYPE and set board-specific fonts
 if(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI)
     set(BOARD_TYPE "bread-compact-wifi")
-    set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_12 "dejavu_sans_12")
-    set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_14 "dejavu_sans_14")
+    # Map Kconfig choice to actual font identifier
+    if(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_12)
+        set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS "dejavu_sans_12")
+    elseif(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_14)
+        set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS "dejavu_sans_14")
+    elseif(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_FULL)
+        set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS "dejavu_sans_full")
+    endif()
     set(BUILTIN_ICON_FONT font_awesome_14_1)
 elseif(CONFIG_BOARD_TYPE_BREAD_COMPACT_ML307)
     set(BOARD_TYPE "bread-compact-ml307")
@@ -670,11 +677,10 @@ endif()
 
 # Override BUILTIN_TEXT_FONT based on language
 if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
-    set(BUILTIN_TEXT_FONT "${CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_14}")
+    set(BUILTIN_TEXT_FONT "${CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS}")
 elseif(BUILTIN_TEXT_FONT_LANG STREQUAL "intl")
     set(BUILTIN_TEXT_FONT "font_puhui_common_16_4")
 elseif(BUILTIN_TEXT_FONT_LANG MATCHES "zh|ja|ko")
-    # Use board-specific font for Chinese, Japanese, Korean unless not set
     if(NOT BUILTIN_TEXT_FONT OR BUILTIN_TEXT_FONT STREQUAL "${DEFAULT_BUILTIN_TEXT_FONT}")
         set(BUILTIN_TEXT_FONT "font_puhui_${BUILTIN_TEXT_FONT_LANG}_16_4")
     endif()
