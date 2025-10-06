@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <esp_heap_caps.h>
+#include <esp_memory_utils.h>
 #include <esp_log.h>
 
 class MemoryManager {
@@ -29,7 +30,39 @@ class MemoryManager {
         }
 
         static void freeMemory(void* ptr) {
-            if(ptr) heap_caps_free(ptr);
+            if (ptr == nullptr) return;
+
+            // Kiểm tra nếu con trỏ thuộc internal RAM
+            if (esp_ptr_internal(ptr)) {
+                heap_caps_free(ptr);
+                return;
+            }
+
+            // Kiểm tra nếu con trỏ thuộc PSRAM (external RAM)
+            if (esp_ptr_external_ram(ptr)) {
+                heap_caps_free(ptr);
+                return;
+            }
+
+            // Kiểm tra nếu con trỏ thuộc RTC fast/slow memory
+            #if CONFIG_IDF_TARGET_ESP32
+                // RTC memory thường không quản lý bằng heap_caps_malloc
+                // Nếu bạn dùng RTC_DATA_ATTR thì không cần free
+                // Nếu bạn có hàm rtc_free() riêng thì gọi ở đây
+                // rtc_free(ptr);
+                if (esp_ptr_in_rtc_fast(ptr) || esp_ptr_in_rtc_slow(ptr)) {
+                    // RTC memory
+                    ESP_LOGW(TAG, "RTC memory is statically allocated, not freed");
+                }
+            #else
+                if (esp_ptr_in_rtc_slow(ptr)) {
+                    // RTC memory (chỉ slow)
+                    ESP_LOGW(TAG, "RTC memory is statically allocated, not freed");
+                }
+            #endif
+
+            // Nếu không thuộc heap nào
+            ESP_LOGW("MemoryManager", "Pointer %p is outside known heap areas", ptr);
         }
 
         struct MemoryInfo
@@ -69,14 +102,14 @@ class MemoryManager {
             MemoryInfo rtcInfo = getRtcInfo();
 
             ESP_LOGI(TAG, "_________________ MEMORY STATUS _________________");
-            ESP_LOGI(TAG, "Internal RAM: Free Bytes: %zu, Min Free Bytes: %zu, Largest Free Block: %zu",
-                     internalInfo.freeBytes, internalInfo.minFreeBytes, internalInfo.largestFreeBlock);
-            ESP_LOGI(TAG, "PSRAM: Free Bytes: %zu, Min Free Bytes: %zu, Largest Free Block: %zu",
-                     psramInfo.freeBytes, psramInfo.minFreeBytes, psramInfo.largestFreeBlock);
-            ESP_LOGI(TAG, "RTC RAM: Free Bytes: %zu, Min Free Bytes: %zu, Largest Free Block: %zu",
-                     rtcInfo.freeBytes, rtcInfo.minFreeBytes, rtcInfo.largestFreeBlock);
+            ESP_LOGI(TAG, "Internal RAM: Free Bytes: %u, Min Free Bytes: %u, Largest Free Block: %u",
+                     (unsigned)internalInfo.freeBytes, (unsigned)internalInfo.minFreeBytes, (unsigned)internalInfo.largestFreeBlock);
+            ESP_LOGI(TAG, "PSRAM: Free Bytes: %u, Min Free Bytes: %u, Largest Free Block: %u",
+                     (unsigned)psramInfo.freeBytes, (unsigned)psramInfo.minFreeBytes, (unsigned)psramInfo.largestFreeBlock);
+            ESP_LOGI(TAG, "RTC RAM: Free Bytes: %u, Min Free Bytes: %u, Largest Free Block: %u",
+                     (unsigned)rtcInfo.freeBytes, (unsigned)rtcInfo.minFreeBytes, (unsigned)rtcInfo.largestFreeBlock);
         }
     private:
         static constexpr const char* TAG = "MemoryManager";
-        static uint8_t rtcMemory[1024];
+        RTC_DATA_ATTR static uint8_t rtcMemory[1024];
 };

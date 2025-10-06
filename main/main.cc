@@ -24,6 +24,7 @@ extern "C" void app_main(void)
     MemoryManager::logMemoryInfo();
 
     // Allocate internal memory
+    ESP_LOGI(TAG, "Allocating internal memory...");
     void* internalPtr = MemoryManager::allocateInternal(1024);
     if (internalPtr == nullptr) {
         ESP_LOGE(TAG, "Failed to allocate internal memory");
@@ -32,6 +33,7 @@ extern "C" void app_main(void)
     }
 
     // Allocate PSRAM memory
+    ESP_LOGI(TAG, "Allocating PSRAM memory...");
     void* psramPtr = MemoryManager::allocatePsram(1024 * 100);
     if (psramPtr == nullptr) {
         ESP_LOGE(TAG, "Failed to allocate PSRAM memory");
@@ -40,6 +42,7 @@ extern "C" void app_main(void)
     }
 
     // Allocate RTC memory
+    ESP_LOGI(TAG, "Allocating RTC memory...");
     void* rtcPtr = MemoryManager::allocateRtc();
     if (rtcPtr == nullptr) {
         ESP_LOGE(TAG, "Failed to allocate RTC memory");
@@ -47,14 +50,17 @@ extern "C" void app_main(void)
         ESP_LOGI(TAG, "Successfully allocated RTC memory at %p", rtcPtr);
     }
 
+    // Log memory info after allocation
+    ESP_LOGI(TAG, "Memory info after allocation:");
     MemoryManager::logMemoryInfo();
-
+    
     // Free memory
+    ESP_LOGI(TAG, "Freeing memory...");
     MemoryManager::freeMemory(internalPtr);
     MemoryManager::freeMemory(psramPtr);
-    MemoryManager::freeMemory(rtcPtr);
+    // MemoryManager::freeMemory(rtcPtr);
 
-    MemoryManager::logMemoryInfo();
+    // MemoryManager::logMemoryInfo();
 
     // Launch the application
     auto& app = Application::GetInstance();
