@@ -804,10 +804,13 @@ menu "Font configuration"
 
 choice BUILTIN_TEXT_FONT_DEJAVU_SANS_CHOICE
     prompt "Select Dejavu Sans font size"
-    default BUILTIN_TEXT_FONT_DEJAVU_SANS_14
+    default BUILTIN_TEXT_FONT_DEJAVU_SANS_CONDENSED_12
 
 config BUILTIN_TEXT_FONT_DEJAVU_SANS_12
     bool "Dejavu Sans 12"
+
+config BUILTIN_TEXT_FONT_DEJAVU_SANS_CONDENSED_12
+    bool "Dejavu Sans Condensed 12"
 
 config BUILTIN_TEXT_FONT_DEJAVU_SANS_14
     bool "Dejavu Sans 14"

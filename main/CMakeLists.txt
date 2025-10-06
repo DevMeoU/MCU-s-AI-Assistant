@@ -44,6 +44,7 @@ set(SOURCES
     "assets/fonts/assets.cc"
     "assets/fonts/dejavu_sans_12.c"
     "assets/fonts/dejavu_sans_14.c"
+    "assets/fonts/dejavu_sans_condensed_12.c"
     "assets/fonts/dejavu_sans_full.c"
     "main.cc"
 )
@@ -104,6 +105,8 @@ if(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI)
     # Map Kconfig choice to actual font identifier
     if(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_12)
         set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS "dejavu_sans_12")
+        elseif(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_CONDENSED_12)
+            set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS "dejavu_sans_condensed_12")
     elseif(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_14)
         set(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS "dejavu_sans_14")
     elseif(CONFIG_BUILTIN_TEXT_FONT_DEJAVU_SANS_FULL)
