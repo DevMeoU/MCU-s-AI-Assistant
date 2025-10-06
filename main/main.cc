@@ -10,6 +10,7 @@
 #include "application.h"
 #include "system_establish.h"
 #include "system_info.h"
+#include "memory_management.h"
 
 #define TAG "app_main"
 
@@ -18,6 +19,42 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "Starting MCU's AI Assistant...");
     /* System Init */
     SystemEstablish::Init();
+
+    // Log memory info
+    MemoryManager::logMemoryInfo();
+
+    // Allocate internal memory
+    void* internalPtr = MemoryManager::allocateInternal(1024);
+    if (internalPtr == nullptr) {
+        ESP_LOGE(TAG, "Failed to allocate internal memory");
+    } else {
+        ESP_LOGI(TAG, "Successfully allocated internal memory at %p", internalPtr);
+    }
+
+    // Allocate PSRAM memory
+    void* psramPtr = MemoryManager::allocatePsram(1024 * 100);
+    if (psramPtr == nullptr) {
+        ESP_LOGE(TAG, "Failed to allocate PSRAM memory");
+    } else {
+        ESP_LOGI(TAG, "Successfully allocated PSRAM memory at %p", psramPtr);
+    }
+
+    // Allocate RTC memory
+    void* rtcPtr = MemoryManager::allocateRtc();
+    if (rtcPtr == nullptr) {
+        ESP_LOGE(TAG, "Failed to allocate RTC memory");
+    } else {
+        ESP_LOGI(TAG, "Successfully allocated RTC memory at %p", rtcPtr);
+    }
+
+    MemoryManager::logMemoryInfo();
+
+    // Free memory
+    MemoryManager::freeMemory(internalPtr);
+    MemoryManager::freeMemory(psramPtr);
+    MemoryManager::freeMemory(rtcPtr);
+
+    MemoryManager::logMemoryInfo();
 
     // Launch the application
     auto& app = Application::GetInstance();

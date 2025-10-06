@@ -54,7 +54,7 @@ public:
     CpuPowerManager& operator=(CpuPowerManager&&) = default;
 private:
 // #ifdef ESP_32S3
-    esp_pm_config_esp32s3_t pm_config;
+    esp_pm_config_t pm_config;
     bool initialized;
 // #endif
 };

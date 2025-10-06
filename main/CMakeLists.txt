@@ -9,6 +9,11 @@ set(SOURCES "audio/audio_codec.cc"
             "audio/codecs/es8389_audio_codec.cc"
             "audio/codecs/dummy_audio_codec.cc"
             "audio/processors/audio_debugger.cc"
+            "audio/processors/afe_audio_processor.cc"
+            "audio/processors/no_audio_processor.cc"
+            "audio/wake_words/afe_wake_word.cc"
+            "audio/wake_words/custom_wake_word.cc"
+            "audio/wake_words/esp_wake_word.cc"
             "led/single_led.cc"
             "led/circular_strip.cc"
             "led/gpio_led.cc"
@@ -28,18 +33,41 @@ set(SOURCES "audio/audio_codec.cc"
             "protocols/protocol.cc"
             "protocols/mqtt_protocol.cc"
             "protocols/websocket_protocol.cc"
-            "mcp_server.cc"
-            "system_info.cc"
-            "system_establish.cc"
-            "application.cc"
-            "ota.cc"
-            "settings.cc"
-            "device_state_event.cc"
-            "assets.cc"
+            "mcp_server/mcp_server.cc"
+            "system/system_info.cc"
+            "system/system_establish.cc"
+            "system/setting/settings.cc"
+            "application/application.cc"
+            "ota/ota.cc"
+            "device_state_event/device_state_event.cc"
+            "assets/fonts/assets.cc"
             "main.cc"
             )
 
-set(INCLUDE_DIRS "." "display" "display/lvgl_display" "display/lvgl_display/jpg" "audio" "protocols")
+set(INCLUDE_DIRS 
+    "." 
+    "application"
+    "assets" 
+    "assets/fonts"
+    "audio" 
+    "audio/codecs" 
+    "audio/processors" 
+    "audio/wake_words"
+    "boards" 
+    "boards/common"
+    "device_state_event"
+    "display" 
+    "display/lvgl_display" 
+    "display/lvgl_display/jpg" 
+    "display/lvgl_display/gif"
+    "led"
+    "mcp_server"
+    "ota"
+    "protocols"
+    "system"
+    "system/setting"
+    "system/management"
+)
 
 # Add board common files
 file(GLOB BOARD_COMMON_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/boards/common/*.cc)
@@ -632,11 +660,7 @@ elseif(CONFIG_LANGUAGE_RO_RO)
     # Use international fonts for Romanian language
     set(BUILTIN_TEXT_FONT_LANG "intl")
     set(CUSTOM_FONT_NAME "")
-elseif(CONFIG_LANGUAGE_VI)
-    set(LANG_DIR "vi-VN")
-    # Use DejaVu Sans font for Vietnamese language
-    set(BUILTIN_TEXT_FONT_LANG "custom")
-    set(CUSTOM_FONT_NAME "dejavu_sans")
+# Note: CONFIG_LANGUAGE_VI_VN is handled above - this is a duplicate check
 endif()
 
 # Define generation path
@@ -654,7 +678,16 @@ if(CONFIG_IDF_TARGET_ESP32)
                              )
 endif()
 
-idf_component_register(SRCS ${SOURCES}
+# Add custom font file to sources if needed - must be done BEFORE idf_component_register
+if(BUILTIN_TEXT_FONT_LANG STREQUAL "custom" AND CUSTOM_FONT_NAME STREQUAL "dejavu_sans")
+    list(APPEND SOURCES "${CMAKE_BINARY_DIR}/temp_fonts/dejavu_sans.c")
+endif()
+
+list(APPEND SRCS ${SOURCES})
+
+list(APPEND SRCS "system/management/memory_management.cc")
+
+idf_component_register(SRCS ${SRCS}
                     EMBED_FILES ${LANG_SOUNDS} ${COMMON_SOUNDS}
                     INCLUDE_DIRS ${INCLUDE_DIRS}
                     WHOLE_ARCHIVE
