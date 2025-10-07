@@ -10,6 +10,7 @@
 #include "pin_config.h"
 #include "esp32_camera.h"
 #include "ir_filter_controller.h"
+#include "system/management/core_management.h"
 
 #include <esp_log.h>
 #include <esp_lcd_panel_vendor.h>
@@ -156,7 +157,14 @@ private:
     void InitCst816d() {
         ESP_LOGI(TAG, "Init CST816x");
         cst816d_ = new Cst816x(i2c_bus_, CST816_ADDRESS);
-        xTaskCreate(TouchpadDaemon, "tp", 2048, NULL, 5, NULL);
+        // Chuẩn hoá: dùng core management để lấy core/priority/stack và pin task vào core theo cấu hình tập trung
+        BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_TOUCHPAD);
+        UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_TOUCHPAD);
+        uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_TOUCHPAD);
+
+        core_management_register_task(CORE_TASK_TYPE_TOUCHPAD, stack_size);
+
+        xTaskCreatePinnedToCore(TouchpadDaemon, "tp", stack_size, NULL, priority, NULL, core);
     }
 
     void InitSpi() {

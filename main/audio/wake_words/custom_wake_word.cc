@@ -1,9 +1,9 @@
 #include "custom_wake_word.h"
-#include "audio_service.h"
-#include "system_info.h"
-#include "assets.h"
-
+#include "core_management.h"
 #include <esp_log.h>
+#include "audio_service.h"
+#include <opus_encoder.h>
+#include "memory_management.h"
 #include <esp_mn_iface.h>
 #include <esp_mn_models.h>
 #include <esp_mn_speech_commands.h>
@@ -24,11 +24,11 @@ CustomWakeWord::~CustomWakeWord() {
     }
 
     if (wake_word_encode_task_stack_ != nullptr) {
-        heap_caps_free(wake_word_encode_task_stack_);
+        MemoryManager::freeMemory(wake_word_encode_task_stack_);
     }
 
     if (wake_word_encode_task_buffer_ != nullptr) {
-        heap_caps_free(wake_word_encode_task_buffer_);
+        MemoryManager::freeMemory(wake_word_encode_task_buffer_);
     }
 
     if (models_ != nullptr) {
@@ -199,17 +199,21 @@ void CustomWakeWord::StoreWakeWordData(const std::vector<int16_t>& data) {
 }
 
 void CustomWakeWord::EncodeWakeWordData() {
-    const size_t stack_size = 4096 * 7;
     wake_word_opus_.clear();
+    uint32_t encode_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
     if (wake_word_encode_task_stack_ == nullptr) {
-        wake_word_encode_task_stack_ = (StackType_t*)heap_caps_malloc(stack_size, MALLOC_CAP_SPIRAM);
+        wake_word_encode_task_stack_ = (StackType_t*)MemoryManager::allocatePsram(encode_stack_size);
         assert(wake_word_encode_task_stack_ != nullptr);
     }
     if (wake_word_encode_task_buffer_ == nullptr) {
-        wake_word_encode_task_buffer_ = (StaticTask_t*)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL);
+        wake_word_encode_task_buffer_ = (StaticTask_t*)MemoryManager::allocateInternal(sizeof(StaticTask_t));
         assert(wake_word_encode_task_buffer_ != nullptr);
     }
 
+    // Tạo task wake word encoding với cấu hình từ core management
+    UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
+    core_management_register_task(CORE_TASK_TYPE_WAKE_WORD_ENCODING, encode_stack_size);
+    
     wake_word_encode_task_ = xTaskCreateStatic([](void* arg) {
         auto this_ = (CustomWakeWord*)arg;
         {
@@ -236,7 +240,12 @@ void CustomWakeWord::EncodeWakeWordData() {
             this_->wake_word_cv_.notify_all();
         }
         vTaskDelete(NULL);
-    }, "encode_wake_word", stack_size, this, 2, wake_word_encode_task_stack_, wake_word_encode_task_buffer_);
+    }, "encode_wake_word", 
+       encode_stack_size, 
+       this, 
+       priority, 
+       wake_word_encode_task_stack_, 
+       wake_word_encode_task_buffer_);
 }
 
 bool CustomWakeWord::GetWakeWordOpus(std::vector<uint8_t>& opus) {

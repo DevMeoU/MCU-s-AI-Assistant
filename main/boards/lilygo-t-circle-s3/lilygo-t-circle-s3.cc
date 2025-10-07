@@ -13,6 +13,7 @@
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include "esp_lcd_gc9d01n.h"
+#include "system/management/core_management.h"
 
 #define TAG "LilygoTCircleS3Board"
 
@@ -132,10 +133,23 @@ private:
         vTaskDelete(NULL);
     }
 
-    void InitCst816d() {
-        ESP_LOGI(TAG, "Init CST816x");
-        cst816d_ = new Cst816x(i2c_bus_, 0x15);
-        xTaskCreate(touchpad_daemon, "tp", 2048, NULL, 5, NULL);
+    void InitializeCst816sTouchPad() {
+        cst816s_ = new Cst816s(i2c_bus_, 0x15);
+
+        // Tạo task touchpad với cấu hình từ core management
+        BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_TOUCHPAD);
+        UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_TOUCHPAD);
+        uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_TOUCHPAD);
+        
+        core_management_register_task(CORE_TASK_TYPE_TOUCHPAD, stack_size);
+        
+        xTaskCreatePinnedToCore(touchpad_daemon, "tp", 
+           stack_size, 
+           NULL, 
+           priority, 
+           NULL, 
+           core);
+
     }
 
     void InitSpi() {

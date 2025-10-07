@@ -1,6 +1,8 @@
 #include "audio_service.h"
 #include <esp_log.h>
 #include <cstring>
+#include "tasks_config.h"
+#include "core_management.h"
 
 #if CONFIG_USE_AUDIO_PROCESSOR
 #include "processors/afe_audio_processor.h"
@@ -80,41 +82,96 @@ void AudioService::Start() {
     esp_timer_start_periodic(audio_power_timer_, 1000000);
 
 #if CONFIG_USE_AUDIO_PROCESSOR
-    /* Start the audio input task */
+    /* Tạo task audio input với cấu hình từ core management */
+    BaseType_t input_core = core_management_get_task_core(CORE_TASK_TYPE_AUDIO_INPUT);
+    UBaseType_t input_priority = core_management_get_task_priority(CORE_TASK_TYPE_AUDIO_INPUT);
+    uint32_t input_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_AUDIO_INPUT);
+    
+    core_management_register_task(CORE_TASK_TYPE_AUDIO_INPUT, input_stack_size);
+    
     xTaskCreatePinnedToCore([](void* arg) {
         AudioService* audio_service = (AudioService*)arg;
         audio_service->AudioInputTask();
         vTaskDelete(NULL);
-    }, "audio_input", 2048 * 3, this, 8, &audio_input_task_handle_, 0);
+    }, "audio_input", 
+       input_stack_size, 
+       this, 
+       input_priority, 
+       &audio_input_task_handle_, 
+       input_core);
 
-    /* Start the audio output task */
-    xTaskCreate([](void* arg) {
+    /* Tạo task audio output với cấu hình từ core management */
+    BaseType_t output_core = core_management_get_task_core(CORE_TASK_TYPE_AUDIO_OUTPUT);
+    UBaseType_t output_priority = core_management_get_task_priority(CORE_TASK_TYPE_AUDIO_OUTPUT);
+    uint32_t output_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_AUDIO_OUTPUT);
+    
+    core_management_register_task(CORE_TASK_TYPE_AUDIO_OUTPUT, output_stack_size);
+    
+    xTaskCreatePinnedToCore([](void* arg) {
         AudioService* audio_service = (AudioService*)arg;
         audio_service->AudioOutputTask();
         vTaskDelete(NULL);
-    }, "audio_output", 2048 * 2, this, 4, &audio_output_task_handle_);
+    }, "audio_output", 
+       output_stack_size, 
+       this, 
+       output_priority, 
+       &audio_output_task_handle_, 
+       output_core);
 #else
-    /* Start the audio input task */
-    xTaskCreate([](void* arg) {
+    /* Tạo task audio input với cấu hình từ core management */
+    BaseType_t input_core = core_management_get_task_core(CORE_TASK_TYPE_AUDIO_INPUT);
+    UBaseType_t input_priority = core_management_get_task_priority(CORE_TASK_TYPE_AUDIO_INPUT);
+    uint32_t input_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_AUDIO_INPUT);
+    
+    core_management_register_task(CORE_TASK_TYPE_AUDIO_INPUT, input_stack_size);
+    
+    xTaskCreatePinnedToCore([](void* arg) {
         AudioService* audio_service = (AudioService*)arg;
         audio_service->AudioInputTask();
         vTaskDelete(NULL);
-    }, "audio_input", 2048 * 2, this, 8, &audio_input_task_handle_);
+    }, "audio_input", 
+       input_stack_size, 
+       this, 
+       input_priority, 
+       &audio_input_task_handle_, 
+       input_core);
 
-    /* Start the audio output task */
-    xTaskCreate([](void* arg) {
+    /* Tạo task audio output với cấu hình từ core management */
+    BaseType_t output_core = core_management_get_task_core(CORE_TASK_TYPE_AUDIO_OUTPUT);
+    UBaseType_t output_priority = core_management_get_task_priority(CORE_TASK_TYPE_AUDIO_OUTPUT);
+    uint32_t output_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_AUDIO_OUTPUT);
+    
+    core_management_register_task(CORE_TASK_TYPE_AUDIO_OUTPUT, output_stack_size);
+    
+    xTaskCreatePinnedToCore([](void* arg) {
         AudioService* audio_service = (AudioService*)arg;
         audio_service->AudioOutputTask();
         vTaskDelete(NULL);
-    }, "audio_output", 2048, this, 4, &audio_output_task_handle_);
+    }, "audio_output", 
+       output_stack_size, 
+       this, 
+       output_priority, 
+       &audio_output_task_handle_, 
+       output_core);
 #endif
 
-    /* Start the opus codec task */
-    xTaskCreate([](void* arg) {
+    /* Tạo task opus codec với cấu hình từ core management */
+    BaseType_t codec_core = core_management_get_task_core(CORE_TASK_TYPE_AUDIO_CODEC);
+    UBaseType_t codec_priority = core_management_get_task_priority(CORE_TASK_TYPE_AUDIO_CODEC);
+    uint32_t codec_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_AUDIO_CODEC);
+    
+    core_management_register_task(CORE_TASK_TYPE_AUDIO_CODEC, codec_stack_size);
+    
+    xTaskCreatePinnedToCore([](void* arg) {
         AudioService* audio_service = (AudioService*)arg;
         audio_service->OpusCodecTask();
         vTaskDelete(NULL);
-    }, "opus_codec", 2048 * 13, this, 2, &opus_codec_task_handle_);
+    }, "opus_codec", 
+       codec_stack_size, 
+       this, 
+       codec_priority, 
+       &opus_codec_task_handle_, 
+       codec_core);
 }
 
 void AudioService::Stop() {

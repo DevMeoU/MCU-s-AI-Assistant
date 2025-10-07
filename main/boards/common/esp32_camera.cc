@@ -63,7 +63,7 @@ bool Esp32Camera::Capture() {
     // Hiển thị hình ảnh xem trước
     auto display = dynamic_cast<LvglDisplay*>(Board::GetInstance().GetDisplay());
     if (display != nullptr) {
-        auto data = (uint8_t*)heap_caps_malloc(fb_->len, MALLOC_CAP_SPIRAM);
+        auto data = (uint8_t*)MemoryManager::allocatePsram(fb_->len);
         if (data == nullptr) {
             ESP_LOGE(TAG, "Failed to allocate memory for preview image");
             return false;
@@ -187,7 +187,7 @@ std::string Esp32Camera::Explain(const std::string& question) {
         JpegChunk chunk;
         while (xQueueReceive(jpeg_queue, &chunk, portMAX_DELAY) == pdPASS) {
             if (chunk.data != nullptr) {
-                heap_caps_free(chunk.data);
+                MemoryManager::freeMemory(chunk.data);
             } else {
                 break;
             }
@@ -228,7 +228,7 @@ std::string Esp32Camera::Explain(const std::string& question) {
         }
         http->Write((const char*)chunk.data, chunk.len);
         total_sent += chunk.len;
-        heap_caps_free(chunk.data);
+        MemoryManager::freeMemory(chunk.data);
     }
     // Wait for the encoder thread to finish
     encoder_thread_.join();

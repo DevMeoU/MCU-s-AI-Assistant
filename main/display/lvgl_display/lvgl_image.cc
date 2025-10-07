@@ -58,7 +58,7 @@ LvglAllocatedImage::LvglAllocatedImage(void* data, size_t size, int width, int h
 
 LvglAllocatedImage::~LvglAllocatedImage() {
     if (image_dsc_.data) {
-        heap_caps_free((void*)image_dsc_.data);
+        MemoryManager::freeMemory((void*)image_dsc_.data);
         image_dsc_.data = nullptr;
     }
 }

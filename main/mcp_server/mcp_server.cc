@@ -19,6 +19,8 @@
 #include "lvgl_display.h"
 #include "boards/common/music.h"
 #include "boards/common/alarm.h"
+#include "core_management.h"
+#include "memory_management.h"
 
 #define TAG "MCP"
 
@@ -376,7 +378,8 @@ void McpServer::AddUserOnlyTools() {
                 }
 
                 size_t content_length = http->GetBodyLength();
-                char* data = (char*)heap_caps_malloc(content_length, MALLOC_CAP_8BIT);
+                // Cấp phát bộ đệm ảnh ở PSRAM bằng MemoryManager để thống nhất quản lý bộ nhớ
+                char* data = (char*)MemoryManager::allocatePsram(content_length);
                 if (data == nullptr) {
                     throw std::runtime_error("Không thể cấp phát bộ nhớ cho hình ảnh: " + url);
                 }
@@ -384,7 +387,7 @@ void McpServer::AddUserOnlyTools() {
                 while (total_read < content_length) {
                     int ret = http->Read(data + total_read, content_length - total_read);
                     if (ret < 0) {
-                        heap_caps_free(data);
+                        MemoryManager::freeMemory(data);
                         throw std::runtime_error("Không thể tải xuống hình ảnh: " + url);
                     }
                     if (ret == 0) {

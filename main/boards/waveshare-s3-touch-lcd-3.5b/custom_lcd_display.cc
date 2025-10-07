@@ -216,8 +216,8 @@ CustomLcdDisplay::CustomLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_p
     port_cfg.timer_period_ms = 50;
     lvgl_port_init(&port_cfg);
     trans_done_sem = xSemaphoreCreateCounting(1, 0);
-    trans_buf_1 = (uint16_t *)heap_caps_malloc(DISPLAY_TRANS_SIZE * sizeof(uint16_t), MALLOC_CAP_DMA);
-    trans_buf_2 = (uint16_t *)heap_caps_malloc(DISPLAY_TRANS_SIZE * sizeof(uint16_t), MALLOC_CAP_DMA);
+    trans_buf_1 = (uint16_t *)MemoryManager::allocateInternal(DISPLAY_TRANS_SIZE * sizeof(uint16_t));
+    trans_buf_2 = (uint16_t *)MemoryManager::allocateInternal(DISPLAY_TRANS_SIZE * sizeof(uint16_t));
 #if 0
     ESP_LOGI(TAG, "Adding LCD screen");
     const lvgl_port_display_cfg_t display_cfg = {

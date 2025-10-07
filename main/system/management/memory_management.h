@@ -2,9 +2,52 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <memory>
+#include <new>
 #include <esp_heap_caps.h>
 #include <esp_memory_utils.h>
 #include <esp_log.h>
+
+// Macro để overload operator new/delete cho class cần ép vào PSRAM
+#define DECLARE_PSRAM_NEW_DELETE(ClassName) \
+    static void* operator new(std::size_t sz) { \
+        void* p = MemoryManager::allocatePsram(sz); \
+        if (!p) throw std::bad_alloc(); \
+        return p; \
+    } \
+    static void* operator new(std::size_t sz, const std::nothrow_t&) noexcept { \
+        return MemoryManager::allocatePsram(sz); \
+    } \
+    static void* operator new(std::size_t sz, void* ptr) noexcept { \
+        return ptr; \
+    } \
+    static void operator delete(void* p) noexcept { \
+        MemoryManager::freeMemory(p); \
+    }
+
+// Macro để tạo factory method cho class cần ép vào PSRAM
+#define DECLARE_PSRAM_FACTORY(ClassName) \
+    struct Deleter { \
+        void operator()(ClassName* obj) { \
+            if (obj) { \
+                if (esp_ptr_external_ram(obj)) { \
+                    obj->~ClassName(); \
+                    MemoryManager::freeMemory(obj); \
+                } else { \
+                    delete obj; \
+                } \
+            } \
+        } \
+    }; \
+    static std::unique_ptr<ClassName, Deleter> CreateInPsram() { \
+        void* memory = MemoryManager::allocatePsram(sizeof(ClassName)); \
+        if (memory) { \
+            ClassName* obj = new(memory) ClassName(); \
+            return std::unique_ptr<ClassName, Deleter>(obj); \
+        } else { \
+            return std::unique_ptr<ClassName, Deleter>(new ClassName()); \
+        } \
+    }
 
 class MemoryManager {
     public:

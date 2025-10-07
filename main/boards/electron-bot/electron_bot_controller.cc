@@ -14,6 +14,7 @@
 #include "movements.h"
 #include "sdkconfig.h"
 #include "settings.h"
+#include "core_management.h"
 
 #define TAG "ElectronBotController"
 
@@ -112,8 +113,19 @@ private:
 
     void StartActionTaskIfNeeded() {
         if (action_task_handle_ == nullptr) {
-            xTaskCreate(ActionTask, "electron_bot_action", 1024 * 4, this, configMAX_PRIORITIES - 1,
-                        &action_task_handle_);
+            // Tạo task board action với cấu hình từ core management
+            BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_BOARD_ACTION);
+            UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_BOARD_ACTION);
+            uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_BOARD_ACTION);
+            
+            core_management_register_task(CORE_TASK_TYPE_BOARD_ACTION, stack_size);
+            
+            xTaskCreatePinnedToCore(ActionTask, "electron_bot_action", 
+               stack_size, 
+               this, 
+               priority, 
+               &action_task_handle_, 
+               core);
         }
     }
 

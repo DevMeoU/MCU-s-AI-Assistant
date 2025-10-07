@@ -1,13 +1,10 @@
 #include "afe_audio_processor.h"
+#include "core_management.h"
 #include <esp_log.h>
-
-#define PROCESSOR_RUNNING 0x01
 
 #define TAG "AfeAudioProcessor"
 
-AfeAudioProcessor::AfeAudioProcessor()
-    : afe_data_(nullptr) {
-    event_group_ = xEventGroupCreate();
+AfeAudioProcessor::AfeAudioProcessor() : event_group_(xEventGroupCreate()) {
 }
 
 void AfeAudioProcessor::Initialize(AudioCodec* codec, int frame_duration_ms, srmodel_list_t* models_list) {
@@ -69,11 +66,23 @@ void AfeAudioProcessor::Initialize(AudioCodec* codec, int frame_duration_ms, srm
     afe_iface_ = esp_afe_handle_from_config(afe_config);
     afe_data_ = afe_iface_->create_from_config(afe_config);
     
-    xTaskCreate([](void* arg) {
+    // Tạo task audio processor với cấu hình từ core management
+    BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_AUDIO_PROCESSOR);
+    UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_AUDIO_PROCESSOR);
+    uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_AUDIO_PROCESSOR);
+    
+    core_management_register_task(CORE_TASK_TYPE_AUDIO_PROCESSOR, stack_size);
+    
+    xTaskCreatePinnedToCore([](void* arg) {
         auto this_ = (AfeAudioProcessor*)arg;
         this_->AudioProcessorTask();
         vTaskDelete(NULL);
-    }, "audio_communication", 4096, this, 3, NULL);
+    }, "audio_communication", 
+       stack_size, 
+       this, 
+       priority, 
+       NULL, 
+       core);
 }
 
 AfeAudioProcessor::~AfeAudioProcessor() {

@@ -349,6 +349,13 @@ private:
         key_pressed = false;
         key_handled = false;
 
+        // Tạo task key monitor với cấu hình từ core management
+        BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_SYSTEM);
+        UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_SYSTEM);
+        uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_SYSTEM);
+        
+        core_management_register_task(CORE_TASK_TYPE_SYSTEM, stack_size);
+        
         xTaskCreatePinnedToCore(
             [](void* arg) {
                 auto* board = static_cast<WaveshareEsp32s3TouchLCD4b*>(arg);
@@ -358,11 +365,11 @@ private:
                 }
             },
             "key_monitor_task",
-            4096,
+            stack_size,
             this,
-            5,
+            priority,
             nullptr,
-            0
+            core
         );
     }
 

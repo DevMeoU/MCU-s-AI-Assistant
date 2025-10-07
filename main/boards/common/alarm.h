@@ -40,32 +40,11 @@ private:
     static void TimerCallback(void* arg);   /* Static timer callback */
     
 public:
-    // Overload operator new để ép vào PSRAM qua MemoryManager
-    static void* operator new(std::size_t sz);
-    static void* operator new(std::size_t sz, const std::nothrow_t&) noexcept;
-    static void* operator new(std::size_t sz, void* ptr) noexcept { return ptr; }  // Placement new
-    static void operator delete(void* p) noexcept;
+    // Sử dụng macro để overload operator new/delete cho Alarm class
+    DECLARE_PSRAM_NEW_DELETE(Alarm)
     
-    // Custom deleter for Alarm objects
-    struct Deleter {
-        void operator()(Alarm* alarm) {
-            if (alarm) {
-                // Check if the alarm was allocated in PSRAM
-                if (esp_ptr_external_ram(alarm)) {
-                    // Call destructor explicitly for placement new
-                    alarm->~Alarm();
-                    // Free the memory
-                    MemoryManager::freeMemory(alarm);
-                } else {
-                    // Normal deletion
-                    delete alarm;
-                }
-            }
-        }
-    };
-    
-    // Factory method to create Alarm in PSRAM
-    static std::unique_ptr<Alarm, Deleter> CreateInPsram();
+    // Sử dụng macro để tạo factory method cho Alarm class
+    DECLARE_PSRAM_FACTORY(Alarm)
 
     Alarm(int seconds_to_light_sleep = 20, int seconds_to_deep_sleep = -1);
     virtual ~Alarm(); // Remove = delete and allow proper destruction
@@ -126,11 +105,8 @@ public:
     void SaveAlarmsToNVS() override {}
     void ProcessAlarmTrigger() override {}
     
-    // Overload operator new để ép vào PSRAM qua MemoryManager
-    static void* operator new(std::size_t sz);
-    static void* operator new(std::size_t sz, const std::nothrow_t&) noexcept;
-    static void* operator new(std::size_t sz, void* ptr) noexcept { return ptr; }  // Placement new
-    static void operator delete(void* p) noexcept;
+    // Sử dụng macro để overload operator new/delete cho NoAlarm class
+    DECLARE_PSRAM_NEW_DELETE(NoAlarm)
     
     // Singleton instance access
     static NoAlarm& GetInstance() {

@@ -1,7 +1,7 @@
 #include "power_manager.h"
-#include "esp_sleep.h"
-#include "driver/rtc_io.h"
-#include "esp_log.h"
+#include "core_management.h"
+#include <driver/gpio.h>
+#include <esp_log.h>
 #include "config.h"
 #include <esp_sleep.h>
 #include "esp_log.h"
@@ -10,8 +10,8 @@
 #define TAG "PowerManager"
 
 static QueueHandle_t gpio_evt_queue = NULL;
-uint16_t battCnt;//闪灯次数
-int battLife = -1; //电量
+uint16_t battCnt;   //Đếm số lần pin
+int battLife = -1;  //Mức pin
 
 // Chương trình dịch vụ ngắt
 static void IRAM_ATTR batt_mon_isr_handler(void* arg) {
@@ -80,8 +80,14 @@ void PowerManager::Initialize(){
     ESP_ERROR_CHECK(gpio_install_isr_service(0));
     // Thêm xử lý ngắt
     ESP_ERROR_CHECK(gpio_isr_handler_add(MON_BATT_PIN, batt_mon_isr_handler, (void*)MON_BATT_PIN));
-     // Tạo tác vụ giám sát
-    xTaskCreate(&batt_mon_task, "batt_mon_task", 1024, NULL, 10, NULL);
+    // Tạo tác vụ giám sát: dùng core management để lấy core/priority/stack và pin vào core cấu hình
+    {
+        BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_BATTERY_MONITORING);
+        UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_BATTERY_MONITORING);
+        uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_BATTERY_MONITORING);
+        core_management_register_task(CORE_TASK_TYPE_BATTERY_MONITORING, stack_size);
+        xTaskCreatePinnedToCore(&batt_mon_task, "batt_mon_task", stack_size, NULL, priority, NULL, core);
+    }
 
     // Khởi tạo chân giám sát
     gpio_config_t mon_conf = {};

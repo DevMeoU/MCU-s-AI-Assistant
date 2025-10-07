@@ -857,7 +857,7 @@ void Esp32Music::DownloadAudioStream(const std::string& music_url) {
         }
         
         // Tạo khối dữ liệu âm thanh
-        uint8_t* chunk_data = (uint8_t*)heap_caps_malloc(bytes_read, MALLOC_CAP_SPIRAM);
+        uint8_t* chunk_data = (uint8_t*)MemoryManager::allocatePsram(bytes_read);
         if (!chunk_data) {
             ESP_LOGE(TAG, "Failed to allocate memory for audio chunk");
             break;
@@ -881,7 +881,7 @@ void Esp32Music::DownloadAudioStream(const std::string& music_url) {
                     ESP_LOGI(TAG, "Downloaded %d bytes, buffer size: %d", total_downloaded, buffer_size_);
                 }
             } else {
-                heap_caps_free(chunk_data);
+                MemoryManager::freeMemory(chunk_data);
                 break;
             }
         }
@@ -939,7 +939,7 @@ void Esp32Music::PlayAudioStream() {
     uint8_t* read_ptr = nullptr;
     
     // Phân bổ bộ đệm đầu vào MP3
-    mp3_input_buffer = (uint8_t*)heap_caps_malloc(8192, MALLOC_CAP_SPIRAM);
+    mp3_input_buffer = (uint8_t*)MemoryManager::allocatePsram(8192);
     if (!mp3_input_buffer) {
         ESP_LOGE(TAG, "Failed to allocate MP3 input buffer");
         is_playing_ = false;
@@ -1052,7 +1052,7 @@ void Esp32Music::PlayAudioStream() {
                 }
                 
                 // Giải phóng bộ nhớ chunk
-                heap_caps_free(chunk.data);
+                MemoryManager::freeMemory(chunk.data);
             }
         }
         
@@ -1147,9 +1147,8 @@ void Esp32Music::PlayAudioStream() {
                 memcpy(packet.payload.data(), final_pcm_data, pcm_size_bytes);
 
                 if (final_pcm_data_fft == nullptr) {
-                    final_pcm_data_fft = (int16_t*)heap_caps_malloc(
-                        final_sample_count * sizeof(int16_t),
-                        MALLOC_CAP_SPIRAM
+                    final_pcm_data_fft = (int16_t*)MemoryManager::allocatePsram(
+                        final_sample_count * sizeof(int16_t)
                     );
                 }
                 
@@ -1188,7 +1187,7 @@ void Esp32Music::PlayAudioStream() {
     
     // Dọn dẹp
     if (mp3_input_buffer) {
-        heap_caps_free(mp3_input_buffer);
+        MemoryManager::freeMemory(mp3_input_buffer);
     }
     
     // Dọn dẹp cơ bản khi phát kết thúc, nhưng không gọi StopStreaming để tránh luồng tự chờ
@@ -1219,7 +1218,7 @@ void Esp32Music::ClearAudioBuffer() {
         AudioChunk chunk = audio_buffer_.front();
         audio_buffer_.pop();
         if (chunk.data) {
-            heap_caps_free(chunk.data);
+            MemoryManager::freeMemory(chunk.data);
         }
     }
     

@@ -5,6 +5,9 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/event_groups.h>
+#ifndef PROCESSOR_RUNNING
+#define PROCESSOR_RUNNING BIT0
+#endif
 
 #include <string>
 #include <vector>

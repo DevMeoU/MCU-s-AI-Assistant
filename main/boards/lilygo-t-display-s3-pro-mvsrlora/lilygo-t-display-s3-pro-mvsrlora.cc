@@ -6,6 +6,7 @@
 #include "config.h"
 #include "power_save_timer.h"
 #include "i2c_device.h"
+#include "system/management/core_management.h"
 
 #include <esp_log.h>
 #include <driver/i2c_master.h>
@@ -154,7 +155,20 @@ private:
     void InitCst226se() {
         ESP_LOGI(TAG, "Init Cst2xxse");
         cst226se_ = new Cst2xxse(i2c_bus_, 0x5A);
-        xTaskCreate(touchpad_daemon, "tp", 4096, NULL, 5, NULL);
+        
+        // Tạo task touchpad với cấu hình từ core management
+        BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_TOUCHPAD);
+        UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_TOUCHPAD);
+        uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_TOUCHPAD);
+        
+        core_management_register_task(CORE_TASK_TYPE_TOUCHPAD, stack_size);
+        
+        xTaskCreatePinnedToCore(touchpad_daemon, "tp", 
+           stack_size, 
+           NULL, 
+           priority, 
+           NULL, 
+           core);
     }
 
     void InitSy6970() {

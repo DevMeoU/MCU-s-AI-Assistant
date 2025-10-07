@@ -11,6 +11,8 @@
 #include "settings.h"
 #include "alarm.h"
 #include "memory_management.h"
+#include "tasks_config.h"
+#include "core_management.h"
 
 #include <cstring>
 #include <esp_log.h>
@@ -357,6 +359,9 @@ void Application::StopListening() {
 }
 
 void Application::Start() {
+    // Khởi tạo core management
+    core_management_init();
+    
     auto& board = Board::GetInstance();
     SetDeviceState(kDeviceStateStarting);
 
@@ -392,11 +397,22 @@ void Application::Start() {
     };
     audio_service_.SetCallbacks(callbacks);
 
-    // Start the main event loop task with priority 3
-    xTaskCreate([](void* arg) {
+    // Tạo task Main Event Loop với cấu hình mới từ core management
+    BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_SYSTEM);
+    UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_SYSTEM);
+    uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_SYSTEM);
+    
+    core_management_register_task(CORE_TASK_TYPE_SYSTEM, stack_size);
+    
+    xTaskCreatePinnedToCore([](void* arg) {
         ((Application*)arg)->MainEventLoop();
         vTaskDelete(NULL);
-    }, "main_event_loop", 2048 * 4, this, 3, &main_event_loop_task_handle_);
+    }, "main_event_loop", 
+       stack_size, 
+       this, 
+       priority, 
+       &main_event_loop_task_handle_, 
+       core);
 
     /* Start the clock timer to update the status bar */
     esp_timer_start_periodic(clock_timer_handle_, 1000000);

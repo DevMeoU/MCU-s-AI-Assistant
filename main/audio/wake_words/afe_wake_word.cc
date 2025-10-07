@@ -1,7 +1,9 @@
 #include "afe_wake_word.h"
-#include "audio_service.h"
-
+#include "core_management.h"
 #include <esp_log.h>
+#include "audio_service.h"
+#include <opus_encoder.h>
+#include "memory_management.h"
 #include <sstream>
 
 #define DETECTION_RUNNING_EVENT 1
@@ -22,11 +24,11 @@ AfeWakeWord::~AfeWakeWord() {
     }
 
     if (wake_word_encode_task_stack_ != nullptr) {
-        heap_caps_free(wake_word_encode_task_stack_);
+        MemoryManager::freeMemory(wake_word_encode_task_stack_);
     }
 
     if (wake_word_encode_task_buffer_ != nullptr) {
-        heap_caps_free(wake_word_encode_task_buffer_);
+        MemoryManager::freeMemory(wake_word_encode_task_buffer_);
     }
 
     if (models_ != nullptr) {
@@ -36,14 +38,14 @@ AfeWakeWord::~AfeWakeWord() {
     vEventGroupDelete(event_group_);
 }
 
-bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) {
+bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
     codec_ = codec;
     int ref_num = codec_->input_reference() ? 1 : 0;
 
-    if (models_list == nullptr) {
+    if (models == nullptr) {
         models_ = esp_srmodel_init("model");
     } else {
-        models_ = models_list;
+        models_ = models;
     }
 
     if (models_ == nullptr || models_->num == -1) {
@@ -81,11 +83,23 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models_list) {
     afe_iface_ = esp_afe_handle_from_config(afe_config);
     afe_data_ = afe_iface_->create_from_config(afe_config);
 
-    xTaskCreate([](void* arg) {
+    // Tạo task wake word detection với cấu hình từ core management
+    BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_WAKE_WORD_DETECTION);
+    UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_WAKE_WORD_DETECTION);
+    uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_WAKE_WORD_DETECTION);
+    
+    core_management_register_task(CORE_TASK_TYPE_WAKE_WORD_DETECTION, stack_size);
+    
+    xTaskCreatePinnedToCore([](void* arg) {
         auto this_ = (AfeWakeWord*)arg;
         this_->AudioDetectionTask();
         vTaskDelete(NULL);
-    }, "audio_detection", 4096, this, 3, nullptr);
+    }, "audio_detection", 
+       stack_size, 
+       this, 
+       priority, 
+       nullptr, 
+       core);
 
     return true;
 }
@@ -157,17 +171,21 @@ void AfeWakeWord::StoreWakeWordData(const int16_t* data, size_t samples) {
 }
 
 void AfeWakeWord::EncodeWakeWordData() {
-    const size_t stack_size = 4096 * 7;
+    uint32_t encode_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
     wake_word_opus_.clear();
     if (wake_word_encode_task_stack_ == nullptr) {
-        wake_word_encode_task_stack_ = (StackType_t*)heap_caps_malloc(stack_size, MALLOC_CAP_SPIRAM);
+        wake_word_encode_task_stack_ = (StackType_t*)MemoryManager::allocatePsram(encode_stack_size);
         assert(wake_word_encode_task_stack_ != nullptr);
     }
     if (wake_word_encode_task_buffer_ == nullptr) {
-        wake_word_encode_task_buffer_ = (StaticTask_t*)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL);
+        wake_word_encode_task_buffer_ = (StaticTask_t*)MemoryManager::allocateInternal(sizeof(StaticTask_t));
         assert(wake_word_encode_task_buffer_ != nullptr);
     }
 
+    // Tạo task wake word encoding với cấu hình từ core management
+    UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
+    core_management_register_task(CORE_TASK_TYPE_WAKE_WORD_ENCODING, encode_stack_size);
+    
     wake_word_encode_task_ = xTaskCreateStatic([](void* arg) {
         auto this_ = (AfeWakeWord*)arg;
         {
@@ -194,7 +212,12 @@ void AfeWakeWord::EncodeWakeWordData() {
             this_->wake_word_cv_.notify_all();
         }
         vTaskDelete(NULL);
-    }, "encode_wake_word", stack_size, this, 2, wake_word_encode_task_stack_, wake_word_encode_task_buffer_);
+    }, "encode_wake_word", 
+       encode_stack_size, 
+       this, 
+       priority, 
+       wake_word_encode_task_stack_, 
+       wake_word_encode_task_buffer_);
 }
 
 bool AfeWakeWord::GetWakeWordOpus(std::vector<uint8_t>& opus) {

@@ -1,0 +1,105 @@
+TODO LIST KIỂM TRA & TỐI ƯU
+1️⃣ Task & Core Mapping
+
+Kiểm tra xem các task trong hệ thống có chạy đúng core, priority, stack như bảng chuẩn chưa.
+
+ 1.1 Tìm tất cả nơi tạo task → xTaskCreate, xTaskCreatePinnedToCore, esp_event_loop_create_default… trong toàn bộ main/.
+
+Ghi lại: tên task, core, priority, stack size, file/dòng.
+
+ 1.2 So sánh với bảng chuẩn:
+
+Main Event Loop → Core 0, Priority 3, 8 KB
+
+Audio Input/Output → Core 1, Priority 8/4
+
+Opus Codec → Core 1, Priority 2, Stack 26 KB
+
+Protocol → Core 0, Priority 5
+
+Display Update → Core 1, Priority 1
+
+Alarm Checker, Clock Timer → Core 0, Priority 1
+
+ 1.3 Đánh dấu những task:
+
+Chạy sai core (VD: audio mà chạy core 0)
+
+Sai priority (VD: protocol priority thấp hơn audio input)
+
+Sai stack size (quá nhỏ hoặc quá lớn so với bảng chuẩn)
+
+ 1.4 Kiểm tra xem các task này có được cấu hình tập trung (ví dụ tasks_config.h) hay viết rải rác trong từng module → nếu rải rác, cần gom lại.
+
+2️⃣ Bộ nhớ (SRAM / PSRAM / RTC)
+
+Đảm bảo dữ liệu được cấp phát đúng vùng nhớ.
+
+ 2.1 Kiểm tra tất cả các buffer lớn → audio (ASR, TTS), nhạc, giao tiếp mạng, JSON, camera frame:
+
+Tìm malloc, new, heap_caps_malloc, ps_malloc, calloc...
+
+Ghi lại kích thước và loại vùng nhớ sử dụng.
+
+ 2.2 Kiểm tra xem:
+
+Stack task có nằm trong SRAM nội bộ?
+
+Buffer lớn (ASR/TTS, JSON, streaming) có dùng PSRAM không?
+
+RTC RAM có được dùng đúng cho dữ liệu lưu khi deep sleep không (VD: trạng thái thiết bị, alarm…)?
+
+ 2.3 Kiểm tra file memory_management.cc:
+
+Có overload new/delete cho PSRAM chưa?
+
+Có macro DECLARE_PSRAM_NEW_DELETE cho class lớn chưa?
+
+ 2.4 Đánh dấu các nơi đang:
+
+Lạm dụng SRAM cho buffer lớn.
+
+Không dùng PSRAM trong khi ESP32-S3 có 8 MB PSRAM.
+
+Không có cơ chế free / reuse → gây rò RAM.
+
+3️⃣ Quản lý tập trung (Tasks, Memory, Module)
+
+ 3.1 Kiểm tra tasks_config.h → có khai báo tập trung stack/core/priority chưa, hay hardcode trong từng module.
+
+ 3.2 Kiểm tra memory_management.cc → có thực sự là trung tâm quản lý cấp phát không.
+
+ 3.3 Kiểm tra các module:
+
+audio_service.cc, display.cc, mqtt_protocol.cc, websocket_protocol.cc, application.cc…
+→ xem mỗi module có tự tạo task riêng rời rạc không.
+
+ 3.4 Nếu có → lên kế hoạch gom lại về một chỗ để quản lý task tập trung, tránh duplicate.
+
+4️⃣ Cấu hình build (Kconfig + CMakeLists)
+
+ 4.1 Kiểm tra Kconfig.projbuild → có option để chọn:
+
+Font (dejavu 12/14/full)
+
+Module bật/tắt (ASR, TTS, camera, alarm…)
+
+PSRAM enable
+
+ 4.2 Kiểm tra CMakeLists.txt:
+
+Có phản ánh đúng giá trị từ Kconfig chưa (ví dụ target_compile_definitions)?
+
+BUILTIN_TEXT_FONT, BUILTIN_ICON_FONT có bị hardcode không?
+
+ 4.3 Đảm bảo menuconfig có thể bật/tắt tính năng mà không cần sửa code.
+
+📌 Kết quả mong muốn sau khi hoàn thành
+
+Bảng thống kê task → core, priority, stack, memory đầy đủ.
+
+Danh sách lỗi / sai lệch (nếu có) → kèm đề xuất chỉnh.
+
+Hệ thống task và memory được gom lại quản lý tập trung, không còn tạo lung tung.
+
+CMake + Kconfig linh hoạt, dễ tùy chỉnh build.

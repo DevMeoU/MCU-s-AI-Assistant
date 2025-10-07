@@ -109,7 +109,7 @@ CustomLcdDisplay::CustomLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_p
     port_cfg.timer_period_ms = 50;
     lvgl_port_init(&port_cfg);
     trans_done_sem = xSemaphoreCreateBinary();
-    trans_buf_1 = (uint16_t *)heap_caps_malloc(LVGL_DMA_BUFF_LEN, MALLOC_CAP_DMA);
+    trans_buf_1 = (uint16_t *)MemoryManager::allocateInternal(LVGL_DMA_BUFF_LEN);
 
     uint32_t buffer_size = 0;
     lv_color_t *buf1 = NULL;
@@ -118,9 +118,9 @@ CustomLcdDisplay::CustomLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_p
     display_ = lv_display_create(width_, height_);
     lv_display_set_flush_cb(display_, lvgl_port_flush_callback);
     buffer_size = width_ * height_;
-    buf1 = (lv_color_t *)heap_caps_aligned_alloc(1, buffer_size * color_bytes, MALLOC_CAP_SPIRAM);
+    buf1 = (lv_color_t *)MemoryManager::allocatePsram(buffer_size * color_bytes);
 #if (DISPLAY_ROTATION_90 == true)
-    dest_map = (uint16_t *)heap_caps_malloc(buffer_size * color_bytes, MALLOC_CAP_SPIRAM);
+    dest_map = (uint16_t *)MemoryManager::allocatePsram(buffer_size * color_bytes);
     lv_display_set_rotation(display_, LV_DISPLAY_ROTATION_90);
 #endif
     lv_display_set_buffers(display_, buf1, NULL, buffer_size * color_bytes, LV_DISPLAY_RENDER_MODE_FULL);

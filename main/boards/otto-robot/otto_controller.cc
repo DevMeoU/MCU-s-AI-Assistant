@@ -14,6 +14,7 @@
 #include "otto_movements.h"
 #include "sdkconfig.h"
 #include "settings.h"
+#include "system/management/core_management.h"
 
 #define TAG "OttoController"
 
@@ -138,8 +139,19 @@ private:
 
     void StartActionTaskIfNeeded() {
         if (action_task_handle_ == nullptr) {
-            xTaskCreate(ActionTask, "otto_action", 1024 * 3, this, configMAX_PRIORITIES - 1,
-                        &action_task_handle_);
+            // Tạo task board action với cấu hình từ core management
+            BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_BOARD_ACTION);
+            UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_BOARD_ACTION);
+            uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_BOARD_ACTION);
+            
+            core_management_register_task(CORE_TASK_TYPE_BOARD_ACTION, stack_size);
+            
+            xTaskCreatePinnedToCore(ActionTask, "otto_action", 
+               stack_size, 
+               this, 
+               priority, 
+               &action_task_handle_, 
+               core);
         }
     }
 
@@ -343,7 +355,7 @@ public:
 
             mcp_server.AddTool(
                 "self.otto.hand_wave",
-                "挥手。speed: 挥手速度(500-1500，数值越小越快); direction: 手部选择(1=左手, "
+                "挥手。speed: 挥手速度(500-1500，数值越小越快); direction: 手部 chọn(1=左手, "
                 "-1=右手, 0=双手)",
                 PropertyList({Property("speed", kPropertyTypeInteger, 1000, 500, 1500),
                               Property("direction", kPropertyTypeInteger, 1, -1, 1)}),
@@ -373,7 +385,7 @@ public:
             "self.otto.set_trim",
             "校准单个舵机位置。设置指定舵机的微调参数以调整Otto的初始站立姿态，设置将永久保存。"
             "servo_type: 舵机类型(left_leg/right_leg/left_foot/right_foot/left_hand/right_hand); "
-            "trim_value: 微调值(-50到50度)",
+            "trim_value: 微调값(-50到50度)",
             PropertyList({Property("servo_type", kPropertyTypeString, "left_leg"),
                           Property("trim_value", kPropertyTypeInteger, 0, -50, 50)}),
             [this](const PropertyList& properties) -> ReturnValue {
@@ -382,7 +394,7 @@ public:
 
                 ESP_LOGI(TAG, "设置舵机微调: %s = %d度", servo_type.c_str(), trim_value);
 
-                // 获取当前所有微调值
+                // 获取当前所有微调값
                 Settings settings("otto_trims", true);
                 int left_leg = settings.GetInt("left_leg", 0);
                 int right_leg = settings.GetInt("right_leg", 0);
@@ -391,7 +403,7 @@ public:
                 int left_hand = settings.GetInt("left_hand", 0);
                 int right_hand = settings.GetInt("right_hand", 0);
 
-                // 更新指定舵机的微调值
+                // Cập nhật chỉ định舵 cơ của micro điều chỉnh
                 if (servo_type == "left_leg") {
                     left_leg = trim_value;
                     settings.SetInt("left_leg", left_leg);
@@ -417,7 +429,7 @@ public:
                     right_hand = trim_value;
                     settings.SetInt("right_hand", right_hand);
                 } else {
-                    return "错误：无效的舵机类型，请使用: left_leg, right_leg, left_foot, "
+                    return "错误：无效的舵机类型，请 sử dụng: left_leg, right_leg, left_foot, "
                            "right_foot, left_hand, right_hand";
                 }
 
@@ -425,11 +437,11 @@ public:
 
                 QueueAction(ACTION_JUMP, 1, 500, 0, 0);
 
-                return "舵机 " + servo_type + " 微调设置为 " + std::to_string(trim_value) +
-                       " 度，已永久保存";
+                return "舵 cơ " + servo_type + " micro điều chỉnh được đặt thành " + std::to_string(trim_value) +
+                       " độ, đã được lưu trữ vĩnh viễn";
             });
 
-        mcp_server.AddTool("self.otto.get_trims", "获取当前的舵机微调设置", PropertyList(),
+        mcp_server.AddTool("self.otto.get_trims", "获取当前的舵 cơ micro điều chỉnh", PropertyList(),
                            [this](const PropertyList& properties) -> ReturnValue {
                                Settings settings("otto_trims", false);
 
@@ -448,16 +460,16 @@ public:
                                    ",\"left_hand\":" + std::to_string(left_hand) +
                                    ",\"right_hand\":" + std::to_string(right_hand) + "}";
 
-                               ESP_LOGI(TAG, "获取微调设置: %s", result.c_str());
+                               ESP_LOGI(TAG, "micro điều chỉnh được lấy: %s", result.c_str());
                                return result;
                            });
 
-        mcp_server.AddTool("self.otto.get_status", "获取机器人状态，返回 moving 或 idle",
+        mcp_server.AddTool("self.otto.get_status", "获取 robot trạng thái, trả về moving hoặc idle",
                            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
                                return is_action_in_progress_ ? "moving" : "idle";
                            });
 
-        mcp_server.AddTool("self.battery.get_level", "获取机器人电池电量和充电状态", PropertyList(),
+        mcp_server.AddTool("self.battery.get_level", "Lấy robot mức pin và trạng thái sạc", PropertyList(),
                            [](const PropertyList& properties) -> ReturnValue {
                                auto& board = Board::GetInstance();
                                int level = 0;
@@ -471,7 +483,7 @@ public:
                                return status;
                            });
 
-        ESP_LOGI(TAG, "MCP工具注册完成");
+        ESP_LOGI(TAG, "MCP công cụ đã đăng ký");
     }
 
     ~OttoController() {
@@ -488,6 +500,6 @@ static OttoController* g_otto_controller = nullptr;
 void InitializeOttoController() {
     if (g_otto_controller == nullptr) {
         g_otto_controller = new OttoController();
-        ESP_LOGI(TAG, "Otto控制器已初始化并注册MCP工具");
+        ESP_LOGI(TAG, "Otto controller đã khởi tạo và đăng ký công cụ MCP");
     }
 }

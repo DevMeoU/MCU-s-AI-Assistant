@@ -24,6 +24,8 @@
 #include <freertos/semphr.h>
 #include <freertos/task.h>
 
+#include "core_management.h"
+
 #define TAG "EchoEar"
 
 
@@ -486,17 +488,40 @@ private:
         }
     }
 
-    void InitializeCharge()
-    {
+    void InitializeCharge() {
         charge_ = new Charge(i2c_bus_, 0x55);
-        xTaskCreatePinnedToCore(Charge::TaskFunction, "batterydecTask", 3 * 1024, charge_, 6, NULL, 0);
+        
+        // Tạo task battery monitoring với cấu hình từ core management
+        BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_BATTERY_MONITORING);
+        UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_BATTERY_MONITORING);
+        uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_BATTERY_MONITORING);
+        
+        core_management_register_task(CORE_TASK_TYPE_BATTERY_MONITORING, stack_size);
+        
+        xTaskCreatePinnedToCore(Charge::TaskFunction, "batterydecTask", 
+           stack_size, 
+           charge_, 
+           priority, 
+           NULL, 
+           core);
     }
 
-    void InitializeCst816sTouchPad()
-    {
+    void InitializeCst816sTouchPad() {
         cst816s_ = new Cst816s(i2c_bus_, 0x15);
 
-        xTaskCreatePinnedToCore(touch_event_task, "touch_task", 4 * 1024, cst816s_, 5, NULL, 1);
+        // Tạo task touchpad với cấu hình từ core management
+        BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_TOUCHPAD);
+        UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_TOUCHPAD);
+        uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_TOUCHPAD);
+        
+        core_management_register_task(CORE_TASK_TYPE_TOUCHPAD, stack_size);
+        
+        xTaskCreatePinnedToCore(touch_event_task, "touch_task", 
+           stack_size, 
+           cst816s_, 
+           priority, 
+           NULL, 
+           core);
 
         const gpio_config_t int_gpio_config = {
             .pin_bit_mask = (1ULL << TP_PIN_NUM_INT),

@@ -64,7 +64,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
             SscmaData dummy;
             while (xQueueReceive(self->sscma_data_queue_, &dummy, 0) == pdPASS) {
                 if (dummy.img) {
-                    heap_caps_free(dummy.img);
+                    MemoryManager::freeMemory(dummy.img);
                 }
             }
             xQueueSend(self->sscma_data_queue_, &data, 0);
@@ -102,7 +102,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
     }
     // 初始化JPEG数据的内存
     jpeg_data_.len = 0;
-    jpeg_data_.buf = (uint8_t*)heap_caps_malloc(IMG_JPEG_BUF_SIZE, MALLOC_CAP_SPIRAM);;
+    jpeg_data_.buf = (uint8_t*)MemoryManager::allocatePsram(IMG_JPEG_BUF_SIZE);
     if ( jpeg_data_.buf == nullptr ) {
         ESP_LOGE(TAG, "Failed to allocate memory for JPEG buffer");
         return;
@@ -116,7 +116,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
         ESP_LOGE(TAG, "Failed to open JPEG decoder");
         return;
     }
-    jpeg_io_ = (jpeg_dec_io_t*)heap_caps_malloc(sizeof(jpeg_dec_io_t), MALLOC_CAP_SPIRAM);
+    jpeg_io_ = (jpeg_dec_io_t*)MemoryManager::allocatePsram(sizeof(jpeg_dec_io_t));
     if (!jpeg_io_) {
         ESP_LOGE(TAG, "Failed to allocate memory for JPEG IO");
         jpeg_dec_close(jpeg_dec_);
@@ -127,7 +127,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
     jpeg_out_ = (jpeg_dec_header_info_t*)heap_caps_aligned_alloc(16, sizeof(jpeg_dec_header_info_t), MALLOC_CAP_SPIRAM);
     if (!jpeg_out_) {
         ESP_LOGE(TAG, "Failed to allocate memory for JPEG output header");
-        heap_caps_free(jpeg_io_);
+        MemoryManager::freeMemory(jpeg_io_);
         jpeg_dec_close(jpeg_dec_);
         return;
     }
@@ -143,7 +143,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
 
     preview_image_.header.stride = preview_image_.header.w * 2;
     preview_image_.data_size = preview_image_.header.w * preview_image_.header.h * 2;
-    preview_image_.data = (uint8_t*)heap_caps_malloc(preview_image_.data_size, MALLOC_CAP_SPIRAM);
+    preview_image_.data = (uint8_t*)MemoryManager::allocatePsram(preview_image_.data_size);
     if (preview_image_.data == nullptr) {
         ESP_LOGE(TAG, "Failed to allocate memory for preview image");
         return;
@@ -152,7 +152,7 @@ SscmaCamera::SscmaCamera(esp_io_expander_handle_t io_exp_handle) {
 
 SscmaCamera::~SscmaCamera() {
     if (preview_image_.data) {
-        heap_caps_free((void*)preview_image_.data);
+        MemoryManager::freeMemory((void*)preview_image_.data);
         preview_image_.data = nullptr;
     }
     if (sscma_client_handle_) {
@@ -162,7 +162,7 @@ SscmaCamera::~SscmaCamera() {
         vQueueDelete(sscma_data_queue_);
     }
     if (jpeg_data_.buf) {
-        heap_caps_free(jpeg_data_.buf);
+        MemoryManager::freeMemory(jpeg_data_.buf);
         jpeg_data_.buf = nullptr;
     }
     if (jpeg_dec_) {
@@ -170,11 +170,11 @@ SscmaCamera::~SscmaCamera() {
         jpeg_dec_ = nullptr;
     }
     if (jpeg_io_) {
-        heap_caps_free(jpeg_io_);
+        MemoryManager::freeMemory(jpeg_io_);
         jpeg_io_ = nullptr;
     }
     if (jpeg_out_) {
-        heap_caps_free(jpeg_out_);
+        MemoryManager::freeMemory(jpeg_out_);
         jpeg_out_ = nullptr;
     }
 }
@@ -208,14 +208,14 @@ bool SscmaCamera::Capture() {
     }
 
     if (jpeg_data_.buf == nullptr) {
-        heap_caps_free(data.img);
+        MemoryManager::freeMemory(data.img);
         return false;
     }
 
     ret = mbedtls_base64_decode(jpeg_data_.buf, IMG_JPEG_BUF_SIZE, &jpeg_data_.len, data.img, data.len);
     if (ret != 0 || jpeg_data_.len == 0) {
         ESP_LOGE(TAG, "Failed to decode base64 image data, ret: %d, output_len: %zu", ret, jpeg_data_.len);
-        heap_caps_free(data.img);
+        MemoryManager::freeMemory(data.img);
         return false;
     }
     heap_caps_free(data.img);

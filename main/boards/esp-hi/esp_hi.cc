@@ -87,7 +87,14 @@ private:
     {
         if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
 
-            xTaskCreate(
+            // Tạo task web server initialization với cấu hình từ core management
+            BaseType_t core = core_management_get_task_core(CORE_TASK_TYPE_SYSTEM);
+            UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_SYSTEM);
+            uint32_t stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_SYSTEM);
+            
+            core_management_register_task(CORE_TASK_TYPE_SYSTEM, stack_size);
+            
+            xTaskCreatePinnedToCore(
                 [](void* arg) {
                     EspHi* instance = static_cast<EspHi*>(arg);
                     
@@ -107,7 +114,7 @@ private:
                     vTaskDelete(NULL);
                 },
                 "web_server_init",
-                1024 * 10, arg, 5, nullptr);
+                stack_size, arg, priority, nullptr, core);
         }
     }
 #endif //CONFIG_ESP_HI_WEB_CONTROL_ENABLED
