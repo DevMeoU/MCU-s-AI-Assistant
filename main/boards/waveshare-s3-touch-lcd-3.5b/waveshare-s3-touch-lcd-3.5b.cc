@@ -368,6 +368,10 @@ public:
         WifiBoard::SetPowerSaveMode(enabled);
     }
 #endif
+    
+    virtual Alarm* GetAlarm() override {
+        return &NoAlarm::GetInstance();
+    }
 };
 
 DECLARE_BOARD(CustomBoard);

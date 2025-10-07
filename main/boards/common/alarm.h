@@ -3,12 +3,17 @@
 #include <functional>
 #include <vector>
 #include <ctime>
+#include <memory>
+#include <new>  // Add this include for placement new
 
 #include <esp_timer.h>
 #include <esp_pm.h>
 #include <freertos/queue.h>
+#include <esp_heap_caps.h>
+#include <esp_memory_utils.h>
 
 #include "sleep_timer.h"
+#include "system/management/memory_management.h"
 
 #define ALARM_CHECK_INTERVAL_MS 1000        /* Check alarm every second */
 #define ALARM_DEFAULT_TIMEZONE_OFFSET 0     /* Default timezone (UTC) */
@@ -35,6 +40,33 @@ private:
     static void TimerCallback(void* arg);   /* Static timer callback */
     
 public:
+    // Overload operator new để ép vào PSRAM qua MemoryManager
+    static void* operator new(std::size_t sz);
+    static void* operator new(std::size_t sz, const std::nothrow_t&) noexcept;
+    static void* operator new(std::size_t sz, void* ptr) noexcept { return ptr; }  // Placement new
+    static void operator delete(void* p) noexcept;
+    
+    // Custom deleter for Alarm objects
+    struct Deleter {
+        void operator()(Alarm* alarm) {
+            if (alarm) {
+                // Check if the alarm was allocated in PSRAM
+                if (esp_ptr_external_ram(alarm)) {
+                    // Call destructor explicitly for placement new
+                    alarm->~Alarm();
+                    // Free the memory
+                    MemoryManager::freeMemory(alarm);
+                } else {
+                    // Normal deletion
+                    delete alarm;
+                }
+            }
+        }
+    };
+    
+    // Factory method to create Alarm in PSRAM
+    static std::unique_ptr<Alarm, Deleter> CreateInPsram();
+
     Alarm(int seconds_to_light_sleep = 20, int seconds_to_deep_sleep = -1);
     virtual ~Alarm(); // Remove = delete and allow proper destruction
 
@@ -66,8 +98,11 @@ public:
     
     // Singleton instance access
     static Alarm& GetInstance() {
-        static Alarm instance;
-        return instance;
+        static Alarm* instance = nullptr;
+        if (instance == nullptr) {
+            instance = new Alarm();
+        }
+        return *instance;
     }
 };
 
@@ -91,9 +126,18 @@ public:
     void SaveAlarmsToNVS() override {}
     void ProcessAlarmTrigger() override {}
     
+    // Overload operator new để ép vào PSRAM qua MemoryManager
+    static void* operator new(std::size_t sz);
+    static void* operator new(std::size_t sz, const std::nothrow_t&) noexcept;
+    static void* operator new(std::size_t sz, void* ptr) noexcept { return ptr; }  // Placement new
+    static void operator delete(void* p) noexcept;
+    
     // Singleton instance access
     static NoAlarm& GetInstance() {
-        static NoAlarm instance;
-        return instance;
+        static NoAlarm* instance = nullptr;
+        if (instance == nullptr) {
+            instance = new NoAlarm();
+        }
+        return *instance;
     }
 };

@@ -9,7 +9,8 @@
 #include "mcp_server.h"
 #include "assets.h"
 #include "settings.h"
-#include "boards/common/alarm.h"
+#include "alarm.h"
+#include "memory_management.h"
 
 #include <cstring>
 #include <esp_log.h>
@@ -40,7 +41,13 @@ Application::Application() {
     event_group_ = xEventGroupCreate();
     
     // Initialize alarm system
-    alarm_ = std::make_unique<Alarm>();
+    ESP_LOGI(TAG, "Initialize alarm system");
+    
+    // Use factory method to create Alarm in PSRAM
+    ESP_LOGI(TAG, "Using factory method to create Alarm in PSRAM");
+    alarm_ = Alarm::CreateInPsram();
+    
+    MemoryManager::logMemoryInfo();
 
 #if CONFIG_USE_DEVICE_AEC && CONFIG_USE_SERVER_AEC
 #error "CONFIG_USE_DEVICE_AEC and CONFIG_USE_SERVER_AEC cannot be enabled at the same time"
@@ -363,12 +370,12 @@ void Application::Start() {
     /* Setup the audio service */
     auto codec = board.GetAudioCodec();
 
-    while (1)
-    {
-        /* code */
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        ESP_LOGI(TAG, "Device state: %d", device_state_);
-    }
+    // while (1)
+    // {
+    //     /* code */
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //     ESP_LOGI(TAG, "Device state: %d", device_state_);
+    // }
 
     audio_service_.Initialize(codec);
     audio_service_.Start();

@@ -303,6 +303,10 @@ public:
         }
         WifiBoard::SetPowerSaveMode(enabled);
     }
+    
+    virtual Alarm* GetAlarm() override {
+        return &NoAlarm::GetInstance();
+    }
 };
 
 DECLARE_BOARD(Spotpear_ESP32_S3_1_28_BOX);

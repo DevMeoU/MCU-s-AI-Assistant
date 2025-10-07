@@ -183,6 +183,10 @@ public:
     virtual Display* GetDisplay() override {
         return display_;
     }
+    
+    virtual Alarm* GetAlarm() override {
+        return &NoAlarm::GetInstance();
+    }
 };
 
 DECLARE_BOARD(CompactWifiBoard);

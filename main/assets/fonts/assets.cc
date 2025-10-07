@@ -160,8 +160,8 @@ bool Assets::Apply() {
             }
             
             auto text_font = std::make_shared<LvglCBinFont>(ptr);
-            if (text_font->font() == nullptr) {
-                ESP_LOGE(TAG, "Failed to load fonts.bin");
+            if (text_font == nullptr || text_font->font() == nullptr) {
+                ESP_LOGE(TAG, "Failed to load font file %s", fonts_text_file.c_str());
                 return false;
             }
             if (light_theme != nullptr) {

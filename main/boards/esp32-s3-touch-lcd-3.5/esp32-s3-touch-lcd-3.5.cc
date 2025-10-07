@@ -376,6 +376,10 @@ public:
     virtual Camera* GetCamera() override {
         return camera_;
     }
+    
+    virtual Alarm* GetAlarm() override {
+        return &NoAlarm::GetInstance();
+    }
 };
 
 DECLARE_BOARD(CustomBoard);

@@ -16,6 +16,7 @@
 #include "audio_service.h"
 #include "device_state_event.h"
 #include "boards/common/alarm.h"
+#include "system/management/memory_management.h"
 
 // Forward declaration for Alarm class
 class Alarm;
@@ -84,7 +85,7 @@ private:
     AecMode aec_mode_ = kAecOff;
     std::string last_error_message_;
     AudioService audio_service_;
-    std::unique_ptr<Alarm> alarm_;  // Alarm system instance
+    std::unique_ptr<Alarm, Alarm::Deleter> alarm_;  // Alarm system instance with custom deleter
 
     bool has_server_time_ = false;
     bool aborted_ = false;

@@ -54,6 +54,7 @@ public:
     virtual void SetPowerSaveMode(bool enabled) override;
     virtual std::string GetBoardJson() override;
     virtual std::string GetDeviceStatusJson() override;
+    virtual Alarm* GetAlarm() override { return current_board_->GetAlarm(); }
 };
 
 #endif // DUAL_NETWORK_BOARD_H

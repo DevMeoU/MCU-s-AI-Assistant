@@ -86,6 +86,10 @@ public:
             false);
         return &audio_codec;
     }
+    
+    virtual Alarm* GetAlarm() override {
+        return &NoAlarm::GetInstance();
+    }
 };
 
 DECLARE_BOARD(AtomEchoS3rBaseBoard);

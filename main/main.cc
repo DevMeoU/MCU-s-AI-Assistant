@@ -10,7 +10,7 @@
 #include "application.h"
 #include "system_establish.h"
 #include "system_info.h"
-#include "memory_management.h"
+#include "system/management/memory_management.h"
 
 #define TAG "app_main"
 
@@ -26,5 +26,5 @@ extern "C" void app_main(void)
     // Launch the application
     auto& app = Application::GetInstance();
     ESP_LOGI(TAG, "Application started");
-    app.Start();
+    // app.Start();
 }

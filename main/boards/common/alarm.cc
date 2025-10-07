@@ -1,5 +1,6 @@
 #include <time.h>
 #include <sys/time.h>
+#include <memory>  // Add this include for std::unique_ptr
 #include "esp_log.h"
 #include "esp_sntp.h"
 #include "esp_timer.h"
@@ -17,8 +18,122 @@ static esp_timer_handle_t alarm_timer = nullptr;
 // Event queue for alarm triggering
 static QueueHandle_t alarm_event_queue = nullptr;
 
+// Factory method to create Alarm in PSRAM
+std::unique_ptr<Alarm, Alarm::Deleter> Alarm::CreateInPsram() {
+    ESP_LOGI(TAG, "Creating Alarm in PSRAM using factory method");
+    void* alarm_memory = MemoryManager::allocatePsram(sizeof(Alarm));
+    if (alarm_memory) {
+        ESP_LOGI(TAG, "Successfully allocated memory for Alarm in PSRAM at %p", alarm_memory);
+        Alarm* alarm = new(alarm_memory) Alarm();
+        ESP_LOGI(TAG, "Successfully constructed Alarm in PSRAM at %p", static_cast<void*>(alarm));
+        
+        // Verify that the alarm is in PSRAM
+        if (esp_ptr_external_ram(alarm)) {
+            ESP_LOGI(TAG, "Verification: Alarm object is correctly placed in PSRAM");
+        } else {
+            ESP_LOGW(TAG, "Verification: Alarm object is NOT in PSRAM");
+        }
+        
+        // Return a unique_ptr with a custom deleter
+        return std::unique_ptr<Alarm, Alarm::Deleter>(alarm);
+    } else {
+        ESP_LOGE(TAG, "Failed to allocate Alarm in PSRAM, using default allocation");
+        return std::unique_ptr<Alarm, Alarm::Deleter>(new Alarm());
+    }
+}
+
+// Overload operator new để ép vào PSRAM qua MemoryManager
+void* Alarm::operator new(std::size_t sz) {
+    ESP_LOGI(TAG, "Alarm::operator new called with size %zu", sz);
+    void* p = MemoryManager::allocatePsram(sz);
+    if (!p) {
+        ESP_LOGE(TAG, "Failed to allocate Alarm object in PSRAM, throwing bad_alloc");
+        throw std::bad_alloc();
+    }
+    ESP_LOGI(TAG, "Successfully allocated Alarm object at %p in PSRAM", p);
+    
+    // Verify that the allocated memory is in PSRAM
+    if (esp_ptr_external_ram(p)) {
+        ESP_LOGI(TAG, "Verification: Allocated memory is correctly in PSRAM");
+    } else {
+        ESP_LOGW(TAG, "Verification: Allocated memory is NOT in PSRAM");
+    }
+    
+    return p;
+}
+
+void* Alarm::operator new(std::size_t sz, const std::nothrow_t&) noexcept {
+    ESP_LOGI(TAG, "Alarm::operator new (nothrow) called with size %zu", sz);
+    void* p = MemoryManager::allocatePsram(sz);
+    if (!p) {
+        ESP_LOGE(TAG, "Failed to allocate Alarm object in PSRAM (nothrow)");
+    } else {
+        ESP_LOGI(TAG, "Successfully allocated Alarm object at %p in PSRAM (nothrow)", p);
+        
+        // Verify that the allocated memory is in PSRAM
+        if (esp_ptr_external_ram(p)) {
+            ESP_LOGI(TAG, "Verification: Allocated memory is correctly in PSRAM (nothrow)");
+        } else {
+            ESP_LOGW(TAG, "Verification: Allocated memory is NOT in PSRAM (nothrow)");
+        }
+    }
+    
+    return p;
+}
+
+void Alarm::operator delete(void* p) noexcept {
+    ESP_LOGI(TAG, "Alarm::operator delete called for object at %p", p);
+    MemoryManager::freeMemory(p);
+}
+
+// Overload operator new để ép vào PSRAM qua MemoryManager
+void* NoAlarm::operator new(std::size_t sz) {
+    ESP_LOGI(TAG, "NoAlarm::operator new called with size %zu", sz);
+    void* p = MemoryManager::allocatePsram(sz);
+    if (!p) {
+        ESP_LOGE(TAG, "Failed to allocate NoAlarm object in PSRAM, throwing bad_alloc");
+        throw std::bad_alloc();
+    }
+    ESP_LOGI(TAG, "Successfully allocated NoAlarm object at %p in PSRAM", p);
+    
+    // Verify that the allocated memory is in PSRAM
+    if (esp_ptr_external_ram(p)) {
+        ESP_LOGI(TAG, "Verification: Allocated memory is correctly in PSRAM");
+    } else {
+        ESP_LOGW(TAG, "Verification: Allocated memory is NOT in PSRAM");
+    }
+    
+    return p;
+}
+
+void* NoAlarm::operator new(std::size_t sz, const std::nothrow_t&) noexcept {
+    ESP_LOGI(TAG, "NoAlarm::operator new (nothrow) called with size %zu", sz);
+    void* p = MemoryManager::allocatePsram(sz);
+    if (!p) {
+        ESP_LOGE(TAG, "Failed to allocate NoAlarm object in PSRAM (nothrow)");
+    } else {
+        ESP_LOGI(TAG, "Successfully allocated NoAlarm object at %p in PSRAM (nothrow)", p);
+        
+        // Verify that the allocated memory is in PSRAM
+        if (esp_ptr_external_ram(p)) {
+            ESP_LOGI(TAG, "Verification: Allocated memory is correctly in PSRAM (nothrow)");
+        } else {
+            ESP_LOGW(TAG, "Verification: Allocated memory is NOT in PSRAM (nothrow)");
+        }
+    }
+    
+    return p;
+}
+
+void NoAlarm::operator delete(void* p) noexcept {
+    ESP_LOGI(TAG, "NoAlarm::operator delete called for object at %p", p);
+    MemoryManager::freeMemory(p);
+}
+
 Alarm::Alarm(int seconds_to_light_sleep, int seconds_to_deep_sleep)
     : SleepTimer(seconds_to_light_sleep, seconds_to_deep_sleep) {
+    ESP_LOGI(TAG, "Alarm constructor called");
+    
     // Initialize alarm times array from NVS storage
     alarm_times_.resize(ALARM_MAX_SETTINGS, 0);
     LoadAlarmsFromNVS();
