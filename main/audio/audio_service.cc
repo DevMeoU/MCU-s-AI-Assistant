@@ -301,10 +301,15 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     audio_processor_->Feed(std::move(data));
+                    // Thêm delay nhỏ để tránh chiếm dụng CPU quá mức
+                    vTaskDelay(pdMS_TO_TICKS(1));
                     continue;
                 }
             }
         }
+
+        // Thêm delay nhỏ khi không có event nào được xử lý
+        vTaskDelay(pdMS_TO_TICKS(5));
 
         ESP_LOGE(TAG, "Should not be here, bits: %lx", bits);
         break;

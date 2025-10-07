@@ -4,7 +4,7 @@
 
 #define TAG "AfeAudioProcessor"
 
-AfeAudioProcessor::AfeAudioProcessor() : event_group_(xEventGroupCreate()) {
+AfeAudioProcessor::AfeAudioProcessor() : afe_data_(nullptr) event_group_(xEventGroupCreate()) {
 }
 
 void AfeAudioProcessor::Initialize(AudioCodec* codec, int frame_duration_ms, srmodel_list_t* models_list) {
@@ -51,9 +51,12 @@ void AfeAudioProcessor::Initialize(AudioCodec* codec, int frame_duration_ms, srm
     }
 
     afe_config->afe_perferred_core = 1;
-    afe_config->afe_perferred_priority = 1;
+    afe_config->afe_perferred_priority = 10;  // Tăng priority cho AFE processing
     afe_config->agc_init = false;
     afe_config->memory_alloc_mode = AFE_MEMORY_ALLOC_MORE_PSRAM;
+    
+    // Tăng kích thước buffer để giảm tần suất đầy buffer
+    afe_config->rb_size = 10240;  // Tăng từ mặc định lên 10KB
 
 #ifdef CONFIG_USE_DEVICE_AEC
     afe_config->aec_init = true;
@@ -135,6 +138,8 @@ void AfeAudioProcessor::AudioProcessorTask() {
     ESP_LOGI(TAG, "Audio communication task started, feed size: %d fetch size: %d",
         feed_size, fetch_size);
 
+    int ringbuffer_full_count = 0;  // Biến đếm số lần ringbuffer đầy
+    
     while (true) {
         xEventGroupWaitBits(event_group_, PROCESSOR_RUNNING, pdFALSE, pdTRUE, portMAX_DELAY);
 
@@ -142,12 +147,28 @@ void AfeAudioProcessor::AudioProcessorTask() {
         if ((xEventGroupGetBits(event_group_) & PROCESSOR_RUNNING) == 0) {
             continue;
         }
+        
+        // Kiểm tra lỗi ringbuffer đầy
         if (res == nullptr || res->ret_value == ESP_FAIL) {
-            if (res != nullptr) {
+            if (res != nullptr && res->ret_value == AFE_RINGBUF_FULL) {
+                ringbuffer_full_count++;
+                ESP_LOGW(TAG, "AFE ringbuffer full count: %d", ringbuffer_full_count);
+                
+                // Nếu ringbuffer đầy nhiều lần liên tiếp, reset buffer
+                if (ringbuffer_full_count >= 5) {
+                    ESP_LOGW(TAG, "Resetting AFE buffer due to continuous full state");
+                    afe_iface_->reset_buffer(afe_data_);
+                    ringbuffer_full_count = 0;
+                }
+            } else if (res != nullptr) {
                 ESP_LOGI(TAG, "Error code: %d", res->ret_value);
+                ringbuffer_full_count = 0;  // Reset counter khi có lỗi khác
             }
             continue;
         }
+        
+        // Reset counter khi fetch thành công
+        ringbuffer_full_count = 0;
 
         // VAD state change
         if (vad_state_change_callback_) {

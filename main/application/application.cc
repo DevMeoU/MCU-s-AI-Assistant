@@ -567,6 +567,7 @@ void Application::Start() {
     bool protocol_started = protocol_->Start();
 
     SystemInfo::PrintHeapStats();
+    MemoryManager::logMemoryInfo();
     SetDeviceState(kDeviceStateIdle);
 
     has_server_time_ = ota.HasServerTime();
@@ -655,6 +656,7 @@ void Application::MainEventLoop() {
                 // SystemInfo::PrintTaskCpuUsage(pdMS_TO_TICKS(1000));
                 // SystemInfo::PrintTaskList();
                 SystemInfo::PrintHeapStats();
+                MemoryManager::logMemoryInfo();
             }
         }
     }

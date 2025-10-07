@@ -38,6 +38,7 @@ set(SOURCES
     "system/system_info.cc"
     "system/system_establish.cc"
     "system/setting/settings.cc"
+    "system/management/core_management.c"
     "application/application.cc"
     "ota/ota.cc"
     "device_state_event/device_state_event.cc"

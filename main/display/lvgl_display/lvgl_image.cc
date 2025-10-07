@@ -1,4 +1,5 @@
 #include "lvgl_image.h"
+#include "memory_management.h"
 #include <cbin_font.h>
 
 #include <esp_log.h>

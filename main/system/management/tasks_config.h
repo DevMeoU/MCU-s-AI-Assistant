@@ -37,8 +37,8 @@
 #define MCP_TASK_PRIORITY               5
 #define OTA_TASK_PRIORITY               1
 #define UI_TASK_PRIORITY                1
-#define AUDIO_PROCESSOR_PRIORITY        8
-#define WAKE_WORD_DETECTION_PRIORITY    8
+#define AUDIO_PROCESSOR_PRIORITY        10  // Tăng từ 8 lên 10 để có độ ưu tiên cao hơn
+#define WAKE_WORD_DETECTION_PRIORITY    9   // Tăng từ 8 lên 9
 #define WAKE_WORD_ENCODING_PRIORITY     2
 #define BOARD_ACTION_PRIORITY           (configMAX_PRIORITIES - 1)
 #define BATTERY_MONITORING_PRIORITY     10

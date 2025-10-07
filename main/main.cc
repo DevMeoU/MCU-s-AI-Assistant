@@ -26,5 +26,5 @@ extern "C" void app_main(void)
     // Launch the application
     auto& app = Application::GetInstance();
     ESP_LOGI(TAG, "Application started");
-    // app.Start();
+    app.Start();
 }

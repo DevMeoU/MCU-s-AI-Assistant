@@ -207,15 +207,33 @@ bool MqttProtocol::OpenAudioChannel() {
     session_id_ = "";
     xEventGroupClearBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT);
 
-    auto message = GetHelloMessage();
-    if (!SendText(message)) {
-        return false;
-    }
+    // Thêm retry mechanism cho việc gửi hello message
+    const int max_retries = 3;
+    int retry_count = 0;
+    
+    while (retry_count < max_retries) {
+        auto message = GetHelloMessage();
+        if (!SendText(message)) {
+            retry_count++;
+            ESP_LOGW(TAG, "Failed to send hello message, retry %d/%d", retry_count, max_retries);
+            vTaskDelay(pdMS_TO_TICKS(1000));  // Đợi 1 giây trước khi retry
+            continue;
+        }
 
-    // Đợi phản hồi từ máy chủ
-    EventBits_t bits = xEventGroupWaitBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT, pdTRUE, pdFALSE, pdMS_TO_TICKS(10000));
-    if (!(bits & MQTT_PROTOCOL_SERVER_HELLO_EVENT)) {
-        ESP_LOGE(TAG, "Failed to receive server hello");
+        // Tăng timeout từ 10s lên 30s để cho phép server phản hồi
+        EventBits_t bits = xEventGroupWaitBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT, pdTRUE, pdFALSE, pdMS_TO_TICKS(30000));
+        if (bits & MQTT_PROTOCOL_SERVER_HELLO_EVENT) {
+            // Thành công, thoát khỏi vòng lặp
+            break;
+        } else {
+            retry_count++;
+            ESP_LOGW(TAG, "Failed to receive server hello, retry %d/%d", retry_count, max_retries);
+            vTaskDelay(pdMS_TO_TICKS(2000));  // Đợi 2 giây trước khi retry
+        }
+    }
+    
+    if (retry_count >= max_retries) {
+        ESP_LOGE(TAG, "Failed to receive server hello after %d retries", max_retries);
         SetError(Lang::Strings::SERVER_TIMEOUT);
         return false;
     }
@@ -349,12 +367,12 @@ void MqttProtocol::ParseServerHello(const cJSON* root) {
 }
 
 static const char hex_chars[] = "0123456789ABCDEF";
-// 辅助函数，将单个十六进制字符转换为对应的数值
+// Hàm chuyển đổi một ký tự hexa thành một số nguyên
 static inline uint8_t CharToHex(char c) {
     if (c >= '0' && c <= '9') return c - '0';
     if (c >= 'A' && c <= 'F') return c - 'A' + 10;
     if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    return 0;  // 对于无效输入，返回0
+    return 0;  // Đối không hợp lệ
 }
 
 std::string MqttProtocol::DecodeHexString(const std::string& hex_string) {
