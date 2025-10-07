@@ -53,8 +53,28 @@ private:
     std::mutex wake_word_mutex_;
     std::condition_variable wake_word_cv_;
 
+    // Task handles
+    TaskHandle_t wake_word_detection_task_ = nullptr;
+    TaskHandle_t audio_encode_task_ = nullptr;
+    StaticTask_t* audio_encode_task_buffer_ = nullptr;
+    StackType_t* audio_encode_task_stack_ = nullptr;
+    EventGroupHandle_t encode_event_group_;
+    
+    // Flag to control task execution
+    volatile bool encode_task_running_ = false;
+    
+    // New queue for raw audio data to be encoded
+    std::deque<std::vector<int16_t>> encode_queue_;
+    std::mutex encode_queue_mutex_;
+    std::condition_variable encode_queue_cv_;
+
     void StoreWakeWordData(const int16_t* data, size_t size);
     void AudioDetectionTask();
+    void AudioEncodeTask();  // New task for encoding
+    
+    // safe create/destroy helpers
+    bool safeCreateAfe(const std::string& input_format, size_t ringbuf_size);
+    void safeDestroyAfe();
 };
 
 #endif

@@ -17,16 +17,16 @@
 #define UI_TASK_STACK_SIZE              (4 * 1024)
 #define AUDIO_PROCESSOR_STACK_SIZE      (4 * 1024)
 #define WAKE_WORD_DETECTION_STACK_SIZE  (4 * 1024)
-#define WAKE_WORD_ENCODING_STACK_SIZE   (4 * 1024 * 7)
+#define WAKE_WORD_ENCODING_STACK_SIZE   (3 * 1024 * 4) // 12KB thay vì 16KB
 #define BOARD_ACTION_STACK_SIZE         (4 * 1024)
 #define BATTERY_MONITORING_STACK_SIZE   (1024)
 #define TOUCHPAD_STACK_SIZE             (4 * 1024)
 
 // Định nghĩa priority cho từng task (0-25)
 #define MAIN_EVENT_LOOP_PRIORITY        3
-#define AUDIO_INPUT_PRIORITY            8
-#define AUDIO_OUTPUT_PRIORITY           4
-#define OPUS_CODEC_PRIORITY             2
+#define AUDIO_INPUT_PRIORITY            4  // Priority cao thứ hai
+#define AUDIO_OUTPUT_PRIORITY           8
+#define OPUS_CODEC_PRIORITY             12
 #define PROTOCOL_HANDLER_PRIORITY       5
 #define DISPLAY_UPDATE_PRIORITY         1
 #define ALARM_CHECKER_PRIORITY          1
@@ -37,9 +37,9 @@
 #define MCP_TASK_PRIORITY               5
 #define OTA_TASK_PRIORITY               1
 #define UI_TASK_PRIORITY                1
-#define AUDIO_PROCESSOR_PRIORITY        10  // Tăng từ 8 lên 10 để có độ ưu tiên cao hơn
-#define WAKE_WORD_DETECTION_PRIORITY    9   // Tăng từ 8 lên 9
-#define WAKE_WORD_ENCODING_PRIORITY     2
+#define AUDIO_PROCESSOR_PRIORITY        2  // Priority cao nhất
+#define WAKE_WORD_DETECTION_PRIORITY    6  // Priority 6
+#define WAKE_WORD_ENCODING_PRIORITY     13 // Priority 13
 #define BOARD_ACTION_PRIORITY           (configMAX_PRIORITIES - 1)
 #define BATTERY_MONITORING_PRIORITY     10
 #define TOUCHPAD_PRIORITY               5
@@ -48,7 +48,7 @@
 #define MAIN_EVENT_LOOP_CORE            0
 #define AUDIO_INPUT_CORE                1
 #define AUDIO_OUTPUT_CORE               1
-#define OPUS_CODEC_CORE                 1
+#define OPUS_CODEC_CORE                 0
 #define PROTOCOL_HANDLER_CORE           0
 #define DISPLAY_UPDATE_CORE             1
 #define ALARM_CHECKER_CORE              0
@@ -61,7 +61,7 @@
 #define UI_TASK_CORE                    1
 #define AUDIO_PROCESSOR_CORE            1
 #define WAKE_WORD_DETECTION_CORE        1
-#define WAKE_WORD_ENCODING_CORE         1
+#define WAKE_WORD_ENCODING_CORE         0  // Chạy trên Core 0
 #define BOARD_ACTION_CORE               0
 #define BATTERY_MONITORING_CORE         0
 #define TOUCHPAD_CORE                   0

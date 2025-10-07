@@ -245,6 +245,9 @@ bool AudioService::ReadAudioData(std::vector<int16_t>& data, int sample_rate, in
 }
 
 void AudioService::AudioInputTask() {
+    int64_t last_wake_word_feed_time = esp_timer_get_time();  // Thời gian feed wake word cuối cùng
+    int64_t last_processor_feed_time = esp_timer_get_time();  // Thời gian feed processor cuối cùng
+    
     while (true) {
         EventBits_t bits = xEventGroupWaitBits(event_group_, AS_EVENT_AUDIO_TESTING_RUNNING |
             AS_EVENT_WAKE_WORD_RUNNING | AS_EVENT_AUDIO_PROCESSOR_RUNNING,
@@ -289,6 +292,9 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     wake_word_->Feed(data);
+                    last_wake_word_feed_time = esp_timer_get_time();  // Cập nhật thời gian feed cuối cùng
+                    // Thêm delay nhỏ để tránh chiếm dụng CPU quá mức
+                    vTaskDelay(pdMS_TO_TICKS(2)); // Giảm delay từ 1ms xuống 2ms
                     continue;
                 }
             }
@@ -301,18 +307,29 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     audio_processor_->Feed(std::move(data));
+                    last_processor_feed_time = esp_timer_get_time();  // Cập nhật thời gian feed cuối cùng
                     // Thêm delay nhỏ để tránh chiếm dụng CPU quá mức
-                    vTaskDelay(pdMS_TO_TICKS(1));
+                    vTaskDelay(pdMS_TO_TICKS(1)); // Giữ nguyên delay 1ms
                     continue;
                 }
             }
         }
 
         // Thêm delay nhỏ khi không có event nào được xử lý
-        vTaskDelay(pdMS_TO_TICKS(5));
+        vTaskDelay(pdMS_TO_TICKS(2)); // Giảm delay từ 5ms xuống 2ms
 
-        ESP_LOGE(TAG, "Should not be here, bits: %lx", bits);
-        break;
+        // Kiểm tra thời gian giữa các lần feed để cảnh báo nếu quá lâu
+        int64_t current_time = esp_timer_get_time();
+        int64_t wake_word_time_diff_ms = (current_time - last_wake_word_feed_time) / 1000;
+        int64_t processor_time_diff_ms = (current_time - last_processor_feed_time) / 1000;
+        
+        if (bits & AS_EVENT_WAKE_WORD_RUNNING && wake_word_time_diff_ms > 200) {  // Cảnh báo nếu thời gian giữa các lần feed > 200ms
+            ESP_LOGW(TAG, "Long time since last wake word feed: %lld ms", wake_word_time_diff_ms);
+        }
+        
+        if (bits & AS_EVENT_AUDIO_PROCESSOR_RUNNING && processor_time_diff_ms > 200) {  // Cảnh báo nếu thời gian giữa các lần feed > 200ms
+            ESP_LOGW(TAG, "Long time since last processor feed: %lld ms", processor_time_diff_ms);
+        }
     }
 
     ESP_LOGW(TAG, "Audio input task stopped");
