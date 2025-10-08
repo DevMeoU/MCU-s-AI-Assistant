@@ -778,17 +778,26 @@ config RECEIVE_CUSTOM_MESSAGE
         # Enable custom message reception from server - Usually via MQTT protocol.
         # Allows device to receive special commands or messages from control server.
 
-menu "TAIJIPAI_S3_CONFIG"
+# Lựa chọn kiểu giao tiếp I2S cho board Taiji Pi S3
+# I2S communication type selection for Taiji Pi S3 board
+choice I2S_TYPE_TAIJIPI_S3
     depends on BOARD_TYPE_ESP32S3_Taiji_Pi
-    choice I2S_TYPE_TAIJIPI_S3
         prompt "taiji-pi-S3 I2S Type"
         default TAIJIPAI_I2S_TYPE_STD
         help
-            I2S 类型选择
+        I2S Type
+        # Lựa chọn kiểu giao tiếp I2S (Inter-IC Sound) cho board Taiji Pi S3.
+        # STD: Chuẩn I2S truyền thống, PDM: Pulse Density Modulation cho microphone kỹ thuật số.
+        # Select I2S (Inter-IC Sound) communication type for Taiji Pi S3 board.
+        # STD: Standard I2S, PDM: Pulse Density Modulation for digital microphones.
         config TAIJIPAI_I2S_TYPE_STD
             bool "I2S Type STD"
+        # I2S chuẩn - Giao tiếp âm thanh nổi tiếng, phù hợp cho hầu hết thiết bị ngoại vi.
+        # Standard I2S - Popular audio communication, suitable for most peripherals.
         config TAIJIPAI_I2S_TYPE_PDM
             bool "I2S Type PDM"
+        # PDM - Dành cho microphone kỹ thuật số, đơn giản hóa thiết kế phần cứng.
+        # PDM - For digital microphones, simplifies hardware design.
     endchoice
 
     config I2S_USE_2SLOT
@@ -797,5 +806,26 @@ menu "TAIJIPAI_S3_CONFIG"
     help
         启动双声道
 endmenu
+
+# Font configuration
+menu "Font configuration"
+
+choice BUILTIN_TEXT_FONT_DEJAVU_SANS_CHOICE
+    prompt "Select Dejavu Sans font size"
+    default BUILTIN_TEXT_FONT_DEJAVU_SANS_CONDENSED_12
+
+config BUILTIN_TEXT_FONT_DEJAVU_SANS_12
+    bool "Dejavu Sans 12"
+
+config BUILTIN_TEXT_FONT_DEJAVU_SANS_CONDENSED_12
+    bool "Dejavu Sans Condensed 12"
+
+config BUILTIN_TEXT_FONT_DEJAVU_SANS_14
+    bool "Dejavu Sans 14"
+
+config BUILTIN_TEXT_FONT_DEJAVU_SANS_FULL
+    bool "Dejavu Sans Full"
+
+endchoice
 
 endmenu

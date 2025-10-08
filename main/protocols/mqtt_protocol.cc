@@ -2,7 +2,7 @@
 #include "board.h"
 #include "application.h"
 #include "settings.h"
-#include "system/system_info.h"  // Add this include for SystemInfo
+#include "system_info.h"  // Add this include for SystemInfo
 
 #include <esp_log.h>
 #include <cstring>
@@ -153,7 +153,6 @@ bool MqttProtocol::SendText(const std::string& text) {
         SetError(Lang::Strings::SERVER_ERROR);
         return false;
     }
-
     ESP_LOGI(TAG, "Published message: %s", text.c_str());
     return true;
 }
@@ -218,7 +217,6 @@ bool MqttProtocol::OpenAudioChannel() {
     if (!SendText(message)) {
     return false;
     }
-
 
     // Chờ phản hồi từ máy chủ
     EventBits_t bits = xEventGroupWaitBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT, pdTRUE, pdFALSE, pdMS_TO_TICKS(10000));

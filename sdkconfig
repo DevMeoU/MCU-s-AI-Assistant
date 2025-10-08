@@ -717,6 +717,7 @@ CONFIG_USE_AUDIO_PROCESSOR=y
 # CONFIG_USE_AUDIO_DEBUGGER is not set
 # CONFIG_USE_ACOUSTIC_WIFI_PROVISIONING is not set
 # CONFIG_RECEIVE_CUSTOM_MESSAGE is not set
+# CONFIG_I2S_USE_2SLOT is not set
 # end of Xiaozhi Assistant (Custom by Deesol)
 
 #

@@ -753,7 +753,7 @@ if(DEFINED BUILTIN_ICON_FONT)
 else()
   target_compile_definitions(${COMPONENT_LIB} PRIVATE
     BUILTIN_ICON_FONT=font_awesome_14_1
-    BUILTIN_ICON_FONT_STR=\"font_awesome_14_1\"
+    BUILTIN_ICON_FONT_STR=\"font_awesome_14_1\"menu
   )
 endif()
 
