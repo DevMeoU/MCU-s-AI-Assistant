@@ -33,6 +33,9 @@ protected:
 
     // Mã định danh duy nhất của thiết bị được tạo bởi phần mềm
     std::string uuid_;
+    
+    // Instance của trình phát nhạc
+    Music* music_;
 
 public:
     static Board& GetInstance() {
@@ -40,7 +43,7 @@ public:
         return *instance;
     }
 
-    virtual ~Board() = default;
+    virtual ~Board();
     virtual std::string GetBoardType() = 0;
     virtual std::string GetUuid() { return uuid_; }
     virtual Backlight* GetBacklight() { return nullptr; }

@@ -117,7 +117,6 @@ static std::string url_encode(const std::string& str) {
             c == '-' || c == '_' || c == '.' || c == '~') {
             encoded += c;
         } else if (c == ' ') {
-            encoded += '+';  // Mã hóa khoảng trắng thành '+' hoặc '%20'
             encoded += '+';  // Khoảng trắng được mã hóa thành '+' hoặc '%20'
         } else {
             snprintf(hex, sizeof(hex), "%%%02X", c);
@@ -205,7 +204,8 @@ Esp32Music::~Esp32Music() {
                 break;
             }
             
-            // Thiết lập lại cờ dừng, đảm bảo luồng có thể phát hiện
+            // 再次设置停止标志，确保线程能够检测到
+            is_downloading_ = false;
             
             // Thông báo biến điều kiện
             {

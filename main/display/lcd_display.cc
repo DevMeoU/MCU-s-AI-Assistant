@@ -485,26 +485,26 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         }
     }
     
-    // 折叠系统消息（如果是系统消息，检查最后一个消息是否也是系统消息）
+    // Thu gọn tin nhắn hệ thống (nếu là tin nhắn hệ thống, kiểm tra xem tin nhắn cuối cùng có phải là tin nhắn hệ thống không)
     if (strcmp(role, "system") == 0) {
         if (child_count > 0) {
-            // 获取最后一个消息容器
+            // Lấy container tin nhắn cuối cùng
             lv_obj_t* last_container = lv_obj_get_child(content_, child_count - 1);
             if (last_container != nullptr && lv_obj_get_child_cnt(last_container) > 0) {
-                // 获取容器内的气泡
+                // Lấy bong bóng trong container
                 lv_obj_t* last_bubble = lv_obj_get_child(last_container, 0);
                 if (last_bubble != nullptr) {
-                    // Check if bubble type is system message
+                    // Kiểm tra xem loại bong bóng có phải là tin nhắn hệ thống không
                     void* bubble_type_ptr = lv_obj_get_user_data(last_bubble);
                     if (bubble_type_ptr != nullptr && strcmp((const char*)bubble_type_ptr, "system") == 0) {
-                        // If the last message is also a system message, delete it
+                        // Nếu tin nhắn cuối cùng cũng là tin nhắn hệ thống, xóa nó
                         lv_obj_del(last_container);
                     }
                 }
             }
         }
     } else {
-        // Hide the center-aligned AI logo
+        // Ẩn logo AI căn giữa
         lv_obj_add_flag(emoji_label_, LV_OBJ_FLAG_HIDDEN);
     }
 
@@ -540,18 +540,18 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         text_width = min_width;
     }
 
-    // 如果文本宽度小于最大宽度，使用文本宽度
+    // Nếu chiều rộng văn bản nhỏ hơn chiều rộng tối đa, sử dụng chiều rộng văn bản
     if (text_width < max_width) {
         bubble_width = text_width; 
     } else {
         bubble_width = max_width;
     }
     
-    // 设置消息文本的宽度
-    lv_obj_set_width(msg_text, bubble_width);  // 减去padding
+    // Thiết lập chiều rộng văn bản tin nhắn
+    lv_obj_set_width(msg_text, bubble_width);  // Trừ đi padding
     lv_label_set_long_mode(msg_text, LV_LABEL_LONG_WRAP);
 
-    // 设置气泡宽度
+    // Thiết lập chiều rộng bong bóng
     lv_obj_set_width(msg_bubble, bubble_width);
     lv_obj_set_height(msg_bubble, LV_SIZE_CONTENT);
 
@@ -579,7 +579,7 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         // Set text color for contrast
         lv_obj_set_style_text_color(msg_text, lvgl_theme->text_color(), 0);
         
-        // 设置自定义属性标记气泡类型
+        // Thiết lập thuộc tính tùy chỉnh để đánh dấu loại bong bóng
         lv_obj_set_user_data(msg_bubble, (void*)"assistant");
         
         // Set appropriate width for content
@@ -595,7 +595,7 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         // Set text color for contrast
         lv_obj_set_style_text_color(msg_text, lvgl_theme->system_text_color(), 0);
         
-        // 设置自定义属性标记气泡类型
+        // Thiết lập thuộc tính tùy chỉnh để đánh dấu loại bong bóng
         lv_obj_set_user_data(msg_bubble, (void*)"system");
         
         // Set appropriate width for content
@@ -643,7 +643,7 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
         // Center the bubble in the container
         lv_obj_align(msg_bubble, LV_ALIGN_CENTER, 0, 0);
         
-        // 自动滚动底部
+        // Tự động cuộn xuống đáy
         lv_obj_scroll_to_view_recursive(container, LV_ANIM_ON);
     } else {
         // For assistant messages
@@ -680,7 +680,7 @@ void LcdDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
     lv_obj_set_style_bg_color(img_bubble, lvgl_theme->assistant_bubble_color(), 0);
     lv_obj_set_style_bg_opa(img_bubble, LV_OPA_70, 0);
     
-    // 设置自定义属性标记气泡类型
+    // Thiết lập thuộc tính tùy chỉnh để đánh dấu loại bong bóng
     lv_obj_set_user_data(img_bubble, (void*)"image");
 
     // Create the image object inside the bubble
@@ -814,9 +814,9 @@ void LcdDisplay::SetupUI() {
 
     chat_message_label_ = lv_label_create(content_);
     lv_label_set_text(chat_message_label_, "");
-    lv_obj_set_width(chat_message_label_, width_ * 0.9); // 限制宽度为屏幕宽度的 90%
-    lv_label_set_long_mode(chat_message_label_, LV_LABEL_LONG_WRAP); // 设置为自动换行模式
-    lv_obj_set_style_text_align(chat_message_label_, LV_TEXT_ALIGN_CENTER, 0); // 设置文本居中对齐
+    lv_obj_set_width(chat_message_label_, width_ * 0.9); // Giới hạn chiều rộng là 90% chiều rộng màn hình
+    lv_label_set_long_mode(chat_message_label_, LV_LABEL_LONG_WRAP); // Thiết lập chế độ tự động xuống dòng
+    lv_obj_set_style_text_align(chat_message_label_, LV_TEXT_ALIGN_CENTER, 0); // Căn giữa văn bản
     lv_obj_set_style_text_color(chat_message_label_, lvgl_theme->text_color(), 0);
 
     /* Status bar */
@@ -1059,12 +1059,12 @@ void LcdDisplay::SetTheme(Theme* theme) {
         
         if (bubble == nullptr) continue;
         
-        // 使用保存的用户数据来识别气泡类型
+        // Sử dụng dữ liệu người dùng đã lưu để nhận biết loại bong bóng
         void* bubble_type_ptr = lv_obj_get_user_data(bubble);
         if (bubble_type_ptr != nullptr) {
             const char* bubble_type = static_cast<const char*>(bubble_type_ptr);
             
-            // 根据气泡类型应用正确的颜色
+            // Áp dụng màu sắc đúng theo loại bong bóng
             if (strcmp(bubble_type, "user") == 0) {
                 lv_obj_set_style_bg_color(bubble, lvgl_theme->user_bubble_color(), 0);
             } else if (strcmp(bubble_type, "assistant") == 0) {
