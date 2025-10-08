@@ -5,9 +5,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/event_groups.h>
-#ifndef PROCESSOR_RUNNING
-#define PROCESSOR_RUNNING BIT1
-#endif
 
 #include <string>
 #include <vector>
@@ -43,10 +40,6 @@ private:
     std::vector<int16_t> output_buffer_;
 
     void AudioProcessorTask();
-    
-    // safe create/destroy helpers
-    bool safeCreateAfe(const std::string& input_format, size_t ringbuf_size);
-    void safeDestroyAfe();
 };
 
 #endif 
