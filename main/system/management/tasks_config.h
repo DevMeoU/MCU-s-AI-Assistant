@@ -1,11 +1,12 @@
 #pragma once
 
 // Định nghĩa stack size cho từng task (bytes)
+// Giảm stack size để tiết kiệm RAM
 #define MAIN_EVENT_LOOP_STACK_SIZE      (8 * 1024)
 #define AUDIO_INPUT_STACK_SIZE          (6 * 1024)
 #define AUDIO_OUTPUT_STACK_SIZE         (4 * 1024)
-#define OPUS_CODEC_STACK_SIZE           (26 * 1024)
-#define PROTOCOL_HANDLER_STACK_SIZE     (12 * 1024)
+#define OPUS_CODEC_STACK_SIZE           (24 * 1024)  // Giảm từ 26KB xuống 24KB
+#define PROTOCOL_HANDLER_STACK_SIZE     (10 * 1024)  // Giảm từ 12KB xuống 10KB
 #define DISPLAY_UPDATE_STACK_SIZE       (4 * 1024)
 #define ALARM_CHECKER_STACK_SIZE        (2 * 1024)
 #define CLOCK_TIMER_STACK_SIZE          (2 * 1024)
@@ -17,9 +18,10 @@
 #define UI_TASK_STACK_SIZE              (4 * 1024)
 #define AUDIO_PROCESSOR_STACK_SIZE      (4 * 1024)
 #define WAKE_WORD_DETECTION_STACK_SIZE  (4 * 1024)
-#define WAKE_WORD_ENCODING_STACK_SIZE   (3 * 1024 * 4) // 12KB thay vì 16KB
+#define WAKE_WORD_ENCODING_STACK_SIZE   (3 * 1024 * 3) // 9KB thay vì 12KB
+
 #define BOARD_ACTION_STACK_SIZE         (4 * 1024)
-#define BATTERY_MONITORING_STACK_SIZE   (1024)
+#define BATTERY_MONITORING_STACK_SIZE   (1024)  // Giảm từ 2KB xuống 1KB
 #define TOUCHPAD_STACK_SIZE             (4 * 1024)
 
 // Định nghĩa priority cho từng task (0-25)

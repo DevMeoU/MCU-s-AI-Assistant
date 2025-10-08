@@ -2,7 +2,15 @@
 #include "core_management.h"
 #include <esp_log.h>
 
+// Chỉ định TAG cho logging
 #define TAG "AfeAudioProcessor"
+
+// Giảm mức độ log không cần thiết
+#ifdef CONFIG_AFE_DEBUG_LOG
+#define AFE_LOGD ESP_LOGD
+#else
+#define AFE_LOGD(...) do {} while(0)  // Disable debug logs
+#endif
 
 AfeAudioProcessor::AfeAudioProcessor() : event_group_(xEventGroupCreate()), afe_data_(nullptr) {
 }
@@ -34,8 +42,8 @@ void AfeAudioProcessor::Initialize(AudioCodec* codec, int frame_duration_ms, srm
     char* ns_model_name = esp_srmodel_filter(models, ESP_NSNET_PREFIX, NULL);
     char* vad_model_name = esp_srmodel_filter(models, ESP_VADN_PREFIX, NULL);
     
-    // Log memory before AFE init
-    ESP_LOGI(TAG, "Free internal before AFE: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+    // Log memory before AFE init - chỉ khi cần thiết
+    AFE_LOGD(TAG, "Free internal before AFE: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     
     // attempt create AFE with fallback sizes - ưu tiên kích thước nhỏ hơn trước
     const size_t ringbuf_sizes[] = {4096, 6144, 8192, 10240};
@@ -130,7 +138,8 @@ void AfeAudioProcessor::AudioProcessorTask() {
     int wait_count = 0;
     const int max_wait_count = 100; // 5 seconds timeout (50ms * 100)
     while (afe_iface_ == nullptr || afe_data_ == nullptr) {
-        ESP_LOGW(TAG, "Waiting for AFE to be ready...");
+        // Chỉ log khi cần thiết
+        AFE_LOGD(TAG, "Waiting for AFE to be ready...");
         vTaskDelay(pdMS_TO_TICKS(50));
         wait_count++;
         if (wait_count >= max_wait_count) {
@@ -142,7 +151,8 @@ void AfeAudioProcessor::AudioProcessorTask() {
 
     auto fetch_size = afe_iface_->get_fetch_chunksize(afe_data_);
     auto feed_size = afe_iface_->get_feed_chunksize(afe_data_);
-    ESP_LOGI(TAG, "Audio communication task started, feed size: %d fetch size: %d",
+    // Chỉ log khi cần thiết
+    AFE_LOGD(TAG, "Audio communication task started, feed size: %d fetch size: %d",
         feed_size, fetch_size);
         
     // Kiểm tra fetch_size để đảm bảo ringbuffer đã được tạo đúng cách
@@ -161,7 +171,8 @@ void AfeAudioProcessor::AudioProcessorTask() {
         
         // guard before calling AFE
         if (afe_iface_ == nullptr || afe_data_ == nullptr) {
-            ESP_LOGW(TAG, "AFE not available, skipping fetch");
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "AFE not available, skipping fetch");
             vTaskDelay(pdMS_TO_TICKS(50));
             continue;
         }
@@ -181,7 +192,8 @@ void AfeAudioProcessor::AudioProcessorTask() {
         
         // Kiểm tra res == nullptr TRƯỚC KHI truy cập res->ret_value
         if (res == nullptr) {
-            ESP_LOGW(TAG, "AFE fetch returned nullptr");
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "AFE fetch returned nullptr");
             vTaskDelay(pdMS_TO_TICKS(50));
             continue;
         }
@@ -191,7 +203,8 @@ void AfeAudioProcessor::AudioProcessorTask() {
             // Kiểm tra nếu ringbuffer đầy dựa trên mã lỗi cụ thể
             ringbuffer_full_count++;
             emergency_reset_count++;
-            ESP_LOGW(TAG, "AFE fetch error, code: %d, count: %d", res->ret_value, ringbuffer_full_count);
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "AFE fetch error, code: %d, count: %d", res->ret_value, ringbuffer_full_count);
             
             // Reset buffer sau 3 lần lỗi
             if (ringbuffer_full_count >= 3) {
@@ -266,11 +279,12 @@ void AfeAudioProcessor::AudioProcessorTask() {
             }
         }
         
-        // Monitor fetch interval
+        // Monitor fetch interval - chỉ khi cần thiết
         int64_t current_time = esp_timer_get_time();
         int64_t time_diff_ms = (current_time - last_fetch_time) / 1000;
         if (time_diff_ms > 50) {  // Warning if time between fetches > 50ms
-            ESP_LOGW(TAG, "Long time between fetches: %lld ms", time_diff_ms);
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "Long time between fetches: %lld ms", time_diff_ms);
         }
     }
 }
@@ -350,6 +364,7 @@ bool AfeAudioProcessor::safeCreateAfe(const std::string& input_format, size_t ri
         return false;
     }
 
-    ESP_LOGI(TAG, "AFE created OK ringbuf_size=%d", (int)ringbuf_size);
+    // Chỉ log khi cần thiết
+    AFE_LOGD(TAG, "AFE created OK ringbuf_size=%d", (int)ringbuf_size);
     return true;
 }

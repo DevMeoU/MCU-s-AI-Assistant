@@ -2,6 +2,7 @@
 #include "board.h"
 #include "application.h"
 #include "settings.h"
+#include "system/system_info.h"  // Add this include for SystemInfo
 
 #include <esp_log.h>
 #include <cstring>
@@ -19,7 +20,7 @@ MqttProtocol::MqttProtocol() {
             MqttProtocol* protocol = (MqttProtocol*)arg;
             auto& app = Application::GetInstance();
             if (app.GetDeviceState() == kDeviceStateIdle) {
-                ESP_LOGI(TAG, "Reconnecting to MQTT server");
+                    ESP_LOGI(TAG, "Reconnecting to MQTT server");
                 app.Schedule([protocol]() {
                     protocol->StartMqttClient(false);
                 });
@@ -31,7 +32,7 @@ MqttProtocol::MqttProtocol() {
 }
 
 MqttProtocol::~MqttProtocol() {
-    ESP_LOGI(TAG, "MqttProtocol deinit");
+        ESP_LOGI(TAG, "MqttProtocol deinit");
     if (reconnect_timer_ != nullptr) {
         esp_timer_stop(reconnect_timer_);
         esp_timer_delete(reconnect_timer_);
@@ -64,7 +65,7 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
     publish_topic_ = settings.GetString("publish_topic");
 
     if (endpoint.empty()) {
-        ESP_LOGW(TAG, "MQTT endpoint is not specified");
+            ESP_LOGW(TAG, "MQTT endpoint is not specified");
         if (report_error) {
             SetError(Lang::Strings::SERVER_NOT_FOUND);
         }
@@ -79,7 +80,7 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
         if (on_disconnected_ != nullptr) {
             on_disconnected_();
         }
-        ESP_LOGI(TAG, "MQTT disconnected, schedule reconnect in %d seconds", MQTT_RECONNECT_INTERVAL_MS / 1000);
+            ESP_LOGI(TAG, "MQTT disconnected, schedule reconnect in %d seconds", MQTT_RECONNECT_INTERVAL_MS / 1000);
         esp_timer_start_once(reconnect_timer_, MQTT_RECONNECT_INTERVAL_MS * 1000);
     });
 
@@ -92,25 +93,27 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
 
     mqtt_->OnMessage([this](const std::string& topic, const std::string& payload) {
         cJSON* root = cJSON_Parse(payload.c_str());
+        ESP_LOGW(TAG, "Received message: %s", payload.c_str());
         if (root == nullptr) {
-            ESP_LOGE(TAG, "Failed to parse json message %s", payload.c_str());
+                ESP_LOGE(TAG, "Failed to parse json message %s", payload.c_str());
             return;
         }
         cJSON* type = cJSON_GetObjectItem(root, "type");
         if (!cJSON_IsString(type)) {
-            ESP_LOGE(TAG, "Message type is invalid");
+                ESP_LOGE(TAG, "Message type is invalid");
             cJSON_Delete(root);
             return;
         }
 
         if (strcmp(type->valuestring, "hello") == 0) {
+            ESP_LOGI(TAG, "Received server hello: %s", payload.c_str());
             ParseServerHello(root);
         } else if (strcmp(type->valuestring, "goodbye") == 0) {
             auto session_id = cJSON_GetObjectItem(root, "session_id");
             ESP_LOGI(TAG, "Received goodbye message, session_id: %s", session_id ? session_id->valuestring : "null");
             if (session_id == nullptr || session_id_ == session_id->valuestring) {
                 Application::GetInstance().Schedule([this]() {
-                    CloseAudioChannel();
+                    CloseAudioChannel();  // CHỈ đóng, KHÔNG mở lại - đúng như phiên bản cũ
                 });
             }
         } else if (on_incoming_json_ != nullptr) {
@@ -121,6 +124,7 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
     });
 
     ESP_LOGI(TAG, "Connecting to endpoint %s", endpoint.c_str());
+    ESP_LOGW(TAG, "client_id: %s, username: %s, password: %s", client_id.c_str(), username.c_str(), password.c_str());
     std::string broker_address;
     int broker_port = 8883;
     size_t pos = endpoint.find(':');
@@ -136,7 +140,7 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
         return false;
     }
 
-    ESP_LOGI(TAG, "Connected to endpoint");
+        ESP_LOGI(TAG, "Connected to endpoint");
     return true;
 }
 
@@ -145,10 +149,12 @@ bool MqttProtocol::SendText(const std::string& text) {
         return false;
     }
     if (!mqtt_->Publish(publish_topic_, text)) {
-        ESP_LOGE(TAG, "Failed to publish message: %s", text.c_str());
+            ESP_LOGE(TAG, "Failed to publish message: %s", text.c_str());
         SetError(Lang::Strings::SERVER_ERROR);
         return false;
     }
+
+    ESP_LOGI(TAG, "Published message: %s", text.c_str());
     return true;
 }
 
@@ -184,11 +190,11 @@ void MqttProtocol::CloseAudioChannel() {
         udp_.reset();
     }
 
-    std::string message = "{";
-    message += "\"session_id\":\"" + session_id_ + "\",";
-    message += "\"type\":\"goodbye\"";
-    message += "}";
-    SendText(message);
+        std::string message = "{";
+        message += "\"session_id\":\"" + session_id_ + "\",";
+        message += "\"type\":\"goodbye\"";
+        message += "}";
+        SendText(message);
 
     if (on_audio_channel_closed_ != nullptr) {
         on_audio_channel_closed_();
@@ -197,7 +203,7 @@ void MqttProtocol::CloseAudioChannel() {
 
 bool MqttProtocol::OpenAudioChannel() {
     if (mqtt_ == nullptr || !mqtt_->IsConnected()) {
-        ESP_LOGI(TAG, "MQTT is not connected, try to connect now");
+            ESP_LOGI(TAG, "MQTT is not connected, try to connect now");
         if (!StartMqttClient(true)) {
             return false;
         }
@@ -206,44 +212,29 @@ bool MqttProtocol::OpenAudioChannel() {
     error_occurred_ = false;
     session_id_ = "";
     xEventGroupClearBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT);
-
-    // Thêm retry mechanism cho việc gửi hello message
-    const int max_retries = 3;
-    int retry_count = 0;
-    
-    while (retry_count < max_retries) {
-        auto message = GetHelloMessage();
-        if (!SendText(message)) {
-            retry_count++;
-            ESP_LOGW(TAG, "Failed to send hello message, retry %d/%d", retry_count, max_retries);
-            vTaskDelay(pdMS_TO_TICKS(1000));  // Đợi 1 giây trước khi retry
-            continue;
-        }
-
-        // Tăng timeout từ 10s lên 30s để cho phép server phản hồi
-        EventBits_t bits = xEventGroupWaitBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT, pdTRUE, pdFALSE, pdMS_TO_TICKS(30000));
-        if (bits & MQTT_PROTOCOL_SERVER_HELLO_EVENT) {
-            // Thành công, thoát khỏi vòng lặp
-            break;
-        } else {
-            retry_count++;
-            ESP_LOGW(TAG, "Failed to receive server hello, retry %d/%d", retry_count, max_retries);
-            vTaskDelay(pdMS_TO_TICKS(2000));  // Đợi 2 giây trước khi retry
-        }
+        
+    auto message = GetHelloMessage();
+    ESP_LOGW(TAG, "MQTT status: %s", mqtt_->IsConnected() ? "connected" : "disconnected");
+    if (!SendText(message)) {
+    return false;
     }
-    
-    if (retry_count >= max_retries) {
-        ESP_LOGE(TAG, "Failed to receive server hello after %d retries", max_retries);
+
+
+    // Chờ phản hồi từ máy chủ
+    EventBits_t bits = xEventGroupWaitBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT, pdTRUE, pdFALSE, pdMS_TO_TICKS(10000));
+    if (!(bits & MQTT_PROTOCOL_SERVER_HELLO_EVENT)) {
+        ESP_LOGE(TAG, "Failed to receive server hello");
         SetError(Lang::Strings::SERVER_TIMEOUT);
         return false;
     }
 
+    // Set up UDP connection as specified in mqtt-udp.md
     std::lock_guard<std::mutex> lock(channel_mutex_);
     auto network = Board::GetInstance().GetNetwork();
     udp_ = network->CreateUdp(2);
     udp_->OnMessage([this](const std::string& data) {
         /*
-         * UDP Encrypted OPUS Packet Format:
+         * UDP Encrypted OPUS Packet Format according to mqtt-udp.md:
          * |type 1u|flags 1u|payload_len 2u|ssrc 4u|timestamp 4u|sequence 4u|
          * |payload payload_len|
          */
@@ -258,11 +249,11 @@ bool MqttProtocol::OpenAudioChannel() {
         uint32_t timestamp = ntohl(*(uint32_t*)&data[8]);
         uint32_t sequence = ntohl(*(uint32_t*)&data[12]);
         if (sequence < remote_sequence_) {
-            ESP_LOGW(TAG, "Received audio packet with old sequence: %lu, expected: %lu", sequence, remote_sequence_);
+                ESP_LOGW(TAG, "Received audio packet with old sequence: %lu, expected: %lu", sequence, remote_sequence_);
             return;
         }
         if (sequence != remote_sequence_ + 1) {
-            ESP_LOGW(TAG, "Received audio packet with wrong sequence: %lu, expected: %lu", sequence, remote_sequence_ + 1);
+                ESP_LOGW(TAG, "Received audio packet with wrong sequence: %lu, expected: %lu", sequence, remote_sequence_ + 1);
         }
 
         size_t decrypted_size = data.size() - aes_nonce_.size();
@@ -296,7 +287,7 @@ bool MqttProtocol::OpenAudioChannel() {
 }
 
 std::string MqttProtocol::GetHelloMessage() {
-    // Gửi tin nhắn hello để yêu cầu kênh UDP
+    // Send hello message according to mqtt-udp.md specification
     cJSON* root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "type", "hello");
     cJSON_AddNumberToObject(root, "version", 3);
@@ -330,7 +321,7 @@ void MqttProtocol::ParseServerHello(const cJSON* root) {
     auto session_id = cJSON_GetObjectItem(root, "session_id");
     if (cJSON_IsString(session_id)) {
         session_id_ = session_id->valuestring;
-        ESP_LOGI(TAG, "Session ID: %s", session_id_.c_str());
+            ESP_LOGI(TAG, "Session ID: %s", session_id_.c_str());
     }
 
     // Get sample rate from hello message
@@ -346,6 +337,7 @@ void MqttProtocol::ParseServerHello(const cJSON* root) {
         }
     }
 
+    // Get UDP configuration as specified in mqtt-udp.md
     auto udp = cJSON_GetObjectItem(root, "udp");
     if (!cJSON_IsObject(udp)) {
         ESP_LOGE(TAG, "UDP is not specified");

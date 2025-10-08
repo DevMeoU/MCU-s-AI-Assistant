@@ -19,6 +19,10 @@
 #include "audio_codec.h"
 #include "wake_word.h"
 
+// Định nghĩa các event flag cho wake word detection và encoding
+#define DETECTION_RUNNING_EVENT (1 << 0)  // Bit 0
+#define ENCODE_RUNNING_EVENT    (1 << 1)  // Bit 1
+
 class AfeWakeWord : public WakeWord {
 public:
     AfeWakeWord();

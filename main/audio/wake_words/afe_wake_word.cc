@@ -6,10 +6,15 @@
 #include "memory_management.h"
 #include <sstream>
 
-#define DETECTION_RUNNING_EVENT 1
-#define ENCODE_RUNNING_EVENT 1
-
+// Chỉ định TAG cho logging
 #define TAG "AfeWakeWord"
+
+// Giảm mức độ log không cần thiết
+#ifdef CONFIG_AFE_DEBUG_LOG
+#define AFE_LOGD ESP_LOGD
+#else
+#define AFE_LOGD(...) do {} while(0)  // Disable debug logs
+#endif
 
 AfeWakeWord::AfeWakeWord()
     : afe_data_(nullptr),
@@ -67,7 +72,8 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
         return false;
     }
     for (int i = 0; i < models_->num; i++) {
-        ESP_LOGI(TAG, "Model %d: %s", i, models_->model_name[i]);
+        // Chỉ log khi cần thiết - giảm log model
+        AFE_LOGD(TAG, "Model %d: %s", i, models_->model_name[i]);
         if (strstr(models_->model_name[i], ESP_WN_PREFIX) != NULL) {
             wakenet_model_ = models_->model_name[i];
             auto words = esp_srmodel_get_wake_words(models_, wakenet_model_);
@@ -88,8 +94,8 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
         input_format.push_back('R');
     }
     
-    // Log memory before AFE init
-    ESP_LOGI(TAG, "Free internal before AFE: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+    // Log memory before AFE init - chỉ khi cần thiết
+    AFE_LOGD(TAG, "Free internal before AFE: %d", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     
     // attempt create AFE with fallback sizes - ưu tiên kích thước nhỏ hơn trước
     const size_t ringbuf_sizes[] = {4096, 6144, 8192, 10240};
@@ -134,7 +140,7 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
        detection_core);
 
     // Create audio encode task with configuration from core management
-    BaseType_t encode_core = core_management_get_task_core(CORE_TASK_TYPE_WAKE_WORD_ENCODING); // Lấy core từ config
+    // BaseType_t encode_core = core_management_get_task_core(CORE_TASK_TYPE_WAKE_WORD_ENCODING); // Đã loại bỏ biến không sử dụng
     UBaseType_t encode_priority = core_management_get_task_priority(CORE_TASK_TYPE_WAKE_WORD_ENCODING); // Sử dụng priority gốc cho encode task
     uint32_t encode_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
     
@@ -212,7 +218,8 @@ void AfeWakeWord::AudioDetectionTask() {
     int wait_count = 0;
     const int max_wait_count = 100; // 5 seconds timeout (50ms * 100)
     while (afe_iface_ == nullptr || afe_data_ == nullptr) {
-        ESP_LOGW(TAG, "Waiting for AFE to be ready...");
+        // Chỉ log khi cần thiết
+        AFE_LOGD(TAG, "Waiting for AFE to be ready...");
         vTaskDelay(pdMS_TO_TICKS(50));
         wait_count++;
         if (wait_count >= max_wait_count) {
@@ -223,9 +230,10 @@ void AfeWakeWord::AudioDetectionTask() {
     }
 
     auto fetch_size = afe_iface_->get_fetch_chunksize(afe_data_);
-    auto feed_size = afe_iface_->get_feed_chunksize(afe_data_);
-    ESP_LOGI(TAG, "Audio detection task started, feed size: %d fetch size: %d",
-        feed_size, fetch_size);
+    // auto feed_size = afe_iface_->get_feed_chunksize(afe_data_);  // Đã loại bỏ biến không sử dụng
+    // Chỉ log khi cần thiết
+    AFE_LOGD(TAG, "Audio detection task started, feed size: %d fetch size: %d",
+        afe_iface_->get_feed_chunksize(afe_data_), fetch_size);
         
     // Kiểm tra fetch_size để đảm bảo ringbuffer đã được tạo đúng cách
     if (fetch_size == 0) {
@@ -243,7 +251,8 @@ void AfeWakeWord::AudioDetectionTask() {
 
         // guard before calling AFE
         if (afe_iface_ == nullptr || afe_data_ == nullptr) {
-            ESP_LOGW(TAG, "AFE not available, skipping fetch");
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "AFE not available, skipping fetch");
             vTaskDelay(pdMS_TO_TICKS(50));
             continue;
         }
@@ -259,7 +268,8 @@ void AfeWakeWord::AudioDetectionTask() {
         auto res = afe_iface_->fetch_with_delay(afe_data_, portMAX_DELAY);
         // Kiểm tra res == nullptr TRƯỚC KHI truy cập res->ret_value
         if (res == nullptr) {
-            ESP_LOGW(TAG, "AFE fetch returned nullptr");
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "AFE fetch returned nullptr");
             vTaskDelay(pdMS_TO_TICKS(50));
             continue;
         }
@@ -267,7 +277,8 @@ void AfeWakeWord::AudioDetectionTask() {
         if (res->ret_value == ESP_FAIL) {
             ringbuffer_full_count++;
             emergency_reset_count++;
-            ESP_LOGW(TAG, "AFE fetch error, code: %d, count: %d", res->ret_value, ringbuffer_full_count);
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "AFE fetch error, code: %d, count: %d", res->ret_value, ringbuffer_full_count);
             
             if (ringbuffer_full_count >= 3) {
                 ESP_LOGW(TAG, "Resetting AFE buffer due to continuous error state");
@@ -321,11 +332,12 @@ void AfeWakeWord::AudioDetectionTask() {
             }
         }
         
-        // Monitor fetch interval
+        // Monitor fetch interval - chỉ khi cần thiết
         int64_t current_time = esp_timer_get_time();
         int64_t time_diff_ms = (current_time - last_fetch_time) / 1000;
         if (time_diff_ms > 50) {
-            ESP_LOGW(TAG, "Long time between fetches: %lld ms", time_diff_ms);
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "Long time between fetches: %lld ms", time_diff_ms);
         }
         
         // Thêm delay nhỏ để giảm tần suất xử lý
@@ -334,7 +346,8 @@ void AfeWakeWord::AudioDetectionTask() {
 }
 
 void AfeWakeWord::AudioEncodeTask() {
-    ESP_LOGI(TAG, "Audio encode task started");
+    // Chỉ log khi cần thiết
+    AFE_LOGD(TAG, "Audio encode task started");
     
     auto encoder = std::make_unique<OpusEncoderWrapper>(16000, 1, OPUS_FRAME_DURATION_MS);
     encoder->SetComplexity(0); // Fastest encoding
@@ -363,7 +376,8 @@ void AfeWakeWord::AudioEncodeTask() {
         }
     }
     
-    ESP_LOGI(TAG, "Audio encode task stopped");
+    // Chỉ log khi cần thiết
+    AFE_LOGD(TAG, "Audio encode task stopped");
 }
 
 void AfeWakeWord::StoreWakeWordData(const int16_t* data, size_t samples) {
@@ -394,7 +408,7 @@ void AfeWakeWord::EncodeWakeWordData() {
     wake_word_encode_task_ = xTaskCreateStatic([](void* arg) {
         auto this_ = (AfeWakeWord*)arg;
         {
-            auto start_time = esp_timer_get_time();
+            // auto start_time = esp_timer_get_time();  // Đã loại bỏ biến không sử dụng
             auto encoder = std::make_unique<OpusEncoderWrapper>(16000, 1, OPUS_FRAME_DURATION_MS);
             encoder->SetComplexity(0);
 
@@ -409,8 +423,9 @@ void AfeWakeWord::EncodeWakeWordData() {
             }
             this_->wake_word_pcm_.clear();
 
-            auto end_time = esp_timer_get_time();
-            ESP_LOGI(TAG, "Encode wake word opus %d packets in %ld ms", packets, (long)((end_time - start_time) / 1000));
+            // auto end_time = esp_timer_get_time();  // Đã loại bỏ biến không sử dụng
+            // Chỉ log khi cần thiết
+            AFE_LOGD(TAG, "Encode wake word opus %d packets in %ld ms", packets, (long)((esp_timer_get_time() - esp_timer_get_time()) / 1000));
 
             std::lock_guard<std::mutex> lock(this_->wake_word_mutex_);
             this_->wake_word_opus_.push_back(std::vector<uint8_t>());
@@ -491,6 +506,7 @@ bool AfeWakeWord::safeCreateAfe(const std::string& input_format, size_t ringbuf_
         return false;
     }
 
-    ESP_LOGI(TAG, "AFE created OK ringbuf_size=%d", (int)ringbuf_size);
+    // Chỉ log khi cần thiết
+    AFE_LOGD(TAG, "AFE created OK ringbuf_size=%d", (int)ringbuf_size);
     return true;
 }

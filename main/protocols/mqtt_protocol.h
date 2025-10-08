@@ -1,7 +1,6 @@
 #ifndef MQTT_PROTOCOL_H
 #define MQTT_PROTOCOL_H
 
-
 #include "protocol.h"
 #include <mqtt.h>
 #include <udp.h>
@@ -55,6 +54,5 @@ private:
     bool SendText(const std::string& text) override;
     std::string GetHelloMessage();
 };
-
 
 #endif // MQTT_PROTOCOL_H
