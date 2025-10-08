@@ -1,27 +1,6 @@
 # Custom Development Board Guide
-
-This guide describes how to customize a new development board initialization program for the Xiaozhi AI voice chatbot project. Xiaozhi AI supports more than 70 types of ESP32 series development boards, and the initialization code for each development board is placed in its corresponding directory.
-
-## Important Notes
-
-> **Warning**: For custom development boards, when the IO configuration is different from the original development board, do not directly overwrite the configuration of the original development board to compile the firmware. You must create a new development board type, or distinguish it by configuring different names and sdkconfig macros in the `builds` configuration in the `config.json` file. Use `python scripts/release.py [development_board_directory_name]` to compile and package the firmware.
->
-> If you directly overwrite the original configuration, your custom firmware may be overwritten by the standard firmware of the original development board during future OTA upgrades, causing your device to malfunction. Each development board has a unique identifier and corresponding firmware upgrade channel, so maintaining the uniqueness of the development board identifier is very important.
-
-## Directory Structure
-
-The directory structure of each development board usually includes the following files:
-
-- `xxx_board.cc` - The main board-level initialization code, which implements board-related initialization and functions.
-- `config.h` - Board-level configuration file, defining hardware pin mappings and other configuration items.
-- `config.json` - Compilation configuration, specifying the target chip and special compilation options.
-- `README.md` - Documentation related to the development board.
-
-## Steps to Customize a Development Board
-
-### 1. Create a New Development Board Directory
-
-First, create a new directory under `boards/`, for example, `my-custom-board/`:
+首先在`boards/`目录下创建一个新的目录，命名方式应使用 `[品牌名]-[开发板类型]` 的形式，例如 `m5stack-tab5`：
+>>>>>>> upstream/main:docs/custom-board.md
 
 ```bash
 mkdir main/boards/my-custom-board
@@ -87,6 +66,7 @@ Reference example (from lichuang-c3-dev):
 
 #### config.json
 
+<<<<<<< HEAD:main/boards/README.md
 Define compilation configurations in `config.json`:
 
 ```json
@@ -97,7 +77,19 @@ Define compilation configurations in `config.json`:
             "name": "my-custom-board",  // Development board name
             "sdkconfig_append": [
                 // Additional required compilation configurations
+在`config.json`中定义编译配置，这个文件用于 `scripts/release.py` 脚本自动化编译：
+
+```json
+{
+    "target": "esp32s3",  // 目标芯片型号: esp32, esp32s3, esp32c3, esp32c6, esp32p4等
+    "builds": [
+        {
+            "name": "my-custom-board",  // 开发板名称，用于生成固件包
+            "sdkconfig_append": [
+                // 特别 Flash 大小配置
+>>>>>>> upstream/main:docs/custom-board.md
                 "CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y",
+                // 特别分区表配置
                 "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""
             ]
         }
@@ -105,7 +97,393 @@ Define compilation configurations in `config.json`:
 }
 ```
 
+<<<<<<< HEAD:main/boards/README.md
 ### 3. Write Board-Level Initialization Code
+**配置项说明：**
+- `target`: 目标芯片型号，必须与硬件匹配
+- `name`: 编译输出的固件包名称，建议与目录名一致
+- `sdkconfig_append`: 额外的 sdkconfig 配置项数组，会追加到默认配置中
+
+**常用的 sdkconfig_append 配置：**
+```json
+// Flash 大小
+"CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y"   // 4MB Flash
+"CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y"   // 8MB Flash
+"CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y"  // 16MB Flash
+
+// 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/4m.csv\""  // 4MB 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""  // 8MB 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/16m.csv\"" // 16MB 分区表
+
+// 语言配置
+"CONFIG_LANGUAGE_EN_US=y"  // 英语
+"CONFIG_LANGUAGE_ZH_CN=y"  // 简体中文
+
+// 唤醒词配置
+"CONFIG_USE_DEVICE_AEC=y"          // 启用设备端 AEC
+"CONFIG_WAKE_WORD_DISABLED=y"      // 禁用唤醒词
+```
+
+### 3. 编写板级初始化代码
+>>>>>>> upstream/main:docs/custom-board.md
+
+Create a `my_custom_board.cc` file to implement all initialization logic for the development board.
+
+A basic development board class definition includes the following parts:
+
+1. **Class Definition**: Inherits from `WifiBoard` or `Ml307Board`.
+2. **Initialization Function**: Includes initialization of components such as I2C, display, buttons, IoT, etc.
+3. **Virtual Function Overrides**: Such as `GetAudioCodec()`, `GetDisplay()`, `GetBacklight()`, etc.
+4. **Register Development Board**: Use the `DECLARE_BOARD` macro to register the development board.
+
+```cpp
+#include "wifi_board.h"
+#include "codecs/es8311_audio_codec.h"
+#include "display/lcd_display.h"
+#include "application.h"
+#include "button.h"
+#include "config.h"
+#include "mcp_server.h"
+
+#include <esp_log.h>
+#include <driver/i2c_master.h>
+#include <driver/spi_common.h>
+
+#define TAG "MyCustomBoard"
+
+class MyCustomBoard : public WifiBoard {
+private:
+    i2c_master_bus_handle_t codec_i2c_bus_;
+    Button boot_button_;
+    LcdDisplay* display_;
+
+    // I2C initialization
+    void InitializeI2c() {
+        i2c_master_bus_config_t i2c_bus_cfg = {
+            .i2c_port = I2C_NUM_0,
+            .sda_io_num = AUDIO_CODEC_I2C_SDA_PIN,
+            .scl_io_num = AUDIO_CODEC_I2C_SCL_PIN,
+            .clk_source = I2C_CLK_SRC_DEFAULT,
+            .glitch_ignore_cnt = 7,
+            .intr_priority = 0,
+            .trans_queue_depth = 0,
+            .flags = {
+                .enable_internal_pullup = 1,
+            },
+        };
+
+
+This guide describes how to customize a new development board initialization program for the Xiaozhi AI voice chatbot project. Xiaozhi AI supports more than 70 types of ESP32 series development boards, and the initialization code for each development board is placed in its corresponding directory.
+
+## Important Notes
+
+> **Warning**: For custom development boards, when the IO configuration is different from the original development board, do not directly overwrite the configuration of the original development board to compile the firmware. You must create a new development board type, or distinguish it by configuring different names and sdkconfig macros in the `builds` configuration in the `config.json` file. Use `python scripts/release.py [development_board_directory_name]` to compile and package the firmware.
+>
+> If you directly overwrite the original configuration, your custom firmware may be overwritten by the standard firmware of the original development board during future OTA upgrades, causing your device to malfunction. Each development board has a unique identifier and corresponding firmware upgrade channel, so maintaining the uniqueness of the development board identifier is very important.
+
+## Directory Structure
+
+The directory structure of each development board usually includes the following files:
+
+- `xxx_board.cc` - The main board-level initialization code, which implements board-related initialization and functions.
+- `config.h` - Board-level configuration file, defining hardware pin mappings and other configuration items.
+- `config.json` - Compilation configuration, specifying the target chip and special compilation options.
+- `README.md` - Documentation related to the development board.
+
+## Steps to Customize a Development Board
+
+### 1. Create a New Development Board Directory
+
+首先在`boards/`目录下创建一个新的目录，命名方式应使用 `[品牌名]-[开发板类型]` 的形式，例如 `m5stack-tab5`：
+
+```bash
+mkdir main/boards/my-custom-board
+```
+
+### 2. Create Configuration Files
+
+#### config.h
+
+Define all hardware configurations in `config.h`, including:
+
+- Audio sampling rate and I2S pin configuration.
+- Audio codec chip address and I2C pin configuration.
+- Button and LED pin configuration.
+- Display parameters and pin configuration.
+
+Reference example (from lichuang-c3-dev):
+
+```c
+#ifndef _BOARD_CONFIG_H_
+#define _BOARD_CONFIG_H_
+
+#include <driver/gpio.h>
+
+// Audio configuration
+#define AUDIO_INPUT_SAMPLE_RATE  24000
+#define AUDIO_OUTPUT_SAMPLE_RATE 24000
+
+#define AUDIO_I2S_GPIO_MCLK GPIO_NUM_10
+#define AUDIO_I2S_GPIO_WS   GPIO_NUM_12
+#define AUDIO_I2S_GPIO_BCLK GPIO_NUM_8
+#define AUDIO_I2S_GPIO_DIN  GPIO_NUM_7
+#define AUDIO_I2S_GPIO_DOUT GPIO_NUM_11
+
+#define AUDIO_CODEC_PA_PIN       GPIO_NUM_13
+#define AUDIO_CODEC_I2C_SDA_PIN  GPIO_NUM_0
+#define AUDIO_CODEC_I2C_SCL_PIN  GPIO_NUM_1
+#define AUDIO_CODEC_ES8311_ADDR  ES8311_CODEC_DEFAULT_ADDR
+
+// Button configuration
+#define BOOT_BUTTON_GPIO        GPIO_NUM_9
+
+// Display configuration
+#define DISPLAY_SPI_SCK_PIN     GPIO_NUM_3
+#define DISPLAY_SPI_MOSI_PIN    GPIO_NUM_5
+#define DISPLAY_DC_PIN          GPIO_NUM_6
+#define DISPLAY_SPI_CS_PIN      GPIO_NUM_4
+
+#define DISPLAY_WIDTH   320
+#define DISPLAY_HEIGHT  240
+#define DISPLAY_MIRROR_X true
+#define DISPLAY_MIRROR_Y false
+#define DISPLAY_SWAP_XY true
+
+#define DISPLAY_OFFSET_X  0
+#define DISPLAY_OFFSET_Y  0
+
+#define DISPLAY_BACKLIGHT_PIN GPIO_NUM_2
+#define DISPLAY_BACKLIGHT_OUTPUT_INVERT true
+
+#endif // _BOARD_CONFIG_H_
+```
+
+#### config.json
+
+在`config.json`中定义编译配置，这个文件用于 `scripts/release.py` 脚本自动化编译：
+
+```json
+{
+    "target": "esp32s3",  // 目标芯片型号: esp32, esp32s3, esp32c3, esp32c6, esp32p4等
+    "builds": [
+        {
+            "name": "my-custom-board",  // 开发板名称，用于生成固件包
+            "sdkconfig_append": [
+                // 特别 Flash 大小配置
+                "CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y",
+                // 特别分区表配置
+                "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""
+            ]
+        }
+    ]
+}
+```
+
+**配置项说明：**
+- `target`: 目标芯片型号，必须与硬件匹配
+- `name`: 编译输出的固件包名称，建议与目录名一致
+- `sdkconfig_append`: 额外的 sdkconfig 配置项数组，会追加到默认配置中
+
+**常用的 sdkconfig_append 配置：**
+```json
+// Flash 大小
+"CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y"   // 4MB Flash
+"CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y"   // 8MB Flash
+"CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y"  // 16MB Flash
+
+// 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/4m.csv\""  // 4MB 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""  // 8MB 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/16m.csv\"" // 16MB 分区表
+
+// 语言配置
+"CONFIG_LANGUAGE_EN_US=y"  // 英语
+"CONFIG_LANGUAGE_ZH_CN=y"  // 简体中文
+
+// 唤醒词配置
+"CONFIG_USE_DEVICE_AEC=y"          // 启用设备端 AEC
+"CONFIG_WAKE_WORD_DISABLED=y"      // 禁用唤醒词
+```
+
+### 3. 编写板级初始化代码
+
+Create a `my_custom_board.cc` file to implement all initialization logic for the development board.
+
+A basic development board class definition includes the following parts:
+
+1. **Class Definition**: Inherits from `WifiBoard` or `Ml307Board`.
+2. **Initialization Function**: Includes initialization of components such as I2C, display, buttons, IoT, etc.
+3. **Virtual Function Overrides**: Such as `GetAudioCodec()`, `GetDisplay()`, `GetBacklight()`, etc.
+4. **Register Development Board**: Use the `DECLARE_BOARD` macro to register the development board.
+
+```cpp
+#include "wifi_board.h"
+#include "codecs/es8311_audio_codec.h"
+#include "display/lcd_display.h"
+#include "application.h"
+#include "button.h"
+#include "config.h"
+#include "mcp_server.h"
+
+#include <esp_log.h>
+#include <driver/i2c_master.h>
+#include <driver/spi_common.h>
+
+#define TAG "MyCustomBoard"
+
+class MyCustomBoard : public WifiBoard {
+private:
+    i2c_master_bus_handle_t codec_i2c_bus_;
+    Button boot_button_;
+    LcdDisplay* display_;
+
+    // I2C initialization
+    void InitializeI2c() {
+        i2c_master_bus_config_t i2c_bus_cfg = {
+            .i2c_port = I2C_NUM_0,
+            .sda_io_num = AUDIO_CODEC_I2C_SDA_PIN,
+            .scl_io_num = AUDIO_CODEC_I2C_SCL_PIN,
+            .clk_source = I2C_CLK_SRC_DEFAULT,
+            .glitch_ignore_cnt = 7,
+            .intr_priority = 0,
+            .trans_queue_depth = 0,
+            .flags = {
+                .enable_internal_pullup = 1,
+            },
+        };
+
+=======
+首先在`boards/`目录下创建一个新的目录，命名方式应使用 `[品牌名]-[开发板类型]` 的形式，例如 `m5stack-tab5`：
+>>>>>>> upstream/main:docs/custom-board.md
+
+```bash
+mkdir main/boards/my-custom-board
+```
+
+### 2. Create Configuration Files
+
+#### config.h
+
+Define all hardware configurations in `config.h`, including:
+
+- Audio sampling rate and I2S pin configuration.
+- Audio codec chip address and I2C pin configuration.
+- Button and LED pin configuration.
+- Display parameters and pin configuration.
+
+Reference example (from lichuang-c3-dev):
+
+```c
+#ifndef _BOARD_CONFIG_H_
+#define _BOARD_CONFIG_H_
+
+#include <driver/gpio.h>
+
+// Audio configuration
+#define AUDIO_INPUT_SAMPLE_RATE  24000
+#define AUDIO_OUTPUT_SAMPLE_RATE 24000
+
+#define AUDIO_I2S_GPIO_MCLK GPIO_NUM_10
+#define AUDIO_I2S_GPIO_WS   GPIO_NUM_12
+#define AUDIO_I2S_GPIO_BCLK GPIO_NUM_8
+#define AUDIO_I2S_GPIO_DIN  GPIO_NUM_7
+#define AUDIO_I2S_GPIO_DOUT GPIO_NUM_11
+
+#define AUDIO_CODEC_PA_PIN       GPIO_NUM_13
+#define AUDIO_CODEC_I2C_SDA_PIN  GPIO_NUM_0
+#define AUDIO_CODEC_I2C_SCL_PIN  GPIO_NUM_1
+#define AUDIO_CODEC_ES8311_ADDR  ES8311_CODEC_DEFAULT_ADDR
+
+// Button configuration
+#define BOOT_BUTTON_GPIO        GPIO_NUM_9
+
+// Display configuration
+#define DISPLAY_SPI_SCK_PIN     GPIO_NUM_3
+#define DISPLAY_SPI_MOSI_PIN    GPIO_NUM_5
+#define DISPLAY_DC_PIN          GPIO_NUM_6
+#define DISPLAY_SPI_CS_PIN      GPIO_NUM_4
+
+#define DISPLAY_WIDTH   320
+#define DISPLAY_HEIGHT  240
+#define DISPLAY_MIRROR_X true
+#define DISPLAY_MIRROR_Y false
+#define DISPLAY_SWAP_XY true
+
+#define DISPLAY_OFFSET_X  0
+#define DISPLAY_OFFSET_Y  0
+
+#define DISPLAY_BACKLIGHT_PIN GPIO_NUM_2
+#define DISPLAY_BACKLIGHT_OUTPUT_INVERT true
+
+#endif // _BOARD_CONFIG_H_
+```
+
+#### config.json
+
+<<<<<<< HEAD:main/boards/README.md
+Define compilation configurations in `config.json`:
+
+```json
+{
+    "target": "esp32s3",  // Target chip model: esp32, esp32s3, esp32c3, etc.
+    "builds": [
+        {
+            "name": "my-custom-board",  // Development board name
+            "sdkconfig_append": [
+                // Additional required compilation configurations
+=======
+在`config.json`中定义编译配置，这个文件用于 `scripts/release.py` 脚本自动化编译：
+
+```json
+{
+    "target": "esp32s3",  // 目标芯片型号: esp32, esp32s3, esp32c3, esp32c6, esp32p4等
+    "builds": [
+        {
+            "name": "my-custom-board",  // 开发板名称，用于生成固件包
+            "sdkconfig_append": [
+                // 特别 Flash 大小配置
+>>>>>>> upstream/main:docs/custom-board.md
+                "CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y",
+                // 特别分区表配置
+                "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""
+            ]
+        }
+    ]
+}
+```
+
+<<<<<<< HEAD:main/boards/README.md
+### 3. Write Board-Level Initialization Code
+=======
+**配置项说明：**
+- `target`: 目标芯片型号，必须与硬件匹配
+- `name`: 编译输出的固件包名称，建议与目录名一致
+- `sdkconfig_append`: 额外的 sdkconfig 配置项数组，会追加到默认配置中
+
+**常用的 sdkconfig_append 配置：**
+```json
+// Flash 大小
+"CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y"   // 4MB Flash
+"CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y"   // 8MB Flash
+"CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y"  // 16MB Flash
+
+// 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/4m.csv\""  // 4MB 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/8m.csv\""  // 8MB 分区表
+"CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/16m.csv\"" // 16MB 分区表
+
+// 语言配置
+"CONFIG_LANGUAGE_EN_US=y"  // 英语
+"CONFIG_LANGUAGE_ZH_CN=y"  // 简体中文
+
+// 唤醒词配置
+"CONFIG_USE_DEVICE_AEC=y"          // 启用设备端 AEC
+"CONFIG_WAKE_WORD_DISABLED=y"      // 禁用唤醒词
+```
+
+### 3. 编写板级初始化代码
+>>>>>>> upstream/main:docs/custom-board.md
 
 Create a `my_custom_board.cc` file to implement all initialization logic for the development board.
 
@@ -260,7 +638,110 @@ public:
 DECLARE_BOARD(MyCustomBoard);
 ```
 
+<<<<<<< HEAD:main/boards/README.md
 ### 4. Create README.md
+=======
+### 4. 添加构建系统配置
+
+#### 在 Kconfig.projbuild 中添加开发板选项
+
+打开 `main/Kconfig.projbuild` 文件，在 `choice BOARD_TYPE` 部分添加新的开发板配置项：
+
+```kconfig
+choice BOARD_TYPE
+    prompt "Board Type"
+    default BOARD_TYPE_BREAD_COMPACT_WIFI
+    help
+        Board type. 开发板类型
+    
+    # ... 其他开发板选项 ...
+    
+    config BOARD_TYPE_MY_CUSTOM_BOARD
+        bool "My Custom Board (我的自定义开发板)"
+        depends on IDF_TARGET_ESP32S3  # 根据你的目标芯片修改
+endchoice
+```
+
+**注意事项：**
+- `BOARD_TYPE_MY_CUSTOM_BOARD` 是配置项名称，需要全大写，使用下划线分隔
+- `depends on` 指定了目标芯片类型（如 `IDF_TARGET_ESP32S3`、`IDF_TARGET_ESP32C3` 等）
+- 描述文字可以使用中英文
+
+#### 在 CMakeLists.txt 中添加开发板配置
+
+打开 `main/CMakeLists.txt` 文件，在开发板类型判断部分添加新的配置：
+
+```cmake
+# 在 elseif 链中添加你的开发板配置
+elseif(CONFIG_BOARD_TYPE_MY_CUSTOM_BOARD)
+    set(BOARD_TYPE "my-custom-board")  # 与目录名一致
+    set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)  # 根据屏幕大小选择合适的字体
+    set(BUILTIN_ICON_FONT font_awesome_20_4)
+    set(DEFAULT_EMOJI_COLLECTION twemoji_64)  # 可选，如果需要表情显示
+endif()
+```
+
+**字体和表情配置说明：**
+
+根据屏幕分辨率选择合适的字体大小：
+- 小屏幕（128x64 OLED）：`font_puhui_basic_14_1` / `font_awesome_14_1`
+- 中小屏幕（240x240）：`font_puhui_basic_16_4` / `font_awesome_16_4`
+- 中等屏幕（240x320）：`font_puhui_basic_20_4` / `font_awesome_20_4`
+- 大屏幕（480x320+）：`font_puhui_basic_30_4` / `font_awesome_30_4`
+
+表情集合选项：
+- `twemoji_32` - 32x32 像素表情（小屏幕）
+- `twemoji_64` - 64x64 像素表情（大屏幕）
+
+### 5. 配置和编译
+
+#### 方法一：使用 idf.py 手动配置
+
+1. **设置目标芯片**（首次配置或更换芯片时）：
+   ```bash
+   # 对于 ESP32-S3
+   idf.py set-target esp32s3
+   
+   # 对于 ESP32-C3
+   idf.py set-target esp32c3
+   
+   # 对于 ESP32
+   idf.py set-target esp32
+   ```
+
+2. **清理旧配置**：
+   ```bash
+   idf.py fullclean
+   ```
+
+3. **进入配置菜单**：
+   ```bash
+   idf.py menuconfig
+   ```
+   
+   在菜单中导航到：`Xiaozhi Assistant` -> `Board Type`，选择你的自定义开发板。
+
+4. **编译和烧录**：
+   ```bash
+   idf.py build
+   idf.py flash monitor
+   ```
+
+#### 方法二：使用 release.py 脚本（推荐）
+
+如果你的开发板目录下有 `config.json` 文件，可以使用此脚本自动完成配置和编译：
+
+```bash
+python scripts/release.py my-custom-board
+```
+
+此脚本会自动：
+- 读取 `config.json` 中的 `target` 配置并设置目标芯片
+- 应用 `sdkconfig_append` 中的编译选项
+- 完成编译并打包固件
+
+### 6. 创建README.md
+>>>>>>> upstream/main:docs/custom-board.md
 
 In README.md, explain the features, hardware requirements, compilation, and flashing steps for the development board:
 

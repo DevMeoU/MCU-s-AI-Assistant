@@ -296,8 +296,10 @@ choice BOARD_TYPE
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32S3_Touch_AMOLED_2_06
         bool "Waveshare ESP32-S3-Touch-AMOLED-2.06"
+        depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32S3_Touch_AMOLED_1_75
         bool "Waveshare ESP32-S3-Touch-AMOLED-1.75"
+        depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_ESP32S3_Touch_LCD_4B
         bool "Waveshare ESP32-S3-Touch-LCD-4B"
         depends on IDF_TARGET_ESP32S3
@@ -448,6 +450,7 @@ choice BOARD_TYPE
         select LV_GIF_CACHE_DECODE_DATA
     config BOARD_TYPE_JIUCHUAN
         bool "Jiuchuan Smart"
+        depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_LABPLUS_MPYTHON_V3
         bool "labplus mpython_v3 board"
         depends on IDF_TARGET_ESP32S3
@@ -775,49 +778,24 @@ config RECEIVE_CUSTOM_MESSAGE
         # Enable custom message reception from server - Usually via MQTT protocol.
         # Allows device to receive special commands or messages from control server.
 
-# Lựa chọn kiểu giao tiếp I2S cho board Taiji Pi S3
-# I2S communication type selection for Taiji Pi S3 board
-choice I2S_TYPE_TAIJIPI_S3
+menu "TAIJIPAI_S3_CONFIG"
     depends on BOARD_TYPE_ESP32S3_Taiji_Pi
-    prompt "taiji-pi-S3 I2S Type"
-    default TAIJIPAI_I2S_TYPE_STD
+    choice I2S_TYPE_TAIJIPI_S3
+        prompt "taiji-pi-S3 I2S Type"
+        default TAIJIPAI_I2S_TYPE_STD
+        help
+            I2S 类型选择
+        config TAIJIPAI_I2S_TYPE_STD
+            bool "I2S Type STD"
+        config TAIJIPAI_I2S_TYPE_PDM
+            bool "I2S Type PDM"
+    endchoice
+
+    config I2S_USE_2SLOT
+    bool "Enable I2S 2 Slot"
+    default n
     help
-        I2S Type
-        # Lựa chọn kiểu giao tiếp I2S (Inter-IC Sound) cho board Taiji Pi S3.
-        # STD: Chuẩn I2S truyền thống, PDM: Pulse Density Modulation cho microphone kỹ thuật số.
-        # Select I2S (Inter-IC Sound) communication type for Taiji Pi S3 board.
-        # STD: Standard I2S, PDM: Pulse Density Modulation for digital microphones.
-    config TAIJIPAI_I2S_TYPE_STD
-        bool "I2S Type STD"
-        # I2S chuẩn - Giao tiếp âm thanh nổi tiếng, phù hợp cho hầu hết thiết bị ngoại vi.
-        # Standard I2S - Popular audio communication, suitable for most peripherals.
-    config TAIJIPAI_I2S_TYPE_PDM
-        bool "I2S Type PDM"
-        # PDM - Dành cho microphone kỹ thuật số, đơn giản hóa thiết kế phần cứng.
-        # PDM - For digital microphones, simplifies hardware design.
-endchoice
-
+        启动双声道
 endmenu
-
-# Font configuration
-menu "Font configuration"
-
-choice BUILTIN_TEXT_FONT_DEJAVU_SANS_CHOICE
-    prompt "Select Dejavu Sans font size"
-    default BUILTIN_TEXT_FONT_DEJAVU_SANS_CONDENSED_12
-
-config BUILTIN_TEXT_FONT_DEJAVU_SANS_12
-    bool "Dejavu Sans 12"
-
-config BUILTIN_TEXT_FONT_DEJAVU_SANS_CONDENSED_12
-    bool "Dejavu Sans Condensed 12"
-
-config BUILTIN_TEXT_FONT_DEJAVU_SANS_14
-    bool "Dejavu Sans 14"
-
-config BUILTIN_TEXT_FONT_DEJAVU_SANS_FULL
-    bool "Dejavu Sans Full"
-
-endchoice
 
 endmenu

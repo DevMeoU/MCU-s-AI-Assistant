@@ -1,4 +1,35 @@
 #include "power_manager.h"
+uint16_t battCnt;//闪灯次数
+int battLife = 70; //电量
+>>>>>>> upstream/main
+
+// Chương trình dịch vụ ngắt
+static void IRAM_ATTR batt_mon_isr_handler(void* arg) {
+    uint32_t gpio_num = (uint32_t) arg;
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+}
+
+// Thêm hàm xử lý tác vụ
+static void batt_mon_task(void* arg) {
+    uint32_t io_num;
+    while(1) {
+        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+            battCnt++;
+        }
+    }
+}
+
+static void calBattLife() {
+    // Tính toán mức pin
+    battLife = battCnt;
+
+    if (battLife > 100){
+        battLife = 100;
+    }
+    // ESP_LOGI(TAG, "Battery life:%d", (int)battLife);
+    // Đặt lại bộ đếm
+    battCnt = 0;
+}
 #include "core_management.h"
 #include <driver/gpio.h>
 #include <esp_log.h>
@@ -10,8 +41,40 @@
 #define TAG "PowerManager"
 
 static QueueHandle_t gpio_evt_queue = NULL;
-uint16_t battCnt;   //Đếm số lần pin
-int battLife = -1;  //Mức pin
+uint16_t battCnt;//闪灯次数
+int battLife = 70; //电量
+
+// 程序中断服务
+static void IRAM_ATTR batt_mon_isr_handler(void* arg) {
+    uint32_t gpio_num = (uint32_t) arg;
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+}
+
+// 添加任务处理函数
+static void batt_mon_task(void* arg) {
+    uint32_t io_num;
+    while(1) {
+        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+            battCnt++;
+        }
+    }
+}
+
+static void calBattLife() {
+    // 计算电池电量
+    battLife = battCnt;
+
+    if (battLife > 100){
+        battLife = 100;
+    }
+    // ESP_LOGI(TAG, "Battery life:%d", (int)battLife);
+    // 重置计数器
+    battCnt = 0;
+}
+=======
+uint16_t battCnt;//闪灯次数
+int battLife = 70; //电量
+>>>>>>> upstream/main
 
 // Chương trình dịch vụ ngắt
 static void IRAM_ATTR batt_mon_isr_handler(void* arg) {

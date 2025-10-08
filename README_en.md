@@ -1,26 +1,17 @@
 # An MCP-based Chatbot | Một chatbot dựa trên MCP
 
-（中文 | [English](README_en.md) | [日本語](README_ja.md) | [Tiếng Việt](README_vi.md)）
+As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabilities of large models like Qwen / DeepSeek, and achieves multi-terminal control via the MCP protocol.
 
-## Video
+<img src="docs/mcp-based-graph.jpg" alt="Control everything via MCP" width="320">
 
-👉 [Human: Install camera for AI vs AI: Detect owner who hasn't washed hair for three days on the spot【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)
+## Version Notes
 
-👉 [Make your AI girlfriend by hand, beginner's guide【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
+The current v2 version is incompatible with the v1 partition table, so it is not possible to upgrade from v1 to v2 via OTA. For partition table details, see [partitions/v2/README.md](partitions/v2/README.md).
 
-## Introduction
+All hardware running v1 can be upgraded to v2 by manually flashing the firmware.
 
-This is an ESP32 open-source project by Xiaoge, released under the MIT license, allowing anyone to use it freely or for commercial purposes.
-
-We hope that through this project, we can help people understand AI hardware development and apply the rapidly developing large language models to actual hardware devices.
-
-If you have any ideas or suggestions, please submit Issues or join the QQ group: 1011329060
-
-### Control Everything Based on MCP
-
-Xiaozhi AI chatbot, as a voice interaction portal, uses the AI capabilities of large models such as Qwen/DeepSeek to implement multi-device control through the MCP protocol.
-
-![Control Everything with MCP](docs/mcp-based-graph.jpg)
+The stable version of v1 is 1.9.2. You can switch to v1 by running `git checkout v1`. The v1 branch will be maintained until February 2026.
+>>>>>>> upstream/main
 
 ### Implemented Features
 
@@ -32,11 +23,90 @@ Xiaozhi AI chatbot, as a voice interaction portal, uses the AI capabilities of l
 - Voice recognition, identify current speaker identity [3D Speaker](https://github.com/modelscope/3D-Speaker)
 - OLED / LCD display, support emoji display
 - Battery display and power management
+<<<<<<< HEAD
 - Multi-language support (Chinese, English, Japanese, Vietnamese) with DejaVu Sans font for Vietnamese
 - Support for ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
 - Device control through on-device MCP (volume, lights, motors, GPIO, alarm system, etc.)
 - Extend large model capabilities through cloud MCP (smart home control, computer operations, knowledge search, email sending/receiving, etc.)
 - Alarm system with up to 5 configurable alarms, persistent storage, and natural language control
+- Multi-language support (Chinese, English, Japanese)
+- Supports ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
+- Device-side MCP for device control (Speaker, LED, Servo, GPIO, etc.)
+- Cloud-side MCP to extend large model capabilities (smart home control, PC desktop operation, knowledge search, email, etc.)
+- Customizable wake words, fonts, emojis, and chat backgrounds with online web-based editing ([Custom Assets Generator](https://github.com/78/xiaozhi-assets-generator))
+>>>>>>> upstream/main
+(中文 | [English](README_en.md) | [日本語](README_ja.md) | [Tiếng Việt](README_vi.md))
+
+## Introduction
+
+👉 [Human: Install camera for AI vs AI: Detect owner who hasn't washed hair for three days on the spot【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)
+
+👉 [Make your AI girlfriend by hand, beginner's guide【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
+
+As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabilities of large models like Qwen / DeepSeek, and achieves multi-terminal control via the MCP protocol.
+
+<img src="docs/mcp-based-graph.jpg" alt="Control everything via MCP" width="320">
+
+## Version Notes
+
+The current v2 version is incompatible with the v1 partition table, so it is not possible to upgrade from v1 to v2 via OTA. For partition table details, see [partitions/v2/README.md](partitions/v2/README.md).
+
+All hardware running v1 can be upgraded to v2 by manually flashing the firmware.
+
+The stable version of v1 is 1.9.2. You can switch to v1 by running `git checkout v1`. The v1 branch will be maintained until February 2026.
+
+### Implemented Features
+
+- Wi-Fi / ML307 Cat.1 4G
+- Offline voice wake-up [ESP-SR](https://github.com/espressif/esp-sr)
+- Support for two communication protocols ([Websocket](docs/websocket.md) or MQTT+UDP)
+- Use OPUS audio encoding and decoding
+- Stream-based voice interaction architecture (ASR + LLM + TTS)
+- Voice recognition, identify current speaker identity [3D Speaker](https://github.com/modelscope/3D-Speaker)
+- OLED / LCD display, support emoji display
+- Battery display and power management
+- Multi-language support (Chinese, English, Japanese)
+- Supports ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
+- Device-side MCP for device control (Speaker, LED, Servo, GPIO, etc.)
+- Cloud-side MCP to extend large model capabilities (smart home control, PC desktop operation, knowledge search, email, etc.)
+- Customizable wake words, fonts, emojis, and chat backgrounds with online web-based editing ([Custom Assets Generator](https://github.com/78/xiaozhi-assets-generator))
+=======
+As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabilities of large models like Qwen / DeepSeek, and achieves multi-terminal control via the MCP protocol.
+
+<img src="docs/mcp-based-graph.jpg" alt="Control everything via MCP" width="320">
+
+## Version Notes
+
+The current v2 version is incompatible with the v1 partition table, so it is not possible to upgrade from v1 to v2 via OTA. For partition table details, see [partitions/v2/README.md](partitions/v2/README.md).
+
+All hardware running v1 can be upgraded to v2 by manually flashing the firmware.
+
+The stable version of v1 is 1.9.2. You can switch to v1 by running `git checkout v1`. The v1 branch will be maintained until February 2026.
+>>>>>>> upstream/main
+
+### Implemented Features
+
+- Wi-Fi / ML307 Cat.1 4G
+- Offline voice wake-up [ESP-SR](https://github.com/espressif/esp-sr)
+- Support for two communication protocols ([Websocket](docs/websocket.md) or MQTT+UDP)
+- Use OPUS audio encoding and decoding
+- Stream-based voice interaction architecture (ASR + LLM + TTS)
+- Voice recognition, identify current speaker identity [3D Speaker](https://github.com/modelscope/3D-Speaker)
+- OLED / LCD display, support emoji display
+- Battery display and power management
+<<<<<<< HEAD
+- Multi-language support (Chinese, English, Japanese, Vietnamese) with DejaVu Sans font for Vietnamese
+- Support for ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
+- Device control through on-device MCP (volume, lights, motors, GPIO, alarm system, etc.)
+- Extend large model capabilities through cloud MCP (smart home control, computer operations, knowledge search, email sending/receiving, etc.)
+- Alarm system with up to 5 configurable alarms, persistent storage, and natural language control
+=======
+- Multi-language support (Chinese, English, Japanese)
+- Supports ESP32-C3, ESP32-S3, ESP32-P4 chip platforms
+- Device-side MCP for device control (Speaker, LED, Servo, GPIO, etc.)
+- Cloud-side MCP to extend large model capabilities (smart home control, PC desktop operation, knowledge search, email, etc.)
+- Customizable wake words, fonts, emojis, and chat backgrounds with online web-based editing ([Custom Assets Generator](https://github.com/78/xiaozhi-assets-generator))
+>>>>>>> upstream/main
 
 ## Hardware
 
@@ -123,9 +193,10 @@ The firmware connects to the official [xiaozhi.me](https://xiaozhi.me) server by
 
 ### Developer Documentation
 
-- [Custom Board Guide](main/boards/README.md) - Learn how to create custom boards for XiaoZhi AI
+- [Custom Board Guide](docs/custom-board.md) - Learn how to create custom boards for XiaoZhi AI
 - [MCP Protocol IoT Control Usage](docs/mcp-usage.md) - Learn how to control IoT devices via MCP protocol
 - [MCP Protocol Interaction Flow](docs/mcp-protocol.md) - Device-side MCP protocol implementation
+- [MQTT + UDP Hybrid Communication Protocol Document](docs/mqtt-udp.md)
 - [A detailed WebSocket communication protocol document](docs/websocket.md)
 - [Mixed MQTT + UDP communication protocol document](docs/mqtt-udp.md)
 
@@ -147,9 +218,27 @@ Other client projects using the XiaoZhi communication protocol:
 
 - [huangjunsen0406/py-xiaozhi](https://github.com/huangjunsen0406/py-xiaozhi) Python client
 - [TOM88812/xiaozhi-android-client](https://github.com/TOM88812/xiaozhi-android-client) Android client
+<<<<<<< HEAD
 - [100askTeam/xiaozhi-linux](http://github.com/100askTeam/xiaozhi-linux) Linux client provided by 100ask Team
 - [78/xiaozhi-sf32](https://github.com/78/xiaozhi-sf32) Si Che Technology Bluetooth chip firmware
 - [QuecPython/solution-xiaozhiAI](https://github.com/QuecPython/solution-xiaozhiAI) QuecPython firmware provided by Quectel
+=======
+- [100askTeam/xiaozhi-linux](http://github.com/100askTeam/xiaozhi-linux) Linux client by 100ask
+- [78/xiaozhi-sf32](https://github.com/78/xiaozhi-sf32) Bluetooth chip firmware by Sichuan
+- [QuecPython/solution-xiaozhiAI](https://github.com/QuecPython/solution-xiaozhiAI) QuecPython firmware by Quectel
+
+Custom Assets Tools:
+
+- [78/xiaozhi-assets-generator](https://github.com/78/xiaozhi-assets-generator) Custom Assets Generator (Wake words, fonts, emojis, backgrounds)
+
+## About the Project
+
+This is an open-source ESP32 project, released under the MIT license, allowing anyone to use it for free, including for commercial purposes.
+
+We hope this project helps everyone understand AI hardware development and apply rapidly evolving large language models to real hardware devices.
+
+If you have any ideas or suggestions, please feel free to raise Issues or join the QQ group: 1011329060
+>>>>>>> upstream/main
 
 ## Star History
 
