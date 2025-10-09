@@ -374,14 +374,6 @@ void Application::Start() {
     ESP_LOGD(TAG, "Starting %s", board.GetBoardType().c_str());
     /* Setup the audio service */
     auto codec = board.GetAudioCodec();
-
-    // while (1)
-    // {
-    //     /* code */
-    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    //     ESP_LOGI(TAG, "Device state: %d", device_state_);
-    // }
-
     audio_service_.Initialize(codec);
     audio_service_.Start();
 
@@ -638,7 +630,6 @@ void Application::MainEventLoop() {
             clock_ticks_++;
             auto display = Board::GetInstance().GetDisplay();
             display->UpdateStatusBar();
-        
             // Check for alarm triggers every second
             if (alarm_ && alarm_->IsAlarmTriggered()) {
                 ESP_LOGI("Application", "Processing alarm trigger");

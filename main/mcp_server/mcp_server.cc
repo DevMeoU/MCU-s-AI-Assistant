@@ -17,8 +17,8 @@
 #include "settings.h"
 #include "lvgl_theme.h"
 #include "lvgl_display.h"
-#include "boards/common/music.h"
-#include "boards/common/alarm.h"
+#include "music.h"
+#include "alarm.h"
 #include "core_management.h"
 #include "memory_management.h"
 

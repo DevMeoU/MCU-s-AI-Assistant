@@ -245,9 +245,6 @@ bool AudioService::ReadAudioData(std::vector<int16_t>& data, int sample_rate, in
 }
 
 void AudioService::AudioInputTask() {
-    int64_t last_wake_word_feed_time = esp_timer_get_time();  // Thời gian feed wake word cuối cùng
-    int64_t last_processor_feed_time = esp_timer_get_time();  // Thời gian feed processor cuối cùng
-    
     while (true) {
         EventBits_t bits = xEventGroupWaitBits(event_group_, AS_EVENT_AUDIO_TESTING_RUNNING |
             AS_EVENT_WAKE_WORD_RUNNING | AS_EVENT_AUDIO_PROCESSOR_RUNNING,
@@ -292,10 +289,7 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     wake_word_->Feed(data);
-                    last_wake_word_feed_time = esp_timer_get_time();  // Cập nhật thời gian feed cuối cùng
-                    // Thêm delay nhỏ để tránh chiếm dụng CPU quá mức
-                    vTaskDelay(pdMS_TO_TICKS(2)); // Giảm delay từ 1ms xuống 2ms
-                    continue;
+                                        continue;
                 }
             }
         }
@@ -307,9 +301,6 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     audio_processor_->Feed(std::move(data));
-                    last_processor_feed_time = esp_timer_get_time();  // Cập nhật thời gian feed cuối cùng
-                    // Thêm delay nhỏ để tránh chiếm dụng CPU quá mức
-                    vTaskDelay(pdMS_TO_TICKS(1)); // Giữ nguyên delay 1ms
                     continue;
                 }
             }

@@ -29,6 +29,16 @@ MqttProtocol::MqttProtocol() {
         .arg = this,
     };
     esp_timer_create(&reconnect_timer_args, &reconnect_timer_);
+    
+    // Initialize send hello timer
+    esp_timer_create_args_t send_hello_timer_args = {
+        .callback = [](void* arg) {
+            MqttProtocol* protocol = (MqttProtocol*)arg;
+            protocol->SendHelloCallback();
+        },
+        .arg = this,
+    };
+    esp_timer_create(&send_hello_timer_args, &send_hello_timer_);
 }
 
 MqttProtocol::~MqttProtocol() {
@@ -36,6 +46,11 @@ MqttProtocol::~MqttProtocol() {
     if (reconnect_timer_ != nullptr) {
         esp_timer_stop(reconnect_timer_);
         esp_timer_delete(reconnect_timer_);
+    }
+    
+    if (send_hello_timer_ != nullptr) {
+        esp_timer_stop(send_hello_timer_);
+        esp_timer_delete(send_hello_timer_);
     }
 
     udp_.reset();
@@ -89,6 +104,17 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
             on_connected_();
         }
         esp_timer_stop(reconnect_timer_);
+
+        // Subscribe trước khi gửi tin nhắn hello
+        Settings settings("mqtt", false);
+        std::string subscribe_topic = settings.GetString("subscribe_topic");
+        if (!subscribe_topic.empty()) {
+            mqtt_->Subscribe(subscribe_topic, 0);
+            ESP_LOGI(TAG, "Subscribed to topic: %s", subscribe_topic.c_str());
+        }
+
+        // Gửi tin nhắn hello sau một khoảng thời gian ngắn để đảm bảo SUBACK được xử lý
+        esp_timer_start_once(send_hello_timer_, 250 * 1000); // 250ms
     });
 
     mqtt_->OnMessage([this](const std::string& topic, const std::string& payload) {
@@ -379,4 +405,14 @@ std::string MqttProtocol::DecodeHexString(const std::string& hex_string) {
 
 bool MqttProtocol::IsAudioChannelOpened() const {
     return udp_ != nullptr && !error_occurred_ && !IsTimeout();
+}
+
+// Thêm timer callback để gửi tin nhắn hello
+void MqttProtocol::SendHelloCallback() {
+    auto message = GetHelloMessage();
+    if (!SendText(message)) {
+        ESP_LOGE(TAG, "Failed to send hello message");
+    } else {
+        ESP_LOGI(TAG, "Sent hello message after subscription");
+    }
 }

@@ -23,6 +23,10 @@ AfeWakeWord::AfeWakeWord()
 
     event_group_ = xEventGroupCreate();
     encode_event_group_ = xEventGroupCreate();
+    
+    // Đảm bảo các deque sử dụng PSRAM
+    wake_word_pcm_.clear();
+    wake_word_opus_.clear();
 }
 
 AfeWakeWord::~AfeWakeWord() {
@@ -140,8 +144,8 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
        detection_core);
 
     // Create audio encode task with configuration from core management
-    // BaseType_t encode_core = core_management_get_task_core(CORE_TASK_TYPE_WAKE_WORD_ENCODING); // Đã loại bỏ biến không sử dụng
-    UBaseType_t encode_priority = core_management_get_task_priority(CORE_TASK_TYPE_WAKE_WORD_ENCODING); // Sử dụng priority gốc cho encode task
+    BaseType_t encode_core = core_management_get_task_core(CORE_TASK_TYPE_WAKE_WORD_ENCODING); // Sử dụng core từ core_management
+    UBaseType_t encode_priority = core_management_get_task_priority(CORE_TASK_TYPE_WAKE_WORD_ENCODING); // Sử dụng priority từ core_management
     uint32_t encode_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
     
     core_management_register_task(CORE_TASK_TYPE_WAKE_WORD_ENCODING, encode_stack_size);
@@ -166,7 +170,7 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
     }
     
     encode_task_running_ = true;
-    audio_encode_task_ = xTaskCreateStatic([](void* arg) {
+    audio_encode_task_ = xTaskCreateStaticPinnedToCore([](void* arg) {
         auto this_ = (AfeWakeWord*)arg;
         this_->AudioEncodeTask();
         vTaskDelete(NULL);
@@ -175,7 +179,8 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
        this, 
        encode_priority, 
        audio_encode_task_stack_, 
-       audio_encode_task_buffer_);
+       audio_encode_task_buffer_,
+       encode_core); // Sử dụng core từ core_management
 
     return true;
 }
@@ -423,9 +428,8 @@ void AfeWakeWord::EncodeWakeWordData() {
             }
             this_->wake_word_pcm_.clear();
 
-            // auto end_time = esp_timer_get_time();  // Đã loại bỏ biến không sử dụng
-            // Chỉ log khi cần thiết
-            AFE_LOGD(TAG, "Encode wake word opus %d packets in %ld ms", packets, (long)((esp_timer_get_time() - esp_timer_get_time()) / 1000));
+            auto end_time = esp_timer_get_time();
+            ESP_LOGI(TAG, "Encode wake word opus %d packets in %ld ms", packets, (long)((end_time - start_time) / 1000));
 
             std::lock_guard<std::mutex> lock(this_->wake_word_mutex_);
             this_->wake_word_opus_.push_back(std::vector<uint8_t>());

@@ -15,8 +15,8 @@
 #include "ota.h"
 #include "audio_service.h"
 #include "device_state_event.h"
-#include "boards/common/alarm.h"
-#include "system/management/memory_management.h"
+#include "alarm.h"
+#include "memory_management.h"
 
 // Forward declaration for Alarm class
 class Alarm;

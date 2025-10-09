@@ -1,20 +1,283 @@
-[NEED_CHANGE] ./main/assets/fonts/dejavu-sans.zip
-[NEED_CHANGE] ./main/assets/lang_config.h
-[NEED_CHANGE] ./main/boards/atk-dnesp32s3-box2-wifi/atk_dnesp32s3_box2.cc
-[NEED_CHANGE] ./main/boards/jiuchuan-s3/jiuchuan_dev_board.cc
-[NEED_CHANGE] ./main/boards/jiuchuan-s3/power_manager.h
-[NEED_CHANGE] ./main/boards/m5stack-core-s3/m5stack_core_s3.cc
-[NEED_CHANGE] ./main/boards/otto-robot/otto_controller.cc
-[NEED_CHANGE] ./main/boards/otto-robot/otto_emoji_display.cc
-[NEED_CHANGE] ./main/boards/otto-robot/otto_movements.cc
-[NEED_CHANGE] ./main/boards/otto-robot/power_manager.h
-[NEED_CHANGE] ./main/boards/sensecap-watcher/sensecap_watcher.cc
-[NEED_CHANGE] ./main/boards/sensecap-watcher/sscma_camera.cc
-[NEED_CHANGE] ./main/boards/waveshare-c6-touch-amoled-1.43/esp32-c6-touch-amoled-1.43.cc
-[NEED_CHANGE] ./main/boards/yunliao-s3/power_manager.cc
-[NEED_CHANGE] ./main/boards/zhengchen-1.54tft-wifi/power_manager.h
-[NEED_CHANGE] ./main/display/lcd_display.cc
-[NEED_CHANGE] ./main/display/lvgl_display/jpg/image_to_jpeg.cpp
-[NEED_CHANGE] ./main/protocols/mqtt_protocol.cc
-[NEED_CHANGE] ./scripts/acoustic_check/demod.py
-[NEED_CHANGE] ./scripts/acoustic_check/graphic.py
+Tuyệt — dưới đây là gợi ý thực tế, có code mẫu và roadmap để bạn **giám sát runtime các task trên ESP32-S3** (core, priority, stack dùng bao nhiêu, đang chạy gì, CPU%, heap tình trạng, ...). Mình sẽ trình bày theo phần: yêu cầu cấu hình (menuconfig), API FreeRTOS cần bật, rồi **TaskManager** (C++), reporter task, và cách tích hợp/hiển thị (UART / MQTT / Web). Bạn có thể copy-paste code mẫu vào project và nối vào `core_management`/`create task` hiện có.
+
+---
+
+# 1) Bật cấu hình cần thiết (menuconfig)
+
+Để thu thập run-time stats và thông tin task cần:
+
+* Trong `idf.py menuconfig`:
+
+  * Component config → FreeRTOS:
+
+    * `Enable FreeRTOS trace facility` (CONFIG_FREERTOS_USE_TRACE_FACILITY = y)
+    * `Generate run time stats` (CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS = y)
+  * Cần chỉ định nguồn timer cho `portGET_RUN_TIME_COUNTER_VALUE` (ESP-IDF thường đặt `esp_timer_get_time()`).
+  * (Tùy nếu bạn muốn vTaskGetRunTimeStats() tốt) đảm bảo `CONFIG_SECURITY_ASSERT_FAIL_ABORT`... (thường mặc định ổn).
+
+> Lưu ý: bật run-time stats có chi phí (timing counter) — dùng cho debug/monitor, tắt cho release nếu bị overhead.
+
+---
+
+# 2) Những API FreeRTOS / ESP-IDF sẽ dùng
+
+* `uxTaskGetSystemState(TaskStatus_t *taskArray, UBaseType_t arraySize, uint32_t *totalRunTime)` — trả mảng `TaskStatus_t` (tên, handle, priority, run time counter, stack high water mark, ...).
+* `uxTaskGetNumberOfTasks()` — số task hiện tại.
+* `uxTaskGetStackHighWaterMark(TaskHandle_t task)` — stack headroom (words).
+* `vTaskList()` — xuất chuỗi trạng thái (human readable).
+* `esp_get_free_heap_size()`, `esp_get_minimum_free_heap_size()` — heap chung.
+* `heap_caps_get_free_size(MALLOC_CAP_INTERNAL)` — free SRAM internal.
+* `heap_caps_get_free_size(MALLOC_CAP_SPIRAM)` — free PSRAM.
+
+> Vì thông tin core (CPU affinity) không luôn có trong `TaskStatus_t`, **ghi nhận core lúc bạn tạo task** (khi dùng `xTaskCreatePinnedToCore`) và lưu vào TaskManager. Nếu task không pin thì xem `xTaskGetAffinityMask`/hàm tương tự không phổ biến → fallback: "not pinned".
+
+---
+
+# 3) Kiến trúc TaskManager (ý tưởng)
+
+* Một singleton `TaskMonitor` (C++ class) lưu metadata mỗi task khi đăng ký: `name, handle, core, priority, stack_size, description, created_time`.
+* Khi tạo task ở project, gọi `TaskMonitor::RegisterTask(handle, "audio_in", core, priority, stack_size, "Audio capture");`
+* `TaskMonitor` có method `Snapshot()` để chạy `uxTaskGetSystemState` và `heap_caps_get_free_size` lấy dữ liệu, build JSON (cJSON) hoặc human-readable text.
+* Tạo một `monitor_task` chạy định kỳ (ví dụ 5s) xuất báo cáo qua UART / MQTT / WebSocket.
+
+---
+
+# 4) Code mẫu (C++) — TaskMonitor.h / TaskMonitor.cpp và reporter task
+
+**TaskMonitor.h**
+
+```cpp
+#pragma once
+#include <map>
+#include <string>
+#include <mutex>
+#include <vector>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_heap_caps.h"
+#include "cJSON.h"
+
+struct TaskInfo {
+    TaskHandle_t handle;
+    std::string name;
+    int core;
+    UBaseType_t priority;
+    size_t stack_size_bytes;
+    std::string description;
+    uint32_t created_tick;
+};
+
+class TaskMonitor {
+public:
+    static TaskMonitor& Instance();
+
+    void RegisterTask(TaskHandle_t handle, const char* name, int core,
+                      UBaseType_t priority, size_t stack_size_bytes,
+                      const char* description = nullptr);
+
+    void UnregisterTask(TaskHandle_t handle);
+
+    // snapshot into human-readable string (vTaskList-like) or JSON
+    std::string SnapshotText();
+    cJSON* SnapshotJson(); // caller must cJSON_Delete
+
+    // helper to start a reporter task
+    void StartReporter(uint32_t period_ms = 5000);
+
+private:
+    TaskMonitor() = default;
+    std::mutex mutex_;
+    std::map<TaskHandle_t, TaskInfo> tasks_;
+    TaskHandle_t reporter_handle_ = nullptr;
+};
+```
+
+**TaskMonitor.cpp**
+
+```cpp
+#include "TaskMonitor.h"
+#include <sstream>
+#include <vector>
+#include "esp_system.h"
+#include "esp_timer.h"
+
+TaskMonitor& TaskMonitor::Instance() {
+    static TaskMonitor inst;
+    return inst;
+}
+
+void TaskMonitor::RegisterTask(TaskHandle_t handle, const char* name, int core,
+                               UBaseType_t priority, size_t stack_size_bytes,
+                               const char* description) {
+    std::lock_guard<std::mutex> lk(mutex_);
+    TaskInfo ti;
+    ti.handle = handle;
+    ti.name = name ? name : "";
+    ti.core = core;
+    ti.priority = priority;
+    ti.stack_size_bytes = stack_size_bytes;
+    ti.description = description ? description : "";
+    ti.created_tick = xTaskGetTickCount();
+    tasks_[handle] = ti;
+}
+
+void TaskMonitor::UnregisterTask(TaskHandle_t handle) {
+    std::lock_guard<std::mutex> lk(mutex_);
+    tasks_.erase(handle);
+}
+
+cJSON* TaskMonitor::SnapshotJson() {
+    std::lock_guard<std::mutex> lk(mutex_);
+
+    // query number of tasks
+    UBaseType_t num_tasks = uxTaskGetNumberOfTasks();
+    std::vector<TaskStatus_t> states(num_tasks + 5);
+    uint32_t total_run_time = 0;
+    UBaseType_t ret = uxTaskGetSystemState(states.data(), states.size(), &total_run_time);
+
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "total_tasks", (int)num_tasks);
+    cJSON_AddNumberToObject(root, "total_run_time", (double)total_run_time);
+
+    // heap info
+    uint32_t free_heap = esp_get_free_heap_size();
+    cJSON_AddNumberToObject(root, "free_heap", (double)free_heap);
+    cJSON_AddNumberToObject(root, "free_internal", (double)heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+    cJSON_AddNumberToObject(root, "free_psram", (double)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+    cJSON* tasks_arr = cJSON_CreateArray();
+    for (UBaseType_t i = 0; i < ret; ++i) {
+        TaskStatus_t &s = states[i];
+        cJSON* o = cJSON_CreateObject();
+        cJSON_AddStringToObject(o, "name", s.pcTaskName ? s.pcTaskName : "Unknown");
+        cJSON_AddNumberToObject(o, "task_number", s.xTaskNumber);
+        cJSON_AddNumberToObject(o, "state", s.eCurrentState);
+        cJSON_AddNumberToObject(o, "priority", s.uxCurrentPriority);
+        cJSON_AddNumberToObject(o, "run_time_counter", s.ulRunTimeCounter);
+        // stack high water mark in words (depends on port)
+        cJSON_AddNumberToObject(o, "stack_high_water_mark", s.usStackHighWaterMark);
+
+        // try to fetch registered meta
+        TaskInfo info;
+        bool found = false;
+        auto it = tasks_.find(s.xHandle);
+        if (it != tasks_.end()) {
+            info = it->second;
+            found = true;
+        }
+        if (found) {
+            cJSON_AddStringToObject(o, "description", info.description.c_str());
+            cJSON_AddNumberToObject(o, "core", info.core);
+            cJSON_AddNumberToObject(o, "registered_priority", info.priority);
+            cJSON_AddNumberToObject(o, "stack_size_bytes", (double)info.stack_size_bytes);
+        } else {
+            // fallback: show stack base if available (pxStackBase)
+            cJSON_AddNumberToObject(o, "core", -1);
+        }
+        cJSON_AddItemToArray(tasks_arr, o);
+    }
+    cJSON_AddItemToObject(root, "tasks", tasks_arr);
+    return root;
+}
+
+std::string TaskMonitor::SnapshotText() {
+    cJSON* j = SnapshotJson();
+    char* str = cJSON_PrintUnformatted(j);
+    std::string s = str ? str : "";
+    if (str) cJSON_free(str);
+    cJSON_Delete(j);
+    return s;
+}
+
+// Reporter task function (periodic)
+static void reporter_task_fn(void* arg) {
+    TaskMonitor* mon = (TaskMonitor*)arg;
+    const TickType_t delay = pdMS_TO_TICKS(5000);
+    while (true) {
+        std::string snap = mon->SnapshotText();
+        // print to UART (or publish via MQTT)
+        printf("[TaskMonitor] %s\n", snap.c_str());
+        vTaskDelay(delay);
+    }
+}
+
+void TaskMonitor::StartReporter(uint32_t period_ms) {
+    if (reporter_handle_) return;
+    xTaskCreatePinnedToCore(reporter_task_fn, "task_monitor", 6 * 1024, this, 1, &reporter_handle_, 0);
+}
+```
+
+> CAVEAT: `uxTaskGetSystemState` trả `TaskStatus_t` với `xHandle` in `xTaskHandle`. Mảng `TaskStatus_t` nên có `ret = uxTaskGetSystemState(...)` size kiểm soát. `ulRunTimeCounter` chỉ có ý nghĩa nếu bạn bật run-time stats.
+
+---
+
+# 5) Cách dùng / tích hợp
+
+* Mỗi chỗ bạn tạo task (trong `core_management_register_task` hoặc trực tiếp `xTaskCreatePinnedToCore`) hãy gọi:
+
+```cpp
+TaskMonitor::Instance().RegisterTask(taskHandle, "audio_in", core, priority, stack_size_bytes, "Audio capture");
+```
+
+* Khi task exit: `TaskMonitor::Instance().UnregisterTask(handle);`
+* Khởi động reporter sớm ở `app_main()`:
+
+```cpp
+TaskMonitor::Instance().StartReporter(5000);
+```
+
+* Bạn có thể thay reporter để `mqtt_publish(topic, snapshot_json)` thay vì printf.
+
+---
+
+# 6) Tối ưu hiển thị CPU% per-task
+
+* Bật `configGENERATE_RUN_TIME_STATS` rồi dùng `ulRunTimeCounter` từ `uxTaskGetSystemState`. Tính %:
+
+```cpp
+double percent = (double)s.ulRunTimeCounter * 100.0 / (double)total_run_time;
+```
+
+* Lưu ý: counter là cumulative since last reset → reset khi reboot. Nếu muốn windowed usage phải sample 2 lần và lấy delta.
+
+---
+
+# 7) Gợi ý thêm cho production
+
+* Chỉ bật run-time stats khi debug. Đặt `#ifdef CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS` quanh mã tính CPU% để tránh overhead release.
+* Reporter interval: 5–10s đủ cho monitoring.
+* Khi cảnh báo stack thấp (ví dụ `usStackHighWaterMark < threshold_words`) → gửi cảnh báo (log ERROR / MQTT).
+* Khi free heap internal < X KB → giảm hoạt động không critical (tạm dừng prefetch, giảm cache).
+* Ghi số liệu vào ring buffer nhỏ để khi cần upload logs server có snapshot lịch sử.
+
+---
+
+# 8) Ví dụ cảnh báo stack/heap
+
+```cpp
+// check each task stack high water mark and heap
+if (s.usStackHighWaterMark < 100) {
+    ESP_LOGW("TaskMonitor","Low stack for %s: %u words", s.pcTaskName, s.usStackHighWaterMark);
+}
+if (heap_caps_get_free_size(MALLOC_CAP_INTERNAL) < 30*1024) {
+    ESP_LOGW("TaskMonitor","Low internal heap: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+}
+```
+
+---
+
+# 9) Phối hợp với core_management
+
+* Khi `core_management_register_task(type, stack)` được gọi, ngoài việc ghi config, hãy **tự động** đăng ký TaskMonitor: ví dụ hàm trả `TaskHandle_t` hoặc wrapper `CreateTask` sẽ gọi `TaskMonitor::RegisterTask` kèm `core` info.
+
+---
+
+# 10) Triển khai nhanh (quick wins)
+
+1. Thêm `TaskMonitor` vào repo (2 file) và build — bật run-time stats.
+2. Trong `core_management` sửa chỗ tạo task để gọi `RegisterTask`.
+3. Start reporter `StartReporter()` ở `Application::Init`.
+4. Quan sát logs: bạn sẽ thấy JSON mỗi 5s, biết task nào dùng CPU, stack headroom, core.
+5. Dựa vào dữ liệu thực tế điều chỉnh stack size/priority.
+
+---

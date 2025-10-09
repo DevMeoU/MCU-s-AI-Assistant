@@ -3,12 +3,16 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <freertos/semphr.h>
 #include <stdint.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Định nghĩa số core tối đa
+#define CORE_MANAGEMENT_MAX_CORES 2
 
 // Định nghĩa các core
 #define CORE_0 0
@@ -41,7 +45,7 @@ typedef enum {
 // Cấu trúc thông tin core
 typedef struct {
     uint32_t task_count;
-    uint32_t total_stack_size;
+    uint64_t total_stack_size;  // Sử dụng uint64_t để tránh tràn
     bool is_initialized;
 } core_info_t;
 
