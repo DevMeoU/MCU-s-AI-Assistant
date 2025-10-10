@@ -39,6 +39,9 @@ public:
     virtual Theme* GetTheme() { return current_theme_; }
     virtual void UpdateStatusBar(bool update_all = false);
     virtual void SetPowerSaveMode(bool on);
+    virtual void start() {}
+    virtual void clearScreen() {}  // Xóa hiển thị FFT, mặc định là triển khai trống
+    virtual void stopFft() {}      // Dừng hiển thị FFT, mặc định là triển khai trống
 
     inline int width() const { return width_; }
     inline int height() const { return height_; }

@@ -431,7 +431,8 @@ void Application::Start() {
                 protocol_->server_sample_rate(), codec->output_sample_rate());
         }
     });
-    protocol_->OnAudioChannelClosed([this, &board]() {
+    protocol_->OnAudioChannelClosed([this]() {
+        auto& board = Board::GetInstance();
         board.SetPowerSaveMode(true);
         Schedule([this]() {
             auto display = Board::GetInstance().GetDisplay();
@@ -439,7 +440,7 @@ void Application::Start() {
             SetDeviceState(kDeviceStateIdle);
         });
     });
-    protocol_->OnIncomingJson([this, display](const cJSON* root) {
+    protocol_->OnIncomingJson([this](const cJSON* root) {
         // Parse JSON data
         auto type = cJSON_GetObjectItem(root, "type");
         if (strcmp(type->valuestring, "tts") == 0) {
@@ -465,7 +466,8 @@ void Application::Start() {
                 auto text = cJSON_GetObjectItem(root, "text");
                 if (cJSON_IsString(text)) {
                     ESP_LOGI(TAG, "<< %s", text->valuestring);
-                    Schedule([this, display, message = std::string(text->valuestring)]() {
+                    Schedule([this, message = std::string(text->valuestring)]() {
+                        auto display = Board::GetInstance().GetDisplay();
                         display->SetChatMessage("assistant", message.c_str());
                     });
                 }
@@ -474,14 +476,16 @@ void Application::Start() {
             auto text = cJSON_GetObjectItem(root, "text");
             if (cJSON_IsString(text)) {
                 ESP_LOGI(TAG, ">> %s", text->valuestring);
-                Schedule([this, display, message = std::string(text->valuestring)]() {
+                Schedule([this, message = std::string(text->valuestring)]() {
+                    auto display = Board::GetInstance().GetDisplay();
                     display->SetChatMessage("user", message.c_str());
                 });
             }
         } else if (strcmp(type->valuestring, "llm") == 0) {
             auto emotion = cJSON_GetObjectItem(root, "emotion");
             if (cJSON_IsString(emotion)) {
-                Schedule([this, display, emotion_str = std::string(emotion->valuestring)]() {
+                Schedule([this, emotion_str = std::string(emotion->valuestring)]() {
+                    auto display = Board::GetInstance().GetDisplay();
                     display->SetEmotion(emotion_str.c_str());
                 });
             }
@@ -517,7 +521,8 @@ void Application::Start() {
             auto payload = cJSON_GetObjectItem(root, "payload");
             ESP_LOGI(TAG, "Received custom message: %s", cJSON_PrintUnformatted(root));
             if (cJSON_IsObject(payload)) {
-                Schedule([this, display, payload_str = std::string(cJSON_PrintUnformatted(payload))]() {
+                Schedule([this, payload_str = std::string(cJSON_PrintUnformatted(payload))]() {
+                    auto display = Board::GetInstance().GetDisplay();
                     display->SetChatMessage("system", payload_str.c_str());
                 });
             } else {
@@ -680,6 +685,17 @@ void Application::SetDeviceState(DeviceState state) {
     auto display = board.GetDisplay();
     auto led = board.GetLed();
     led->OnStateChanged();
+
+    // Khi chuyển IDLE sang LISTENING hoặc bất kì trạng thái nào khác dừng phát nhạc
+    if ((previous_state == kDeviceStateIdle) || (state != kDeviceStateIdle)) {
+        auto music = board.GetMusicPlayer();
+        if (music) {
+            ESP_LOGW(TAG, "Stopping music streaming due to state change: %s -> %s",
+                    STATE_STRINGS[previous_state], STATE_STRINGS[state]);
+            music->StopStreaming();
+        }
+    }
+
     switch (state) {
         case kDeviceStateUnknown:
         case kDeviceStateIdle:
@@ -865,6 +881,143 @@ void Application::SetAecMode(AecMode mode) {
             protocol_->CloseAudioChannel();
         }
     });
+}
+
+void Application::AddAudioData(AudioStreamPacket&& packet) {
+    auto& board = Board::GetInstance(); /* Get the board instance correctly */
+    auto codec = board.GetAudioCodec(); /* Get the audio codec instance */
+    
+    // Validate inputs
+    if (!codec || packet.payload.empty()) {
+        return;
+    }
+    
+    // If the device is idle and the input is enabled, add the audio data to the codec
+    if ((device_state_ == kDeviceStateIdle) && (codec->input_enabled())) {
+        // packet.payload is a vector of bytes containing PCM integer data (int16_t)
+        if (packet.payload.size() > 2) {
+            // Sử dụng PSRAM để lưu trữ dữ liệu PCM khi có sẵn
+            size_t num_samples = packet.payload.size() / sizeof(int16_t);
+            int16_t* pcm_data = (int16_t*)heap_caps_malloc(num_samples * sizeof(int16_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+            
+            // Kiểm tra xem phân bổ PSRAM có thành công không
+            if (!pcm_data) {
+                ESP_LOGW(TAG, "Không thể phân bổ PSRAM, sử dụng heap thông thường");
+                pcm_data = (int16_t*)malloc(num_samples * sizeof(int16_t));
+                if (!pcm_data) {
+                    ESP_LOGE(TAG, "Không thể phân bổ bộ nhớ cho dữ liệu PCM");
+                    return;
+                }
+            }
+            
+            // Giải phóng bộ nhớ khi hàm kết thúc
+            std::unique_ptr<int16_t, decltype(&free)> pcm_data_ptr(pcm_data, &free);
+            
+            memcpy(pcm_data, packet.payload.data(), packet.payload.size());
+
+            // Kiểm tra xem tần số mẫu có khớp không, nếu không khớp thì thực hiện tái lấy mẫu đơn giản
+            if (codec->input_sample_rate() != packet.sample_rate) {
+                // Xác thực bộ tái lấy mẫu
+                if (packet.sample_rate <= 0 || codec->input_sample_rate() <= 0) {
+                    ESP_LOGE(TAG, "Tần số lấy mẫu không hợp lệ: %d -> %d", 
+                            packet.sample_rate, codec->input_sample_rate());
+                    return;
+                }
+                
+                // Chỉ tái lấy mẫu nếu cần thiết
+                if (packet.sample_rate != codec->input_sample_rate()) {
+                    // Sử dụng PSRAM cho dữ liệu tái lấy mẫu
+                    size_t max_expected_size = (packet.sample_rate > codec->input_sample_rate()) ? 
+                                              (num_samples * packet.sample_rate / codec->input_sample_rate() * 2) : 
+                                              num_samples;
+                    
+                    int16_t* resampled = (int16_t*)heap_caps_malloc(max_expected_size * sizeof(int16_t), 
+                                                                   MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                    
+                    if (!resampled) {
+                        ESP_LOGW(TAG, "Không thể phân bổ PSRAM cho tái lấy mẫu, sử dụng heap thông thường");
+                        resampled = (int16_t*)malloc(max_expected_size * sizeof(int16_t));
+                        if (!resampled) {
+                            ESP_LOGE(TAG, "Không thể phân bổ bộ nhớ cho tái lấy mẫu");
+                            return;
+                        }
+                    }
+                    
+                    std::unique_ptr<int16_t, decltype(&free)> resampled_ptr(resampled, &free);
+                    size_t resampled_count = 0;
+                    
+                    if (packet.sample_rate > codec->input_sample_rate()) {
+                        // Giảm lấy mẫu: lấy mẫu mỗi n mẫu
+                        float downsample_ratio = static_cast<float>(packet.sample_rate) / codec->input_sample_rate();
+                        size_t expected_size = static_cast<size_t>(num_samples / downsample_ratio + 0.5f);
+                        
+                        for (size_t i = 0; i < num_samples && resampled_count < expected_size; 
+                             i += static_cast<size_t>(downsample_ratio)) {
+                            resampled[resampled_count++] = pcm_data[i];
+                        }
+                        
+                        ESP_LOGI(TAG, "Đã giảm mẫu %d -> %d mẫu (tỷ lệ: %.2f)", 
+                                num_samples, resampled_count, downsample_ratio);
+                    } else {
+                        // Tăng lấy mẫu: nội suy tuyến tính
+                        float upsample_ratio = static_cast<float>(codec->input_sample_rate()) / packet.sample_rate;
+                        size_t expected_size = static_cast<size_t>(num_samples * upsample_ratio + 0.5f);
+                        
+                        for (size_t i = 0; i < num_samples && resampled_count < expected_size; ++i) {
+                            // Thêm mẫu gốc
+                            resampled[resampled_count++] = pcm_data[i];
+                            
+                            // Tính số mẫu cần nội suy
+                            if (i + 1 < num_samples && resampled_count < expected_size) {
+                                int interpolation_count = static_cast<int>(upsample_ratio) - 1;
+                                if (interpolation_count > 0) {
+                                    int16_t current = pcm_data[i];
+                                    int16_t next = pcm_data[i + 1];
+                                    for (int j = 1; j <= interpolation_count && resampled_count < expected_size; ++j) {
+                                        float t = static_cast<float>(j) / (interpolation_count + 1);
+                                        int16_t interpolated = static_cast<int16_t>(current + (next - current) * t);
+                                        resampled[resampled_count++] = interpolated;
+                                    }
+                                }
+                            } else if (resampled_count < expected_size) {
+                                // Mẫu cuối cùng, lặp trực tiếp nếu cần
+                                int interpolation_count = static_cast<int>(upsample_ratio) - 1;
+                                for (int j = 1; j <= interpolation_count && resampled_count < expected_size; ++j) {
+                                    resampled[resampled_count++] = pcm_data[i];
+                                }
+                            }
+                        }
+                        
+                        ESP_LOGI(TAG, "Đã tăng mẫu %d -> %d mẫu (tỷ lệ: %.2f)", 
+                                num_samples, resampled_count, upsample_ratio);
+                    }
+                    
+                    // Gửi dữ liệu đã tái lấy mẫu đến codec âm thanh
+                    if (!codec->output_enabled()) {
+                        codec->EnableOutput(true);
+                    }
+                    std::vector<int16_t> resampled_data(resampled, resampled + resampled_count);
+                    codec->OutputData(resampled_data);
+                } else {
+                    // Không cần tái lấy mẫu, gửi dữ liệu gốc
+                    if (!codec->output_enabled()) {
+                        codec->EnableOutput(true);
+                    }
+                    std::vector<int16_t> pcm_data_copy(pcm_data, pcm_data + num_samples);
+                    codec->OutputData(pcm_data_copy);
+                }
+            } else {
+                // Tần số mẫu khớp, gửi dữ liệu gốc
+                if (!codec->output_enabled()) {
+                    codec->EnableOutput(true);
+                }
+                std::vector<int16_t> pcm_data_copy(pcm_data, pcm_data + num_samples);
+                codec->OutputData(pcm_data_copy);
+            }
+
+            audio_service_.UpdateOutputTimestamp();
+        }
+    }
 }
 
 void Application::PlaySound(const std::string_view& sound) {

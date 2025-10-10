@@ -38,7 +38,7 @@ public:
         static Application instance;
         return instance;
     }
-    // 删除拷贝构造函数和赋值运算符
+    // Xóa hàm tạo sao chép và toán tử gán
     Application(const Application&) = delete;
     Application& operator=(const Application&) = delete;
 
@@ -61,6 +61,9 @@ public:
     void SendMcpMessage(const std::string& payload);
     void SetAecMode(AecMode mode);
     AecMode GetAecMode() const { return aec_mode_; }
+
+    // Thêm: nhận dữ liệu âm thanh bên ngoài (ví dụ: phát nhạc)
+    void AddAudioData(AudioStreamPacket&& packet);
     void PlaySound(const std::string_view& sound);
     AudioService& GetAudioService() { return audio_service_; }
 

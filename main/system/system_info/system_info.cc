@@ -31,6 +31,10 @@ size_t SystemInfo::GetFreeHeapSize() {
     return esp_get_free_heap_size();
 }
 
+size_t SystemInfo::GetPsramSize() {
+    return heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+}
+
 std::string SystemInfo::GetMacAddress() {
     uint8_t mac[6];
 #if CONFIG_IDF_TARGET_ESP32P4

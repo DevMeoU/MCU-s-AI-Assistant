@@ -62,7 +62,113 @@ void McpServer::AddCommonTools() {
             codec->SetOutputVolume(properties["volume"].value<int>());
             return true;
         });
-    
+
+    // Music tools
+    auto music_player = board.GetMusicPlayer();
+    if (music_player) {
+        AddTool("music_player.search_and_play",
+            "Tìm kiếm bài hát và bắt đầu phát. Tìm bài hát theo tên và tự động bắt đầu phát. "
+            "Sử dụng công cụ này để phát các bài hát cụ thể do người dùng yêu cầu.",
+            PropertyList({
+                Property("song_name", kPropertyTypeString)
+            }),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                auto song_name = properties["song_name"].value<std::string>();
+                // Use the music player directly instead of a controller
+                bool result = music_player->Download(song_name, "");
+                if (result) {
+                    return "Đã bắt đầu phát: " + song_name;
+                } else {
+                    return "Không tìm thấy hoặc phát: " + song_name;
+                }
+            });
+
+        AddTool("music_player.stop",
+            "Hoàn toàn dừng phát nhạc. Điều này sẽ dừng bài hát hiện tại và đặt lại vị trí về đầu. "
+            "Sử dụng công cụ này khi người dùng muốn dừng nhạc hoàn toàn.",
+            PropertyList(),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                // Use StopStreaming instead of StopMusic
+                bool result = music_player->StopStreaming();
+                if (result) {
+                    return "Đã dừng phát nhạc thành công";
+                } else {
+                    return "Không thể dừng phát nhạc";
+                }
+            });
+
+        AddTool("music_player.pause",
+            "Tạm dừng phát nhạc hiện tại. "
+            "Sử dụng công cụ này khi người dùng muốn tạm dừng nhạc.",
+            PropertyList(),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                // Use Pause method directly
+                bool result = music_player->Pause();
+                if (result) {
+                    return "Đã tạm dừng phát nhạc";
+                } else {
+                    return "Không thể tạm dừng phát nhạc";
+                }
+            });
+
+        AddTool("music_player.resume",
+            "Tiếp tục phát nhạc đã tạm dừng. "
+            "Sử dụng công cụ này khi người dùng muốn tiếp tục phát nhạc.",
+            PropertyList(),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                // Use Resume method directly
+                bool result = music_player->Resume();
+                if (result) {
+                    return "Đã tiếp tục phát nhạc";
+                } else {
+                    return "Không thể tiếp tục phát nhạc";
+                }
+            });
+
+        AddTool("music_player.next",
+            "Chuyển sang bài hát tiếp theo. "
+            "Sử dụng công cụ này khi người dùng muốn chuyển bài.",
+            PropertyList(),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                // For now, we'll stop the current track as a simple implementation
+                // A more sophisticated implementation would queue the next track
+                bool result = music_player->StopStreaming();
+                if (result) {
+                    return "Đã dừng phát nhạc (next track functionality not fully implemented)";
+                } else {
+                    return "Không thể dừng phát nhạc";
+                }
+            });
+
+        AddTool("music_player.set_volume",
+            "Đặt âm lượng phát nhạc. "
+            "Sử dụng công cụ này khi người dùng muốn thay đổi âm lượng.",
+            PropertyList({
+                Property("volume", kPropertyTypeInteger, 0, 100)
+            }),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                auto volume = properties["volume"].value<int>();
+                // Use SetVolume method directly
+                music_player->SetVolume(volume);
+                return "Đã đặt âm lượng thành " + std::to_string(volume);
+            });
+
+        AddTool("music_player.get_status",
+            "Lấy trạng thái hiện tại của trình phát nhạc bao gồm bài hát hiện tại và trạng thái phát. "
+            "Sử dụng công cụ này để kiểm tra những gì đang phát hoặc nhận thông tin phát lại chi tiết.",
+            PropertyList(),
+            [music_player](const PropertyList& properties) -> ReturnValue {
+                cJSON* json = cJSON_CreateObject();
+                cJSON_AddStringToObject(json, "current_song", music_player->GetCurrentSong().c_str());
+                cJSON_AddBoolToObject(json, "is_playing", music_player->IsPlaying());
+                cJSON_AddBoolToObject(json, "is_paused", music_player->IsPaused());
+                cJSON_AddNumberToObject(json, "volume", music_player->GetVolume());
+                cJSON_AddNumberToObject(json, "buffer_size", music_player->GetBufferSize());
+                return json;
+            });
+    }
+        
+    // Screen brightness
     auto backlight = board.GetBacklight();
     if (backlight) {
         AddTool("self.screen.set_brightness",
@@ -463,7 +569,7 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     std::string next_cursor = "";
     
     while (it != tools_.end()) {
-        // 如果我们还没有找到起始位置，继续搜索
+        // Nếu chúng ta chưa tìm thấy vị trí bắt đầu, tiếp tục tìm kiếm
         if (!found_cursor) {
             if ((*it)->name() == cursor) {
                 found_cursor = true;
@@ -478,10 +584,10 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
             continue;
         }
         
-        // 添加tool前检查大小
+        // Thêm tool trước khi kiểm tra kích thước
         std::string tool_json = (*it)->to_json() + ",";
         if (json.length() + tool_json.length() + 30 > max_payload_size) {
-            // 如果添加这个tool会超出大小限制，设置next_cursor并退出循环
+            // Nếu thêm tool này vượt quá kích thước giới hạn, thiết lập next_cursor và thoát khỏi vòng lặp
             next_cursor = (*it)->name();
             break;
         }
@@ -495,7 +601,7 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     }
     
     if (json.back() == '[' && !tools_.empty()) {
-        // 如果没有添加任何tool，返回错误
+        // Nếu không thêm tool nào, trả về lỗi
         ESP_LOGE(TAG, "tools/list: Failed to add tool %s because of payload size limit", next_cursor.c_str());
         ReplyError(id, "Failed to add tool " + next_cursor + " because of payload size limit");
         return;

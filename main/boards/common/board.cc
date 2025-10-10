@@ -1,39 +1,68 @@
 #include "board.h"
-#include "system_info.h"
-#include "settings.h"
-#include "display/display.h"
-#include "display/oled_display.h"
-#include "assets/lang_config.h"
-
 #include <esp_log.h>
-#include <esp_ota_ops.h>
-#include <esp_chip_info.h>
+#include <esp_heap_caps.h>
 #include <esp_random.h>
+#include <esp_chip_info.h>
+#include <esp_app_desc.h>
+#include <esp_partition.h>
+#include <esp_ota_ops.h>
+#include "system_info.h"
+#include "assets/lang_config.h"
+#include "display.h"
+#include "oled_display.h"
+#include "esp32_music.h"
 
-#define TAG "Board"
+static const char* TAG = "Board";
 
-Board::Board() {
-    Settings settings("board", true);
-    uuid_ = settings.GetString("uuid");
-    if (uuid_.empty()) {
-        uuid_ = GenerateUuid();
-        settings.SetString("uuid", uuid_);
+Board::Board() : uuid_(GenerateUuid()) {
+    // Kiểm tra xem PSRAM có được bật không
+    if (SystemInfo::GetPsramSize() > 0) {
+        ESP_LOGI(TAG, "PSRAM detected, allocating music player in PSRAM");
+        // Phân bổ music player trong PSRAM
+        _music_player = (Music*)heap_caps_malloc(sizeof(Esp32Music), MALLOC_CAP_SPIRAM);
+        if (_music_player) {
+            // Gọi hàm tạo trực tiếp trên bộ nhớ đã phân bổ
+            new(_music_player) Esp32Music();
+        } else {
+            ESP_LOGE(TAG, "Failed to allocate music player in PSRAM, falling back to normal allocation");
+            _music_player = new Esp32Music();
+        }
+    } else {
+        ESP_LOGI(TAG, "No PSRAM detected, using normal allocation for music player");
+        _music_player = new Esp32Music();
     }
-    ESP_LOGI(TAG, "UUID=%s SKU=%s", uuid_.c_str(), BOARD_NAME);
+}
+
+void Board::Cleanup() {
+    if (_music_player) {
+        // Kiểm tra xem đối tượng có được phân bổ trong PSRAM không
+        if (esp_ptr_external_ram(_music_player)) {
+            // Gọi destructor thủ công cho đối tượng trong PSRAM
+            _music_player->~Music();
+            // Giải phóng bộ nhớ PSRAM
+            heap_caps_free(_music_player);
+            ESP_LOGI(TAG, "Music player in PSRAM destroyed");
+        } else {
+            // Xóa đối tượng được phân bổ thông thường
+            delete _music_player;
+            ESP_LOGI(TAG, "Music player destroyed");
+        }
+        _music_player = nullptr;
+    }
 }
 
 std::string Board::GenerateUuid() {
-    // UUID v4 需要 16 字节的随机数据
+    // UUID v4 cần 16 byte dữ liệu ngẫu nhiên
     uint8_t uuid[16];
     
-    // 使用 ESP32 的硬件随机数生成器
+    // Sử dụng bộ phát sinh số ngẫu nhiên phần cứng của ESP32
     esp_fill_random(uuid, sizeof(uuid));
     
-    // 设置版本 (版本 4) 和变体位
-    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // 版本 4
-    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // 变体 1
+    // Đặt phiên bản (phiên bản 4) và bit biến thể
+    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // Phiên bản 4
+    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // Biến thể 1
     
-    // 将字节转换为标准的 UUID 字符串格式
+    // Chuyển đổi byte thành định dạng chuỗi UUID tiêu chuẩn
     char uuid_str[37];
     snprintf(uuid_str, sizeof(uuid_str),
         "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
@@ -60,6 +89,10 @@ Display* Board::GetDisplay() {
 
 Camera* Board::GetCamera() {
     return nullptr;
+}
+
+Music* Board::GetMusicPlayer() {
+    return _music_player;
 }
 
 Led* Board::GetLed() {
@@ -147,7 +180,8 @@ std::string Board::GetSystemInfoJson() {
         json += R"("size":)" + std::to_string(partition->size) + R"(},)";;
         it = esp_partition_next(it);
     }
-    json.pop_back(); // Remove the last comma
+    // Xóa dấu phẩy cuối cùng
+    json.pop_back(); 
     json += R"(],)";
 
     json += R"("ota":{)";
@@ -155,7 +189,7 @@ std::string Board::GetSystemInfoJson() {
     json += R"("label":")" + std::string(ota_partition->label) + R"(")";
     json += R"(},)";
 
-    // Append display info
+    // Thêm thông tin hiển thị
     auto display = GetDisplay();
     if (display) {
         json += R"("display":{)";
@@ -166,13 +200,14 @@ std::string Board::GetSystemInfoJson() {
         }
         json += R"("width":)" + std::to_string(display->width()) + R"(,)";
         json += R"("height":)" + std::to_string(display->height()) + R"(,)";
-        json.pop_back(); // Remove the last comma
+        // Xóa dấu phẩy cuối cùng
+        json.pop_back(); 
     }
     json += R"(},)";
 
     json += R"("board":)" + GetBoardJson();
 
-    // Close the JSON object
+    // Đóng đối tượng JSON
     json += R"(})";
     return json;
 }

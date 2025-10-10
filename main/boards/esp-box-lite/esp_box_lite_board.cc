@@ -201,6 +201,9 @@ public:
     }
 
     ~EspBoxBoardLite() {
+        // Gọi phương thức dọn dẹp để giải phóng tài nguyên
+        Cleanup();
+        
         for (int i =0; i<BSP_ADC_BUTTON_NUM; i++) {
             if (adc_button_[i]) {
                 delete adc_button_[i];

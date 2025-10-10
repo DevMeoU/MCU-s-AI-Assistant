@@ -11,6 +11,7 @@ public:
     static size_t GetFlashSize();
     static size_t GetMinimumFreeHeapSize();
     static size_t GetFreeHeapSize();
+    static size_t GetPsramSize();
     static std::string GetMacAddress();
     static std::string GetChipModelName();
     static std::string GetUserAgent();
