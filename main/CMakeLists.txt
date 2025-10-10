@@ -35,7 +35,7 @@ set(SOURCES
     "protocols/mqtt_protocol.cc"
     "protocols/protocol.cc"
     "protocols/websocket_protocol.cc"
-    "system/settings/settings.cc"
+    "system/setting/settings.cc"
     "system/system_info/system_info.cc"
 )
 
@@ -51,7 +51,7 @@ set(INCLUDE_DIRS
     "led"
     "protocols"
     "system"
-    "system/settings"
+    "system/setting"
     "system/system_info"
 )
 
