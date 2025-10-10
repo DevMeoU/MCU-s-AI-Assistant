@@ -18,63 +18,63 @@ static const BaseType_t task_core_mapping[CORE_TASK_TYPE_MAX] = {
     [CORE_TASK_TYPE_SYSTEM] = SYSTEM_TASK_CORE,          // System task trên core 0
     [CORE_TASK_TYPE_AUDIO_INPUT] = AUDIO_INPUT_CORE,     // Audio input task trên core 1
     [CORE_TASK_TYPE_AUDIO_OUTPUT] = AUDIO_OUTPUT_CORE,   // Audio output task trên core 1
-    [CORE_TASK_TYPE_AUDIO_CODEC] = OPUS_CODEC_CORE,      // Audio codec task trên core 0
+    [CORE_TASK_TYPE_AUDIO_CODEC] = OPUS_CODEC_CORE,      // Audio codec task trên core 1
     [CORE_TASK_TYPE_DISPLAY] = DISPLAY_UPDATE_CORE,      // Display task trên core 1
     [CORE_TASK_TYPE_ALARM] = ALARM_CHECKER_CORE,         // Alarm task trên core 0
     [CORE_TASK_TYPE_PROTOCOL] = PROTOCOL_HANDLER_CORE,   // Protocol task trên core 0
-    [CORE_TASK_TYPE_MCP] = PROTOCOL_HANDLER_CORE,        // MCP task trên core 0
-    [CORE_TASK_TYPE_OTA] = SYSTEM_TASK_CORE,             // OTA task trên core 0
-    [CORE_TASK_TYPE_UI] = DISPLAY_UPDATE_CORE,           // UI task trên core 1
+    [CORE_TASK_TYPE_MCP] = MCP_TASK_CORE,                // MCP task trên core 0
+    [CORE_TASK_TYPE_OTA] = OTA_TASK_CORE,                // OTA task trên core 0
+    [CORE_TASK_TYPE_UI] = UI_TASK_CORE,                  // UI task trên core 1
     [CORE_TASK_TYPE_AUDIO_PROCESSOR] = AUDIO_PROCESSOR_CORE, // Audio processor task trên core 1
     [CORE_TASK_TYPE_WAKE_WORD_DETECTION] = WAKE_WORD_DETECTION_CORE, // Wake word detection task trên core 1
     [CORE_TASK_TYPE_WAKE_WORD_ENCODING] = WAKE_WORD_ENCODING_CORE,  // Wake word encoding task trên core 1
-    [CORE_TASK_TYPE_BOARD_ACTION] = SYSTEM_TASK_CORE,        // Board action task trên core 0
-    [CORE_TASK_TYPE_BATTERY_MONITORING] = SYSTEM_TASK_CORE,  // Battery monitoring task trên core 0
-    [CORE_TASK_TYPE_TOUCHPAD] = SYSTEM_TASK_CORE             // Touchpad handling task trên core 0
+    [CORE_TASK_TYPE_BOARD_ACTION] = BOARD_ACTION_CORE,        // Board action task trên core 0
+    [CORE_TASK_TYPE_BATTERY_MONITORING] = BATTERY_MONITORING_CORE,  // Battery monitoring task trên core 0
+    [CORE_TASK_TYPE_TOUCHPAD] = TOUCHPAD_CORE             // Touchpad handling task trên core 0
 };
 
 // Bảng ánh xạ task type sang priority
 static const UBaseType_t task_priority_mapping[CORE_TASK_TYPE_MAX] = {
     [CORE_TASK_TYPE_WIFI] = WIFI_TASK_PRIORITY,                          // Wi-Fi có priority cao
-    [CORE_TASK_TYPE_NETWORK] = PROTOCOL_HANDLER_PRIORITY, // Network task
-    [CORE_TASK_TYPE_SYSTEM] = MAIN_EVENT_LOOP_PRIORITY,  // System task
+    [CORE_TASK_TYPE_NETWORK] = NETWORK_TASK_PRIORITY,    // Network task
+    [CORE_TASK_TYPE_SYSTEM] = MAIN_LOOP_PRIORITY,        // System task
     [CORE_TASK_TYPE_AUDIO_INPUT] = AUDIO_INPUT_PRIORITY, // Audio input task (real-time)
     [CORE_TASK_TYPE_AUDIO_OUTPUT] = AUDIO_OUTPUT_PRIORITY, // Audio output task
     [CORE_TASK_TYPE_AUDIO_CODEC] = OPUS_CODEC_PRIORITY,  // Audio codec task
     [CORE_TASK_TYPE_DISPLAY] = DISPLAY_UPDATE_PRIORITY,   // Display task
     [CORE_TASK_TYPE_ALARM] = ALARM_CHECKER_PRIORITY,     // Alarm task
     [CORE_TASK_TYPE_PROTOCOL] = PROTOCOL_HANDLER_PRIORITY, // Protocol task
-    [CORE_TASK_TYPE_MCP] = PROTOCOL_HANDLER_PRIORITY,    // MCP task
-    [CORE_TASK_TYPE_OTA] = OTA_TASK_PRIORITY,                            // OTA task (low priority)
-    [CORE_TASK_TYPE_UI] = DISPLAY_UPDATE_PRIORITY,       // UI task
+    [CORE_TASK_TYPE_MCP] = MCP_TASK_PRIORITY,            // MCP task
+    [CORE_TASK_TYPE_OTA] = OTA_TASK_PRIORITY,            // OTA task (low priority)
+    [CORE_TASK_TYPE_UI] = UI_TASK_PRIORITY,              // UI task
     [CORE_TASK_TYPE_AUDIO_PROCESSOR] = AUDIO_PROCESSOR_PRIORITY, // Audio processor task (real-time)
     [CORE_TASK_TYPE_WAKE_WORD_DETECTION] = WAKE_WORD_DETECTION_PRIORITY, // Wake word detection task (real-time)
     [CORE_TASK_TYPE_WAKE_WORD_ENCODING] = WAKE_WORD_ENCODING_PRIORITY, // Wake word encoding task
     [CORE_TASK_TYPE_BOARD_ACTION] = BOARD_ACTION_PRIORITY, // Board action task (high priority)
-    [CORE_TASK_TYPE_BATTERY_MONITORING] = BATTERY_MONITORING_PRIORITY,            // Battery monitoring task (high priority)
-    [CORE_TASK_TYPE_TOUCHPAD] = TOUCHPAD_PRIORITY                        // Touchpad handling task
+    [CORE_TASK_TYPE_BATTERY_MONITORING] = BATTERY_MONITORING_PRIORITY, // Battery monitoring task (high priority)
+    [CORE_TASK_TYPE_TOUCHPAD] = TOUCHPAD_PRIORITY         // Touchpad handling task
 };
 
 // Bảng ánh xạ task type sang stack size
 static const uint32_t task_stack_size_mapping[CORE_TASK_TYPE_MAX] = {
-    [CORE_TASK_TYPE_WIFI] = WIFI_TASK_STACK_SIZE,                        // Wi-Fi stack size
-    [CORE_TASK_TYPE_NETWORK] = PROTOCOL_HANDLER_STACK_SIZE, // Network task
-    [CORE_TASK_TYPE_SYSTEM] = MAIN_EVENT_LOOP_STACK_SIZE, // System task
+    [CORE_TASK_TYPE_WIFI] = WIFI_TASK_STACK_SIZE,        // Wi-Fi stack size
+    [CORE_TASK_TYPE_NETWORK] = NETWORK_TASK_STACK_SIZE,  // Network task
+    [CORE_TASK_TYPE_SYSTEM] = MAIN_LOOP_STACK_SIZE,      // System task
     [CORE_TASK_TYPE_AUDIO_INPUT] = AUDIO_INPUT_STACK_SIZE, // Audio input task
     [CORE_TASK_TYPE_AUDIO_OUTPUT] = AUDIO_OUTPUT_STACK_SIZE, // Audio output task
     [CORE_TASK_TYPE_AUDIO_CODEC] = OPUS_CODEC_STACK_SIZE, // Audio codec task
     [CORE_TASK_TYPE_DISPLAY] = DISPLAY_UPDATE_STACK_SIZE, // Display task
     [CORE_TASK_TYPE_ALARM] = ALARM_CHECKER_STACK_SIZE,   // Alarm task
     [CORE_TASK_TYPE_PROTOCOL] = PROTOCOL_HANDLER_STACK_SIZE, // Protocol task
-    [CORE_TASK_TYPE_MCP] = PROTOCOL_HANDLER_STACK_SIZE,  // MCP task
-    [CORE_TASK_TYPE_OTA] = OTA_TASK_STACK_SIZE,                         // OTA task
-    [CORE_TASK_TYPE_UI] = DISPLAY_UPDATE_STACK_SIZE,     // UI task
-    [CORE_TASK_TYPE_AUDIO_PROCESSOR] = AUDIO_PROCESSOR_STACK_SIZE,             // Audio processor task
-    [CORE_TASK_TYPE_WAKE_WORD_DETECTION] = WAKE_WORD_DETECTION_STACK_SIZE,         // Wake word detection task
-    [CORE_TASK_TYPE_WAKE_WORD_ENCODING] = WAKE_WORD_ENCODING_STACK_SIZE,      // Wake word encoding task
-    [CORE_TASK_TYPE_BOARD_ACTION] = BOARD_ACTION_STACK_SIZE,            // Board action task
-    [CORE_TASK_TYPE_BATTERY_MONITORING] = BATTERY_MONITORING_STACK_SIZE,          // Battery monitoring task
-    [CORE_TASK_TYPE_TOUCHPAD] = TOUCHPAD_STACK_SIZE                     // Touchpad handling task
+    [CORE_TASK_TYPE_MCP] = MCP_TASK_STACK_SIZE,          // MCP task
+    [CORE_TASK_TYPE_OTA] = OTA_TASK_STACK_SIZE,          // OTA task
+    [CORE_TASK_TYPE_UI] = UI_TASK_STACK_SIZE,            // UI task
+    [CORE_TASK_TYPE_AUDIO_PROCESSOR] = AUDIO_PROCESSOR_STACK_SIZE, // Audio processor task
+    [CORE_TASK_TYPE_WAKE_WORD_DETECTION] = WAKE_WORD_DETECTION_STACK_SIZE, // Wake word detection task
+    [CORE_TASK_TYPE_WAKE_WORD_ENCODING] = WAKE_WORD_ENCODING_STACK_SIZE, // Wake word encoding task
+    [CORE_TASK_TYPE_BOARD_ACTION] = BOARD_ACTION_STACK_SIZE, // Board action task
+    [CORE_TASK_TYPE_BATTERY_MONITORING] = BATTERY_MONITORING_STACK_SIZE, // Battery monitoring task
+    [CORE_TASK_TYPE_TOUCHPAD] = TOUCHPAD_STACK_SIZE      // Touchpad handling task
 };
 
 void core_management_init(void) {

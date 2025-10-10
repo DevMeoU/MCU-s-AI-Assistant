@@ -18,8 +18,9 @@
 
 AfeWakeWord::AfeWakeWord()
     : afe_data_(nullptr),
-      wake_word_pcm_(),
-      wake_word_opus_() {
+      wake_word_pcm_(PsramAllocator<std::vector<int16_t>>()),
+      wake_word_opus_(PsramAllocator<std::vector<uint8_t>>()),
+      encode_queue_(PsramAllocator<std::vector<int16_t>>()) {
 
     event_group_ = xEventGroupCreate();
     encode_event_group_ = xEventGroupCreate();
@@ -27,6 +28,7 @@ AfeWakeWord::AfeWakeWord()
     // Đảm bảo các deque sử dụng PSRAM
     wake_word_pcm_.clear();
     wake_word_opus_.clear();
+    encode_queue_.clear();
 }
 
 AfeWakeWord::~AfeWakeWord() {
@@ -75,6 +77,12 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
         ESP_LOGE(TAG, "Failed to initialize wakenet model");
         return false;
     }
+    
+    // Thêm kiểm tra và log thông tin bộ nhớ trước khi khởi tạo
+    ESP_LOGI(TAG, "Memory before model initialization - Internal: %d, PSRAM: %d", 
+             heap_caps_get_free_size(MALLOC_CAP_INTERNAL), 
+             heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+    
     for (int i = 0; i < models_->num; i++) {
         // Chỉ log khi cần thiết - giảm log model
         AFE_LOGD(TAG, "Model %d: %s", i, models_->model_name[i]);
@@ -124,6 +132,11 @@ bool AfeWakeWord::Initialize(AudioCodec* codec, srmodel_list_t* models) {
         safeDestroyAfe();
         return false;
     }
+
+    // Log thông tin bộ nhớ sau khi khởi tạo AFE
+    ESP_LOGI(TAG, "Memory after AFE initialization - Internal: %d, PSRAM: %d", 
+             heap_caps_get_free_size(MALLOC_CAP_INTERNAL), 
+             heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
     // Create wake word detection task with configuration from core management
     BaseType_t detection_core = core_management_get_task_core(CORE_TASK_TYPE_WAKE_WORD_DETECTION);
@@ -251,6 +264,10 @@ void AfeWakeWord::AudioDetectionTask() {
     int emergency_reset_count = 0;  // Biến đếm cho emergency reset
     int64_t last_fetch_time = esp_timer_get_time();
     
+    // Thêm biến để theo dõi trạng thái bộ nhớ
+    size_t last_internal_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    size_t last_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    
     while (true) {
         xEventGroupWaitBits(event_group_, DETECTION_RUNNING_EVENT, pdFALSE, pdTRUE, portMAX_DELAY);
 
@@ -268,6 +285,26 @@ void AfeWakeWord::AudioDetectionTask() {
             ESP_LOGE(TAG, "AFE ringbuffer is not properly initialized during detection task, fetch size is 0");
             vTaskDelay(pdMS_TO_TICKS(100)); // Chờ một chút trước khi kiểm tra lại
             continue;
+        }
+        
+        // Kiểm tra bộ nhớ định kỳ để phát hiện rò rỉ
+        static int memory_check_counter = 0;
+        if (++memory_check_counter % 50 == 0) { // Kiểm tra mỗi 50 lần lặp
+            size_t current_internal_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+            size_t current_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+            
+            if (current_internal_free < last_internal_free * 0.8) { // Nếu bộ nhớ giảm hơn 20%
+                ESP_LOGW(TAG, "Internal memory drop detected: %d -> %d", 
+                         (int)last_internal_free, (int)current_internal_free);
+            }
+            
+            if (current_psram_free < last_psram_free * 0.8) { // Nếu bộ nhớ PSRAM giảm hơn 20%
+                ESP_LOGW(TAG, "PSRAM drop detected: %d -> %d", 
+                         (int)last_psram_free, (int)current_psram_free);
+            }
+            
+            last_internal_free = current_internal_free;
+            last_psram_free = current_psram_free;
         }
 
         auto res = afe_iface_->fetch_with_delay(afe_data_, portMAX_DELAY);
@@ -413,7 +450,7 @@ void AfeWakeWord::EncodeWakeWordData() {
     wake_word_encode_task_ = xTaskCreateStatic([](void* arg) {
         auto this_ = (AfeWakeWord*)arg;
         {
-            // auto start_time = esp_timer_get_time();  // Đã loại bỏ biến không sử dụng
+            auto start_time = esp_timer_get_time();  // Đã loại bỏ biến không sử dụng
             auto encoder = std::make_unique<OpusEncoderWrapper>(16000, 1, OPUS_FRAME_DURATION_MS);
             encoder->SetComplexity(0);
 
@@ -473,6 +510,15 @@ bool AfeWakeWord::safeCreateAfe(const std::string& input_format, size_t ringbuf_
         return false;
     }
 
+    // Kiểm tra bộ nhớ trước khi cấu hình AFE
+    size_t internal_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    size_t psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    ESP_LOGI(TAG, "Memory before AFE config - Internal: %d, PSRAM: %d", (int)internal_free, (int)psram_free);
+    
+    if (internal_free < 10240) { // Kiểm tra nếu bộ nhớ internal quá thấp
+        ESP_LOGW(TAG, "Low internal memory: %d bytes", (int)internal_free);
+    }
+
     // configure
     afe_config->aec_init = codec_->input_reference();
     afe_config->aec_mode = AEC_MODE_SR_HIGH_PERF;
@@ -510,7 +556,7 @@ bool AfeWakeWord::safeCreateAfe(const std::string& input_format, size_t ringbuf_
         return false;
     }
 
-    // Chỉ log khi cần thiết
-    AFE_LOGD(TAG, "AFE created OK ringbuf_size=%d", (int)ringbuf_size);
+    // Log thông tin sau khi tạo AFE thành công
+    ESP_LOGI(TAG, "AFE created OK ringbuf_size=%d, fetch_size=%d", (int)ringbuf_size, (int)fetch_size);
     return true;
 }

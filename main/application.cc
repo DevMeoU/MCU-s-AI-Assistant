@@ -361,8 +361,9 @@ void Application::StopListening() {
 void Application::Start() {
     // Khởi tạo core management
     core_management_init();
-    
+
     auto& board = Board::GetInstance();
+
     SetDeviceState(kDeviceStateStarting);
 
     /* Setup the display */
@@ -371,7 +372,6 @@ void Application::Start() {
     // Print board name/version info
     display->SetChatMessage("system", SystemInfo::GetUserAgent().c_str());
 
-    ESP_LOGD(TAG, "Starting %s", board.GetBoardType().c_str());
     /* Setup the audio service */
     auto codec = board.GetAudioCodec();
     audio_service_.Initialize(codec);
@@ -709,56 +709,16 @@ void Application::SetDeviceState(DeviceState state) {
         return;
     }
     
-    clock_ticks_ = 0;
-    auto previous_state = device_state_;
+    ESP_LOGI(TAG, "STATE: %s -> %s", 
+             device_state_ < kDeviceStateInvalid ? STATE_STRINGS[device_state_] : "unknown",
+             state < kDeviceStateInvalid ? STATE_STRINGS[state] : "unknown");
+    
     device_state_ = state;
-    ESP_LOGI(TAG, "STATE: %s", STATE_STRINGS[device_state_]);
-
-    // Send the state change event
-    DeviceStateEventManager::GetInstance().PostStateChangeEvent(previous_state, state);
-
-    auto& board = Board::GetInstance();
-    auto display = board.GetDisplay();
-    auto led = board.GetLed();
-    led->OnStateChanged();
-    switch (state) {
-        case kDeviceStateUnknown:
-        case kDeviceStateIdle:
-            display->SetStatus(Lang::Strings::STANDBY);
-            display->SetEmotion("neutral");
-            audio_service_.EnableVoiceProcessing(false);
-            audio_service_.EnableWakeWordDetection(true);
-            break;
-        case kDeviceStateConnecting:
-            display->SetStatus(Lang::Strings::CONNECTING);
-            display->SetEmotion("neutral");
-            display->SetChatMessage("system", "");
-            break;
-        case kDeviceStateListening:
-            display->SetStatus(Lang::Strings::LISTENING);
-            display->SetEmotion("neutral");
-
-            // Make sure the audio processor is running
-            if (!audio_service_.IsAudioProcessorRunning()) {
-                // Send the start listening command
-                protocol_->SendStartListening(listening_mode_);
-                audio_service_.EnableVoiceProcessing(true);
-                audio_service_.EnableWakeWordDetection(false);
-            }
-            break;
-        case kDeviceStateSpeaking:
-            display->SetStatus(Lang::Strings::SPEAKING);
-
-            if (listening_mode_ != kListeningModeRealtime) {
-                audio_service_.EnableVoiceProcessing(false);
-                // Only AFE wake word can be detected in speaking mode
-                audio_service_.EnableWakeWordDetection(audio_service_.IsAfeWakeWord());
-            }
-            audio_service_.ResetDecoder();
-            break;
-        default:
-            // Do nothing
-            break;
+    auto display = Board::GetInstance().GetDisplay();
+    display->SetDeviceState(state);
+    
+    if (on_state_changed_ != nullptr) {
+        on_state_changed_(state);
     }
 }
 

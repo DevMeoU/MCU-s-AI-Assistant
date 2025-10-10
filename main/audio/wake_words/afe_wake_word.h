@@ -18,6 +18,8 @@
 
 #include "audio_codec.h"
 #include "wake_word.h"
+#include "memory_management.h"
+#include "psram_allocator.h"
 
 // Định nghĩa các event flag cho wake word detection và encoding
 #define DETECTION_RUNNING_EVENT (1 << 0)  // Bit 0
@@ -52,8 +54,8 @@ private:
     TaskHandle_t wake_word_encode_task_ = nullptr;
     StaticTask_t* wake_word_encode_task_buffer_ = nullptr;
     StackType_t* wake_word_encode_task_stack_ = nullptr;
-    std::deque<std::vector<int16_t>> wake_word_pcm_;
-    std::deque<std::vector<uint8_t>> wake_word_opus_;
+    std::deque<std::vector<int16_t>, PsramAllocator<std::vector<int16_t>>> wake_word_pcm_;
+    std::deque<std::vector<uint8_t>, PsramAllocator<std::vector<uint8_t>>> wake_word_opus_;
     std::mutex wake_word_mutex_;
     std::condition_variable wake_word_cv_;
 
@@ -68,7 +70,7 @@ private:
     volatile bool encode_task_running_ = false;
     
     // New queue for raw audio data to be encoded
-    std::deque<std::vector<int16_t>> encode_queue_;
+    std::deque<std::vector<int16_t>, PsramAllocator<std::vector<int16_t>>> encode_queue_;
     std::mutex encode_queue_mutex_;
     std::condition_variable encode_queue_cv_;
 

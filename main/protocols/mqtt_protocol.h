@@ -46,7 +46,6 @@ private:
     uint32_t local_sequence_;
     uint32_t remote_sequence_;
     esp_timer_handle_t reconnect_timer_;
-    esp_timer_handle_t send_hello_timer_; // Thêm timer để gửi tin nhắn hello
 
     bool StartMqttClient(bool report_error=false);
     void ParseServerHello(const cJSON* root);
@@ -54,9 +53,7 @@ private:
 
     bool SendText(const std::string& text) override;
     std::string GetHelloMessage();
-    
-    // Thêm hàm callback để gửi tin nhắn hello
-    void SendHelloCallback();
 };
+
 
 #endif // MQTT_PROTOCOL_H

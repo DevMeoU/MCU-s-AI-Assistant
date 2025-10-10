@@ -14,7 +14,8 @@
 
 
 CustomWakeWord::CustomWakeWord()
-    : wake_word_pcm_(), wake_word_opus_() {
+    : wake_word_pcm_(PsramAllocator<std::vector<int16_t>>()), 
+      wake_word_opus_(PsramAllocator<std::vector<uint8_t>>()) {
 }
 
 CustomWakeWord::~CustomWakeWord() {
@@ -199,8 +200,9 @@ void CustomWakeWord::StoreWakeWordData(const std::vector<int16_t>& data) {
 }
 
 void CustomWakeWord::EncodeWakeWordData() {
-    wake_word_opus_.clear();
     uint32_t encode_stack_size = core_management_get_task_stack_size(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
+    wake_word_opus_.clear();
+    
     if (wake_word_encode_task_stack_ == nullptr) {
         wake_word_encode_task_stack_ = (StackType_t*)MemoryManager::allocatePsram(encode_stack_size);
         assert(wake_word_encode_task_stack_ != nullptr);
@@ -210,7 +212,6 @@ void CustomWakeWord::EncodeWakeWordData() {
         assert(wake_word_encode_task_buffer_ != nullptr);
     }
 
-    // Tạo task wake word encoding với cấu hình từ core management
     UBaseType_t priority = core_management_get_task_priority(CORE_TASK_TYPE_WAKE_WORD_ENCODING);
     core_management_register_task(CORE_TASK_TYPE_WAKE_WORD_ENCODING, encode_stack_size);
     
@@ -219,7 +220,7 @@ void CustomWakeWord::EncodeWakeWordData() {
         {
             auto start_time = esp_timer_get_time();
             auto encoder = std::make_unique<OpusEncoderWrapper>(16000, 1, OPUS_FRAME_DURATION_MS);
-            encoder->SetComplexity(0); // 0 is the fastest
+            encoder->SetComplexity(0);
 
             int packets = 0;
             for (auto& pcm: this_->wake_word_pcm_) {

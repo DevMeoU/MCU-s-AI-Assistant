@@ -14,7 +14,7 @@
 #define TAG "Board"
 
 Board::Board() {
-    music_ = nullptr;  // 先初始化为空指针
+    music_ = nullptr;  // Khởi tạo con trỏ bằng nullptr
     
     Settings settings("board", true);
     uuid_ = settings.GetString("uuid");
@@ -24,7 +24,7 @@ Board::Board() {
     }
     ESP_LOGI(TAG, "UUID=%s SKU=%s", uuid_.c_str(), BOARD_NAME);
     
-    // 初始化音乐播放器
+    // Khởi tạo trình phát nhạc
     music_ = new Esp32Music();
     ESP_LOGI(TAG, "Music player initialized for all boards");
 }

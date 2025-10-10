@@ -52,17 +52,39 @@
 class MemoryManager {
     public:
         static void* allocateInternal(size_t size) {
+            // Kiểm tra kích thước yêu cầu
+            if (size == 0) {
+                ESP_LOGW(TAG, "Attempt to allocate 0 bytes in Internal RAM");
+                return nullptr;
+            }
+            
             void* ptr = heap_caps_malloc(size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
             if (ptr == nullptr) {
                 ESP_LOGE(TAG, "Failed to allocate memory of size %zu with caps 0x%08" PRIx32 " in Internal RAM", (unsigned)size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+                
+                // Log thông tin bộ nhớ hiện tại để debug
+                size_t free_bytes = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+                size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+                ESP_LOGE(TAG, "Current Internal RAM - Free: %u bytes, Largest block: %u bytes", (unsigned)free_bytes, (unsigned)largest_block);
             }
             return ptr;
         }
 
         static void* allocatePsram(size_t size) {
+            // Kiểm tra kích thước yêu cầu
+            if (size == 0) {
+                ESP_LOGW(TAG, "Attempt to allocate 0 bytes in PSRAM");
+                return nullptr;
+            }
+            
             void* ptr = heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
             if (ptr == nullptr) {
                 ESP_LOGE(TAG, "Failed to allocate memory of size %zu with caps 0x%08" PRIx32 " in PSRAM", (unsigned)size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                
+                // Log thông tin bộ nhớ hiện tại để debug
+                size_t free_bytes = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+                size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+                ESP_LOGE(TAG, "Current PSRAM - Free: %u bytes, Largest block: %u bytes", (unsigned)free_bytes, (unsigned)largest_block);
             }
             return ptr;
         }

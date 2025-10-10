@@ -1,8 +1,12 @@
 #include "audio_service.h"
 #include <esp_log.h>
+#include <sstream>
 #include <cstring>
-#include "tasks_config.h"
+#include "memory_management.h"
 #include "core_management.h"
+#include "psram_allocator.h"
+#include "wake_words/afe_wake_word.h"
+#include "wake_words/custom_wake_word.h"
 
 #if CONFIG_USE_AUDIO_PROCESSOR
 #include "processors/afe_audio_processor.h"
@@ -245,6 +249,9 @@ bool AudioService::ReadAudioData(std::vector<int16_t>& data, int sample_rate, in
 }
 
 void AudioService::AudioInputTask() {
+    int64_t last_wake_word_feed_time = esp_timer_get_time();  // Thời gian feed wake word cuối cùng
+    int64_t last_processor_feed_time = esp_timer_get_time();  // Thời gian feed processor cuối cùng
+    
     while (true) {
         EventBits_t bits = xEventGroupWaitBits(event_group_, AS_EVENT_AUDIO_TESTING_RUNNING |
             AS_EVENT_WAKE_WORD_RUNNING | AS_EVENT_AUDIO_PROCESSOR_RUNNING,
@@ -289,6 +296,9 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     wake_word_->Feed(data);
+                    last_wake_word_feed_time = esp_timer_get_time();  // Cập nhật thời gian feed cuối cùng
+                    // Thêm delay nhỏ để tránh chiếm dụng CPU quá mức
+                    vTaskDelay(pdMS_TO_TICKS(2)); // Giảm delay từ 1ms xuống 2ms
                                         continue;
                 }
             }
@@ -301,6 +311,9 @@ void AudioService::AudioInputTask() {
             if (samples > 0) {
                 if (ReadAudioData(data, 16000, samples)) {
                     audio_processor_->Feed(std::move(data));
+                    last_processor_feed_time = esp_timer_get_time();  // Cập nhật thời gian feed cuối cùng
+                    // Thêm delay nhỏ để tránh chiếm dụng CPU quá mức
+                    vTaskDelay(pdMS_TO_TICKS(1)); // Giữ nguyên delay 1ms
                     continue;
                 }
             }
@@ -648,7 +661,7 @@ void AudioService::PlaySound(const std::string_view& ogg) {
 
             if (!seen_head) {
                 // Phân tích gói OpusHead
-                if (pkt_len >= 19 && std::memcmp(pkt_ptr, "OpusHead", 8) == 0) {
+                if (pkt_len >= 19 && memcmp(pkt_ptr, "OpusHead", 8) == 0) {
                     seen_head = true;
                     
                     // Cấu trúc OpusHead: [0-7] "OpusHead", [8] phiên bản, [9] số kênh, [10-11] pre_skip
@@ -670,7 +683,7 @@ void AudioService::PlaySound(const std::string_view& ogg) {
             }
             if (!seen_tags) {
                 // Expect OpusTags in second packet
-                if (pkt_len >= 8 && std::memcmp(pkt_ptr, "OpusTags", 8) == 0) {
+                if (pkt_len >= 8 && memcmp(pkt_ptr, "OpusTags", 8) == 0) {
                     seen_tags = true;
                 }
                 continue;
@@ -681,7 +694,7 @@ void AudioService::PlaySound(const std::string_view& ogg) {
             packet->sample_rate = sample_rate;
             packet->frame_duration = 60;
             packet->payload.resize(pkt_len);
-            std::memcpy(packet->payload.data(), pkt_ptr, pkt_len);
+            memcpy(packet->payload.data(), pkt_ptr, pkt_len);
             PushPacketToDecodeQueue(std::move(packet), true);
         }
 
