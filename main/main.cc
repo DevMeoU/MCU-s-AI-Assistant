@@ -10,7 +10,7 @@
 #include "application.h"
 #include "system_establish.h"
 #include "system_info.h"
-#include "system/management/memory_management.h"
+#include "memory_management.h"
 
 #define TAG "app_main"
 

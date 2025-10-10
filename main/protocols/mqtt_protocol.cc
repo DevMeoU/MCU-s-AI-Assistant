@@ -63,9 +63,6 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
     int keepalive_interval = settings.GetInt("keepalive", 240);
     publish_topic_ = settings.GetString("publish_topic");
 
-    ESP_LOGI(TAG, "MQTT settings - endpoint: %s, client_id: %s, username: %s, keepalive: %d, publish_topic: %s",
-             endpoint.c_str(), client_id.c_str(), username.c_str(), keepalive_interval, publish_topic_.c_str());
-
     if (endpoint.empty()) {
         ESP_LOGW(TAG, "MQTT endpoint is not specified");
         if (report_error) {
@@ -79,7 +76,6 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
     mqtt_->SetKeepAlive(keepalive_interval);
 
     mqtt_->OnDisconnected([this]() {
-        ESP_LOGI(TAG, "MQTT disconnected");
         if (on_disconnected_ != nullptr) {
             on_disconnected_();
         }
@@ -88,7 +84,6 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
     });
 
     mqtt_->OnConnected([this]() {
-        ESP_LOGI(TAG, "MQTT connected");
         if (on_connected_ != nullptr) {
             on_connected_();
         }
@@ -96,9 +91,6 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
     });
 
     mqtt_->OnMessage([this](const std::string& topic, const std::string& payload) {
-        ESP_LOGI(TAG, "Received MQTT message on topic: %s", topic.c_str());
-        ESP_LOGI(TAG, "Message payload: %s", payload.c_str());
-        
         cJSON* root = cJSON_Parse(payload.c_str());
         if (root == nullptr) {
             ESP_LOGE(TAG, "Failed to parse json message %s", payload.c_str());
@@ -111,29 +103,18 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
             return;
         }
 
-        ESP_LOGI(TAG, "Message type: %s", type->valuestring);
         if (strcmp(type->valuestring, "hello") == 0) {
-            ESP_LOGI(TAG, "Processing hello message");
             ParseServerHello(root);
         } else if (strcmp(type->valuestring, "goodbye") == 0) {
             auto session_id = cJSON_GetObjectItem(root, "session_id");
             ESP_LOGI(TAG, "Received goodbye message, session_id: %s", session_id ? session_id->valuestring : "null");
-            ESP_LOGI(TAG, "Current session_id: %s", session_id_.c_str());
-            ESP_LOGI(TAG, "Session ID comparison: %s", 
-                     (session_id == nullptr || session_id_ == session_id->valuestring) ? "MATCH" : "MISMATCH");
-            
             if (session_id == nullptr || session_id_ == session_id->valuestring) {
-                ESP_LOGI(TAG, "Closing audio channel due to goodbye message");
                 Application::GetInstance().Schedule([this]() {
                     CloseAudioChannel();
                 });
-            } else {
-                ESP_LOGI(TAG, "Ignoring goodbye message for different session");
             }
         } else if (on_incoming_json_ != nullptr) {
             on_incoming_json_(root);
-        } else {
-            ESP_LOGI(TAG, "Unhandled message type: %s", type->valuestring);
         }
         cJSON_Delete(root);
         last_incoming_time_ = std::chrono::steady_clock::now();
@@ -146,39 +127,28 @@ bool MqttProtocol::StartMqttClient(bool report_error) {
     if (pos != std::string::npos) {
         broker_address = endpoint.substr(0, pos);
         broker_port = std::stoi(endpoint.substr(pos + 1));
-        ESP_LOGI(TAG, "Parsed broker address: %s, port: %d", broker_address.c_str(), broker_port);
     } else {
         broker_address = endpoint;
-        ESP_LOGI(TAG, "Using default port 8883 for broker address: %s", broker_address.c_str());
     }
-    
-    ESP_LOGI(TAG, "Attempting to connect to MQTT broker...");
     if (!mqtt_->Connect(broker_address, broker_port, client_id, username, password)) {
-        ESP_LOGE(TAG, "Failed to connect to endpoint %s:%d", broker_address.c_str(), broker_port);
+        ESP_LOGE(TAG, "Failed to connect to endpoint");
         SetError(Lang::Strings::SERVER_NOT_CONNECTED);
         return false;
     }
 
-    ESP_LOGI(TAG, "Successfully connected to endpoint %s:%d", broker_address.c_str(), broker_port);
+    ESP_LOGI(TAG, "Connected to endpoint");
     return true;
 }
 
 bool MqttProtocol::SendText(const std::string& text) {
     if (publish_topic_.empty()) {
-        ESP_LOGW(TAG, "Publish topic is empty");
         return false;
     }
-    
-    ESP_LOGI(TAG, "Sending message to topic: %s", publish_topic_.c_str());
-    ESP_LOGI(TAG, "Message content: %s", text.c_str());
-    
     if (!mqtt_->Publish(publish_topic_, text)) {
         ESP_LOGE(TAG, "Failed to publish message: %s", text.c_str());
         SetError(Lang::Strings::SERVER_ERROR);
         return false;
     }
-    
-    ESP_LOGI(TAG, "Message published successfully");
     return true;
 }
 
@@ -209,45 +179,26 @@ bool MqttProtocol::SendAudio(std::unique_ptr<AudioStreamPacket> packet) {
 }
 
 void MqttProtocol::CloseAudioChannel() {
-    ESP_LOGI(TAG, "CloseAudioChannel called");
-    ESP_LOGI(TAG, "Current session_id: %s", session_id_.c_str());
-    
     {
         std::lock_guard<std::mutex> lock(channel_mutex_);
-        if (udp_ != nullptr) {
-            ESP_LOGI(TAG, "Closing UDP connection");
             udp_.reset();
-        } else {
-            ESP_LOGI(TAG, "UDP connection already closed");
-        }
     }
 
     std::string message = "{";
     message += "\"session_id\":\"" + session_id_ + "\",";
     message += "\"type\":\"goodbye\"";
     message += "}";
-    
-    ESP_LOGI(TAG, "Sending goodbye message: %s", message.c_str());
     SendText(message);
 
     if (on_audio_channel_closed_ != nullptr) {
-        ESP_LOGI(TAG, "Calling on_audio_channel_closed callback");
         on_audio_channel_closed_();
-    } else {
-        ESP_LOGI(TAG, "No on_audio_channel_closed callback registered");
     }
-    
-    ESP_LOGI(TAG, "CloseAudioChannel completed");
 }
 
 bool MqttProtocol::OpenAudioChannel() {
-    ESP_LOGI(TAG, "OpenAudioChannel called");
-    ESP_LOGI(TAG, "MQTT connection status: %s", (mqtt_ != nullptr && mqtt_->IsConnected()) ? "Connected" : "Not connected");
-    
     if (mqtt_ == nullptr || !mqtt_->IsConnected()) {
         ESP_LOGI(TAG, "MQTT is not connected, try to connect now");
         if (!StartMqttClient(true)) {
-            ESP_LOGE(TAG, "Failed to establish MQTT connection");
             return false;
         }
     }
@@ -257,23 +208,18 @@ bool MqttProtocol::OpenAudioChannel() {
     xEventGroupClearBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT);
         
     auto message = GetHelloMessage();
-    ESP_LOGI(TAG, "Sending hello message: %s", message.c_str());
     if (!SendText(message)) {
-        ESP_LOGE(TAG, "Failed to send hello message");
         return false;
     }
 
     // Chờ phản hồi từ máy chủ
-    ESP_LOGI(TAG, "Waiting for server hello response (10 second timeout)...");
     EventBits_t bits = xEventGroupWaitBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT, pdTRUE, pdFALSE, pdMS_TO_TICKS(10000));
     if (!(bits & MQTT_PROTOCOL_SERVER_HELLO_EVENT)) {
-        ESP_LOGE(TAG, "Failed to receive server hello after 10 seconds");
-        ESP_LOGI(TAG, "MQTT connection status: %s", mqtt_->IsConnected() ? "Connected" : "Disconnected");
+        ESP_LOGE(TAG, "Failed to receive server hello");
         SetError(Lang::Strings::SERVER_TIMEOUT);
         return false;
     }
 
-    // Set up UDP connection as specified in mqtt-udp.md
     std::lock_guard<std::mutex> lock(channel_mutex_);
     auto network = Board::GetInstance().GetNetwork();
     udp_ = network->CreateUdp(2);
@@ -324,13 +270,10 @@ bool MqttProtocol::OpenAudioChannel() {
     });
 
     udp_->Connect(udp_server_, udp_port_);
-    ESP_LOGI(TAG, "UDP connection established to %s:%d", udp_server_.c_str(), udp_port_);
 
     if (on_audio_channel_opened_ != nullptr) {
         on_audio_channel_opened_();
     }
-    
-    ESP_LOGI(TAG, "OpenAudioChannel completed successfully");
     return true;
 }
 
@@ -354,28 +297,14 @@ std::string MqttProtocol::GetHelloMessage() {
     cJSON_AddItemToObject(root, "audio_params", audio_params);
     auto json_str = cJSON_PrintUnformatted(root);
     std::string message(json_str);
-    ESP_LOGI(TAG, "Generated hello message: %s", message.c_str());
     cJSON_free(json_str);
     cJSON_Delete(root);
     return message;
 }
 
 void MqttProtocol::ParseServerHello(const cJSON* root) {
-    ESP_LOGI(TAG, "Received server hello message");
-    
     auto transport = cJSON_GetObjectItem(root, "transport");
-    if (transport == nullptr) {
-        ESP_LOGE(TAG, "Transport field is missing in server hello");
-        return;
-    }
-    
-    if (!cJSON_IsString(transport)) {
-        ESP_LOGE(TAG, "Transport field is not a string");
-        return;
-    }
-    
-    ESP_LOGI(TAG, "Transport: %s", transport->valuestring);
-    if (strcmp(transport->valuestring, "udp") != 0) {
+    if (transport == nullptr || strcmp(transport->valuestring, "udp") != 0) {
         ESP_LOGE(TAG, "Unsupported transport: %s", transport->valuestring);
         return;
     }
@@ -384,8 +313,6 @@ void MqttProtocol::ParseServerHello(const cJSON* root) {
     if (cJSON_IsString(session_id)) {
         session_id_ = session_id->valuestring;
         ESP_LOGI(TAG, "Session ID: %s", session_id_.c_str());
-    } else {
-        ESP_LOGW(TAG, "Session ID is missing or invalid");
     }
 
     // Get sample rate from hello message
@@ -394,51 +321,31 @@ void MqttProtocol::ParseServerHello(const cJSON* root) {
         auto sample_rate = cJSON_GetObjectItem(audio_params, "sample_rate");
         if (cJSON_IsNumber(sample_rate)) {
             server_sample_rate_ = sample_rate->valueint;
-            ESP_LOGI(TAG, "Server sample rate: %d", server_sample_rate_);
         }
         auto frame_duration = cJSON_GetObjectItem(audio_params, "frame_duration");
         if (cJSON_IsNumber(frame_duration)) {
             server_frame_duration_ = frame_duration->valueint;
-            ESP_LOGI(TAG, "Server frame duration: %d", server_frame_duration_);
         }
-    } else {
-        ESP_LOGW(TAG, "Audio params are missing or invalid");
     }
 
     // Get UDP configuration as specified in mqtt-udp.md
     auto udp = cJSON_GetObjectItem(root, "udp");
     if (!cJSON_IsObject(udp)) {
-        ESP_LOGE(TAG, "UDP configuration is missing or invalid");
+        ESP_LOGE(TAG, "UDP is not specified");
         return;
     }
-    
-    auto udp_server = cJSON_GetObjectItem(udp, "server");
-    auto udp_port = cJSON_GetObjectItem(udp, "port");
-    auto key = cJSON_GetObjectItem(udp, "key");
-    auto nonce = cJSON_GetObjectItem(udp, "nonce");
-    
-    if (!cJSON_IsString(udp_server) || !cJSON_IsNumber(udp_port) || 
-        !cJSON_IsString(key) || !cJSON_IsString(nonce)) {
-        ESP_LOGE(TAG, "UDP configuration fields are missing or invalid");
-        return;
-    }
-    
-    udp_server_ = udp_server->valuestring;
-    udp_port_ = udp_port->valueint;
-    ESP_LOGI(TAG, "UDP server: %s, port: %d", udp_server_.c_str(), udp_port_);
-    
-    auto key_str = key->valuestring;
-    auto nonce_str = nonce->valuestring;
-    ESP_LOGI(TAG, "Key length: %d, Nonce length: %d", strlen(key_str), strlen(nonce_str));
+    udp_server_ = cJSON_GetObjectItem(udp, "server")->valuestring;
+    udp_port_ = cJSON_GetObjectItem(udp, "port")->valueint;
+    auto key = cJSON_GetObjectItem(udp, "key")->valuestring;
+    auto nonce = cJSON_GetObjectItem(udp, "nonce")->valuestring;
 
     // auto encryption = cJSON_GetObjectItem(udp, "encryption")->valuestring;
     // ESP_LOGI(TAG, "UDP server: %s, port: %d, encryption: %s", udp_server_.c_str(), udp_port_, encryption);
-    aes_nonce_ = DecodeHexString(nonce_str);
+    aes_nonce_ = DecodeHexString(nonce);
     mbedtls_aes_init(&aes_ctx_);
-    mbedtls_aes_setkey_enc(&aes_ctx_, (const unsigned char*)DecodeHexString(key_str).c_str(), 128);
+    mbedtls_aes_setkey_enc(&aes_ctx_, (const unsigned char*)DecodeHexString(key).c_str(), 128);
     local_sequence_ = 0;
     remote_sequence_ = 0;
-    ESP_LOGI(TAG, "Server hello parsing completed successfully");
     xEventGroupSetBits(event_group_handle_, MQTT_PROTOCOL_SERVER_HELLO_EVENT);
 }
 
