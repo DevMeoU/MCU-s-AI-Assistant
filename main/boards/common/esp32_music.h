@@ -110,6 +110,8 @@ private:
     
     // Âm lượng (0-100)
     std::atomic<int> volume_;
+    // Nếu true thì nhạc có quyền ưu tiên (ngăn Application tự động dừng nhạc khi chuyển trạng thái)
+    std::atomic<bool> music_has_priority_;
 
     // Phương thức riêng tư
     void DownloadAudioStream(const std::string& music_url);
@@ -152,6 +154,9 @@ public:
     // Phương thức điều khiển chế độ hiển thị
     void SetDisplayMode(DisplayMode mode);
     DisplayMode GetDisplayMode() const { return display_mode_.load(); }
+
+    // Kiểm tra quyền ưu tiên của nhạc
+    bool HasPriority() const override { return music_has_priority_.load(); }
 };
 
 #endif // ESP32_MUSIC_H

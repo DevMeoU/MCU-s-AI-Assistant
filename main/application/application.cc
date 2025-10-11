@@ -687,12 +687,19 @@ void Application::SetDeviceState(DeviceState state) {
     led->OnStateChanged();
 
     // Khi chuyển IDLE sang LISTENING hoặc bất kì trạng thái nào khác dừng phát nhạc
-    if ((previous_state == kDeviceStateIdle) || (state != kDeviceStateIdle)) {
+    // Nếu nhạc có quyền ưu tiên (ví dụ: được yêu cầu bởi tool), thì không dừng
+    if ((previous_state == kDeviceStateIdle && state != kDeviceStateIdle) ||
+        (previous_state != kDeviceStateIdle && state == kDeviceStateIdle)) {
         auto music = board.GetMusicPlayer();
         if (music) {
-            ESP_LOGW(TAG, "Stopping music streaming due to state change: %s -> %s",
-                    STATE_STRINGS[previous_state], STATE_STRINGS[state]);
-            music->StopStreaming();
+            if (!music->HasPriority()) {
+                ESP_LOGW(TAG, "Stopping music streaming due to state change: %s -> %s",
+                        STATE_STRINGS[previous_state], STATE_STRINGS[state]);
+                music->StopStreaming();
+            } else {
+                ESP_LOGI(TAG, "Music has priority; skipping StopStreaming for state change %s -> %s",
+                        STATE_STRINGS[previous_state], STATE_STRINGS[state]);
+            }
         }
     }
 

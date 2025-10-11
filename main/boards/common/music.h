@@ -23,6 +23,8 @@ public:
     virtual std::string GetCurrentSong() const = 0;  // Lấy tên bài hát hiện tại
     virtual void SetVolume(int volume) = 0;          // Đặt âm lượng (0-100)
     virtual int GetVolume() const = 0;               // Lấy âm lượng hiện tại
+    // Kiểm tra quyền ưu tiên của nhạc (mặc định: không có)
+    virtual bool HasPriority() const { return false; }
 };
 
 #endif // MUSIC_H

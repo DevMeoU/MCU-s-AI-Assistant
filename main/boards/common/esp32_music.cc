@@ -168,7 +168,7 @@ Esp32Music::Esp32Music() : last_downloaded_data_(), current_music_url_(), curren
                          display_mode_(DISPLAY_MODE_LYRICS), is_playing_(false), is_paused_(false), is_downloading_(false), 
                          play_thread_(), download_thread_(), audio_buffer_(), buffer_mutex_(), 
                          buffer_cv_(), buffer_size_(0), mp3_decoder_(nullptr), mp3_frame_info_(), 
-                         mp3_decoder_initialized_(false), fft_data_size_(0), volume_(50) {
+                         mp3_decoder_initialized_(false), fft_data_size_(0), volume_(50), music_has_priority_(false) {
     ESP_LOGI(TAG, "Music player initialized with default spectrum display mode");
     
     // Phân bổ bộ nhớ FFT trong PSRAM
@@ -447,6 +447,7 @@ std::string Esp32Music::GetDownloadResult() {
 
 // Bắt đầu phát trực tuyến
 bool Esp32Music::StartStreaming(const std::string& music_url) {
+    music_has_priority_.store(true);
     if (music_url.empty()) {
         ESP_LOGE(TAG, "Music URL is empty");
         return false;
@@ -499,6 +500,7 @@ bool Esp32Music::StartStreaming(const std::string& music_url) {
 
 // Dừng phát trực tuyến
 bool Esp32Music::StopStreaming() {
+    music_has_priority_.store(false);
     ESP_LOGI(TAG, "Stopping music streaming - current state: downloading=%d, playing=%d", 
             is_downloading_.load(), is_playing_.load());
 
