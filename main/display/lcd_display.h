@@ -39,7 +39,7 @@ protected:
     virtual void Unlock() override;
 
 protected:
-    // 添加protected构造函数
+    // Thêm hàm tạo được bảo vệ
     LcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel, int width, int height);
     
 public:
@@ -49,10 +49,10 @@ public:
     virtual void SetPreviewImage(std::unique_ptr<LvglImage> image) override;
 
     // Add theme switching function
-    virtual void SetTheme(Theme* theme) override;
+    virtual void SetTheme(Theme& theme) override;
 };
 
-// SPI LCD显示器
+// Màn hình LCD SPI
 class SpiLcdDisplay : public LcdDisplay {
 public:
     SpiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
@@ -60,7 +60,7 @@ public:
                   bool mirror_x, bool mirror_y, bool swap_xy);
 };
 
-// RGB LCD显示器
+// Màn hình LCD RGB
 class RgbLcdDisplay : public LcdDisplay {
 public:
     RgbLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
@@ -68,7 +68,7 @@ public:
                   bool mirror_x, bool mirror_y, bool swap_xy);
 };
 
-// MIPI LCD显示器
+// Màn hình LCD MIPI
 class MipiLcdDisplay : public LcdDisplay {
 public:
     MipiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,

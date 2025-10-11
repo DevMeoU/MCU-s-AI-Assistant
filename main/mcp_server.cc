@@ -18,6 +18,7 @@
 #include "settings.h"
 #include "lvgl_theme.h"
 #include "lvgl_display.h"
+#include "esp32_music.h"
 
 #define TAG "MCP"
 
@@ -37,6 +38,9 @@ void McpServer::AddCommonTools() {
     // Backup the original tools list and restore it after adding the common tools.
     auto original_tools = std::move(tools_);
     auto& board = Board::GetInstance();
+
+    // Do not add custom tools here.
+    // Custom tools must be added in the board's InitializeTools function.
 
     AddTool("self.get_device_status",
         "Provides the real-time information of the device, including the current status of the audio speaker, screen, battery, network, etc.\n"
@@ -73,8 +77,9 @@ void McpServer::AddCommonTools() {
             });
     }
 
+#ifdef HAVE_LVGL
     auto display = board.GetDisplay();
-    if (display && !display->GetTheme().empty()) {
+    if (display && display->GetTheme() != nullptr) {
         AddTool("self.screen.set_theme",
             "Set the theme of the screen. The theme can be `light` or `dark`.",
             PropertyList({
@@ -155,12 +160,12 @@ void McpServer::AddCommonTools() {
                 // Chuyển đổi thành chữ thường để so sánh
                 std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::tolower);
                 
-                if (mode_str == "spectrum" || mode_str == "频谱") {
+                if (mode_str == "spectrum" || mode_str == "phổ tần") {
                     // Thiết lập chế độ hiển thị phổ tần
                     auto esp32_music = static_cast<Esp32Music*>(music);
                     esp32_music->SetDisplayMode(Esp32Music::DISPLAY_MODE_SPECTRUM);
                     return "{\"success\": true, \"message\": \"Đã chuyển sang chế độ hiển thị phổ tần\"}";
-                } else if (mode_str == "lyrics" || mode_str == "歌词") {
+                } else if (mode_str == "lyrics" || mode_str == "lời bài hát") {
                     // Thiết lập chế độ hiển thị lời bài hát
                     auto esp32_music = static_cast<Esp32Music*>(music);
                     esp32_music->SetDisplayMode(Esp32Music::DISPLAY_MODE_LYRICS);

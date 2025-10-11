@@ -162,21 +162,14 @@ static std::string buildUrlWithParams(const std::string& base_url, const std::st
     return result_url;
 }
 
-Esp32Music::Esp32Music() : last_downloaded_data_(), current_music_url_(), current_song_name_(), current_artist_name_(),
+Esp32Music::Esp32Music() : last_downloaded_data_(), current_music_url_(), current_song_name_(),
                          song_name_displayed_(false), current_lyric_url_(), lyrics_(), 
                          current_lyric_index_(-1), lyric_thread_(), is_lyric_running_(false),
-                         display_mode_(DISPLAY_MODE_LYRICS), is_playing_(false), is_paused_(false), is_downloading_(false), 
+                         display_mode_(DISPLAY_MODE_LYRICS), is_playing_(false), is_downloading_(false), 
                          play_thread_(), download_thread_(), audio_buffer_(), buffer_mutex_(), 
                          buffer_cv_(), buffer_size_(0), mp3_decoder_(nullptr), mp3_frame_info_(), 
-                         mp3_decoder_initialized_(false), fft_data_size_(0), volume_(50), music_has_priority_(false),
-                         consecutive_decode_errors_(0), decoder_reset_count_(0) {
+                         mp3_decoder_initialized_(false) {
     ESP_LOGI(TAG, "Music player initialized with default spectrum display mode");
-    
-    // Phân bổ bộ nhớ FFT trong PSRAM
-    fft_data_size_ = 2048; // Kích thước mẫu cho dữ liệu FFT
-    final_pcm_data_fft = std::unique_ptr<int16_t[]>(new int16_t[fft_data_size_]);
-    memset(final_pcm_data_fft.get(), 0, fft_data_size_ * sizeof(int16_t));
-    
     InitializeMp3Decoder();
 }
 
@@ -448,7 +441,6 @@ std::string Esp32Music::GetDownloadResult() {
 
 // Bắt đầu phát trực tuyến
 bool Esp32Music::StartStreaming(const std::string& music_url) {
-    music_has_priority_.store(true);
     if (music_url.empty()) {
         ESP_LOGE(TAG, "Music URL is empty");
         return false;
@@ -501,7 +493,6 @@ bool Esp32Music::StartStreaming(const std::string& music_url) {
 
 // Dừng phát trực tuyến
 bool Esp32Music::StopStreaming() {
-    music_has_priority_.store(false);
     ESP_LOGI(TAG, "Stopping music streaming - current state: downloading=%d, playing=%d", 
             is_downloading_.load(), is_playing_.load());
 
@@ -576,7 +567,14 @@ bool Esp32Music::StopStreaming() {
         }
     }
     
-    // FFT visualization is not available in the base Display class
+    // Sau khi luồng kết thúc hoàn toàn, chỉ dừng hiển thị FFT ở chế độ phổ
+    if (display && display_mode_ == DISPLAY_MODE_SPECTRUM) {
+        display->stopFft();
+        ESP_LOGI(TAG, "Stopped FFT display in StopStreaming (spectrum mode)");
+    } else if (display) {
+        ESP_LOGI(TAG, "Not in spectrum mode, skipping FFT stop in StopStreaming");
+    }
+    
     ESP_LOGI(TAG, "Music streaming stop signal sent");
     return true;
 }
@@ -617,30 +615,6 @@ void Esp32Music::DownloadAudioStream(const std::string& music_url) {
         return;
     }
     
-    // Simple sanity check: read a small prefix to inspect content-type-ish bytes
-    {
-        char probe[16] = {0};
-        int pr = http->Read(probe, sizeof(probe));
-        if (pr > 0) {
-            // Reset stream by reopening - if the underlying HTTP client supports Range we continue
-            ESP_LOGD(TAG, "Probed first %d bytes of stream: %.8s", pr, probe);
-            // If the data doesn't look like MP3 (no 0xFF sync or 'ID3'), log warning
-            if (!(probe[0] == 0xFF || (pr >= 3 && memcmp(probe, "ID3", 3) == 0))) {
-                ESP_LOGW(TAG, "Stream probe did not find MP3 sync/ID3 header - first bytes: %.8s", probe);
-            }
-            // push probed bytes into buffer for normal processing
-            AudioChunk audio_chunk;
-            audio_chunk.data = std::unique_ptr<uint8_t[]>(new uint8_t[pr]);
-            audio_chunk.size = pr;
-            memcpy(audio_chunk.data.get(), probe, pr);
-            {
-                std::lock_guard<std::mutex> lock(buffer_mutex_);
-                audio_buffer_.push(std::move(audio_chunk));
-                buffer_size_ += pr;
-            }
-        }
-    }
-    
     ESP_LOGI(TAG, "Started downloading audio stream, status: %d", status_code);
     
     // Đọc dữ liệu âm thanh theo khối
@@ -659,30 +633,65 @@ void Esp32Music::DownloadAudioStream(const std::string& music_url) {
             break;
         }
         
-        // Tạo khối dữ liệu âm thanh với quản lý bộ nhớ thông minh
-        AudioChunk audio_chunk;
-        audio_chunk.data = std::unique_ptr<uint8_t[]>(new uint8_t[bytes_read]);
-        audio_chunk.size = bytes_read;
-        memcpy(audio_chunk.data.get(), buffer.data(), bytes_read);
+        // In thông tin khối dữ liệu
+        // ESP_LOGI(TAG, "Downloaded chunk: %d bytes at offset %d", bytes_read, total_downloaded);
         
-        // Chờ bộ đệm có không gian
+        // An toàn in nội dung hex của khối dữ liệu (16 byte đầu tiên)
+        if (bytes_read >= 16) {
+            // ESP_LOGI(TAG, "Data: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X ...", 
+            //         (unsigned char)buffer[0], (unsigned char)buffer[1], (unsigned char)buffer[2], (unsigned char)buffer[3],
+            //         (unsigned char)buffer[4], (unsigned char)buffer[5], (unsigned char)buffer[6], (unsigned char)buffer[7],
+            //         (unsigned char)buffer[8], (unsigned char)buffer[9], (unsigned char)buffer[10], (unsigned char)buffer[11],
+            //         (unsigned char)buffer[12], (unsigned char)buffer[13], (unsigned char)buffer[14], (unsigned char)buffer[15]);
+        } else {
+            ESP_LOGI(TAG, "Data chunk too small: %d bytes", bytes_read);
+        }
+        
+        // Thử phát hiện định dạng tệp (kiểm tra tiêu đề tệp)
+        if (total_downloaded == 0 && bytes_read >= 4) {
+            if (memcmp(buffer, "ID3", 3) == 0) {
+                ESP_LOGI(TAG, "Detected MP3 file with ID3 tag");
+            } else if (buffer[0] == 0xFF && (buffer[1] & 0xE0) == 0xE0) {
+                ESP_LOGI(TAG, "Detected MP3 file header");
+            } else if (memcmp(buffer, "RIFF", 4) == 0) {
+                ESP_LOGI(TAG, "Detected WAV file");
+            } else if (memcmp(buffer, "fLaC", 4) == 0) {
+                ESP_LOGI(TAG, "Detected FLAC file");
+            } else if (memcmp(buffer, "OggS", 4) == 0) {
+                ESP_LOGI(TAG, "Detected OGG file");
+            } else {
+                ESP_LOGI(TAG, "Unknown audio format, first 4 bytes: %02X %02X %02X %02X", 
+                        (unsigned char)buffer[0], (unsigned char)buffer[1], 
+                        (unsigned char)buffer[2], (unsigned char)buffer[3]);
+            }
+        }
+        
+        // Tạo khối dữ liệu âm thanh
+        uint8_t* chunk_data = (uint8_t*)heap_caps_malloc(bytes_read, MALLOC_CAP_SPIRAM);
+        if (!chunk_data) {
+            ESP_LOGE(TAG, "Failed to allocate memory for audio chunk");
+            break;
+        }
+        memcpy(chunk_data, buffer, bytes_read);
+        
+        // Chờ bộ đệm có không gian trống
         {
             std::unique_lock<std::mutex> lock(buffer_mutex_);
             buffer_cv_.wait(lock, [this] { return buffer_size_ < MAX_BUFFER_SIZE || !is_downloading_; });
             
             if (is_downloading_) {
-                audio_buffer_.push(std::move(audio_chunk));
+                audio_buffer_.push(AudioChunk(chunk_data, bytes_read));
                 buffer_size_ += bytes_read;
                 total_downloaded += bytes_read;
                 
                 // Thông báo luồng phát có dữ liệu mới
                 buffer_cv_.notify_one();
                 
-                if (total_downloaded % (512 * 1024) == 0) {  // In tiến độ mỗi 512KB
+                if (total_downloaded % (256 * 1024) == 0) {  // In tiến độ mỗi 512KB
                     ESP_LOGI(TAG, "Downloaded %d bytes, buffer size: %d", total_downloaded, buffer_size_);
                 }
             } else {
-                // audio_chunk sẽ được giải phóng tự động
+                heap_caps_free(chunk_data);
                 break;
             }
         }
@@ -734,21 +743,22 @@ void Esp32Music::PlayAudioStream() {
     ESP_LOGI(TAG, "Starting playback with buffer size: %d", buffer_size_);
     
     size_t total_played = 0;
-    std::unique_ptr<uint8_t[]> mp3_input_buffer(new uint8_t[MP3_INPUT_BUFFER_SIZE]);
+    uint8_t* mp3_input_buffer = nullptr;
     int bytes_left = 0;
-    uint8_t* read_ptr = mp3_input_buffer.get();
+    uint8_t* read_ptr = nullptr;
     
-    // Đánh dấu xem đã xử lý thẻ ID3 chưa
+    // Phân bổ bộ đệm đầu vào MP3
+    mp3_input_buffer = (uint8_t*)heap_caps_malloc(8192, MALLOC_CAP_SPIRAM);
+    if (!mp3_input_buffer) {
+        ESP_LOGE(TAG, "Failed to allocate MP3 input buffer");
+        is_playing_ = false;
+        return;
+    }
+    
+    // Đánh dấu xem thẻ ID3 đã được xử lý chưa
     bool id3_processed = false;
     
     while (is_playing_) {
-        // Kiểm tra xem có đang tạm dừng không
-        if (is_paused_) {
-            // Chờ cho đến khi không còn tạm dừng
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            continue;
-        }
-        
         // Kiểm tra trạng thái thiết bị, chỉ phát nhạc khi ở trạng thái rảnh
         auto& app = Application::GetInstance();
         DeviceState current_state = app.GetDeviceState();
@@ -784,8 +794,15 @@ void Esp32Music::PlayAudioStream() {
                 song_name_displayed_ = true;
             }
 
-            // FFT visualization is not available in the base Display class
-            ESP_LOGI(TAG, "Music info displayed, FFT visualization not available in base Display class");
+            // Khởi động chức năng hiển thị tương ứng dựa trên chế độ hiển thị
+            if (display) {
+                if (display_mode_ == DISPLAY_MODE_SPECTRUM) {
+                    display->start();
+                    ESP_LOGI(TAG, "Display start() called for spectrum visualization");
+                } else {
+                    ESP_LOGI(TAG, "Lyrics display mode active, FFT visualization disabled");
+                }
+            }
         }
         
         // Nếu cần thêm dữ liệu MP3, đọc từ bộ đệm
@@ -808,7 +825,7 @@ void Esp32Music::PlayAudioStream() {
                     }
                 }
                 
-                chunk = std::move(audio_buffer_.front());
+                chunk = audio_buffer_.front();
                 audio_buffer_.pop();
                 buffer_size_ -= chunk.size;
                 
@@ -819,18 +836,18 @@ void Esp32Music::PlayAudioStream() {
             // Thêm dữ liệu mới vào bộ đệm đầu vào MP3
             if (chunk.data && chunk.size > 0) {
                 // Di chuyển dữ liệu còn lại đến đầu bộ đệm
-                if (bytes_left > 0 && read_ptr != mp3_input_buffer.get()) {
-                    memmove(mp3_input_buffer.get(), read_ptr, bytes_left);
+                if (bytes_left > 0 && read_ptr != mp3_input_buffer) {
+                    memmove(mp3_input_buffer, read_ptr, bytes_left);
                 }
                 
                 // Kiểm tra không gian bộ đệm
-                size_t space_available = MP3_INPUT_BUFFER_SIZE - bytes_left;
+                size_t space_available = 8192 - bytes_left;
                 size_t copy_size = std::min(chunk.size, space_available);
                 
                 // Sao chép dữ liệu mới
-                memcpy(mp3_input_buffer.get() + bytes_left, chunk.data.get(), copy_size);
+                memcpy(mp3_input_buffer + bytes_left, chunk.data, copy_size);
                 bytes_left += copy_size;
-                read_ptr = mp3_input_buffer.get();
+                read_ptr = mp3_input_buffer;
                 
                 // Kiểm tra và bỏ qua thẻ ID3 (chỉ xử lý một lần khi bắt đầu)
                 if (!id3_processed && bytes_left >= 10) {
@@ -842,104 +859,145 @@ void Esp32Music::PlayAudioStream() {
                     }
                     id3_processed = true;
                 }
+                
+                // Giải phóng bộ nhớ chunk
+                heap_caps_free(chunk.data);
             }
-        } else {
-            // Đã có đủ dữ liệu trong bộ đệm đầu vào, tiếp tục giải mã
-            int decode_result = MP3Decode(mp3_decoder_, &read_ptr, &bytes_left, 
-                                        final_pcm_data_fft.get(), 0);
-
-            if (decode_result == ERR_MP3_NONE) {
-                // Giải mã thành công
-                consecutive_decode_errors_.store(0);
-
-                // Cập nhật thông tin khung
-                MP3GetLastFrameInfo(mp3_decoder_, &mp3_frame_info_);
-
-                if (mp3_frame_info_.samprate > 0 && mp3_frame_info_.nChans > 0) {
-                    // Chuyển đổi stereo sang mono nếu cần
-                    int final_sample_count = mp3_frame_info_.outputSamps;
-                    int16_t* pcm_buffer = final_pcm_data_fft.get();
+        }
+        
+        // Tìm kiếm khung đồng bộ MP3
+        int sync_offset = MP3FindSyncWord(read_ptr, bytes_left);
+        if (sync_offset < 0) {
+            ESP_LOGW(TAG, "No MP3 sync word found, skipping %d bytes", bytes_left);
+            bytes_left = 0;
+            continue;
+        }
+        
+        // Bỏ qua đến vị trí khung đồng bộ
+        if (sync_offset > 0) {
+            read_ptr += sync_offset;
+            bytes_left -= sync_offset;
+        }
+        
+        // Giải mã khung MP3
+        int16_t pcm_buffer[2304];
+        int decode_result = MP3Decode(mp3_decoder_, &read_ptr, &bytes_left, pcm_buffer, 0);
+        
+        if (decode_result == 0) {
+            // Giải mã thành công, lấy thông tin khung
+            MP3GetLastFrameInfo(mp3_decoder_, &mp3_frame_info_);
+            total_frames_decoded_++;
+            
+            // Kiểm tra tính hợp lệ thông tin khung cơ bản, tránh lỗi chia cho 0
+            if (mp3_frame_info_.samprate == 0 || mp3_frame_info_.nChans == 0) {
+                ESP_LOGW(TAG, "Invalid frame info: rate=%d, channels=%d, skipping", 
+                        mp3_frame_info_.samprate, mp3_frame_info_.nChans);
+                continue;
+            }
+            
+            // Tính thời gian kéo dài khung hiện tại (mili giây)
+            int frame_duration_ms = (mp3_frame_info_.outputSamps * 1000) / 
+                                  (mp3_frame_info_.samprate * mp3_frame_info_.nChans);
+            
+            // Cập nhật thời gian phát hiện tại
+            current_play_time_ms_ += frame_duration_ms;
+            
+            ESP_LOGD(TAG, "Frame %d: time=%lldms, duration=%dms, rate=%d, ch=%d", 
+                    total_frames_decoded_, current_play_time_ms_, frame_duration_ms,
+                    mp3_frame_info_.samprate, mp3_frame_info_.nChans);
+            
+            // Cập nhật hiển thị lời bài hát
+            int buffer_latency_ms = 600; // Giá trị điều chỉnh thực tế
+            UpdateLyricDisplay(current_play_time_ms_ + buffer_latency_ms);
+            
+            // Gửi dữ liệu PCM đến hàng đợi giải mã âm thanh của Application
+            if (mp3_frame_info_.outputSamps > 0) {
+                int16_t* final_pcm_data = pcm_buffer;
+                int final_sample_count = mp3_frame_info_.outputSamps;
+                std::vector<int16_t> mono_buffer;
+                
+                // Nếu là hai kênh, chuyển đổi thành hỗn hợp đơn kênh
+                if (mp3_frame_info_.nChans == 2) {
+                    // Chuyển đổi hai kênh thành một kênh: trộn các kênh trái và phải
+                    int stereo_samples = mp3_frame_info_.outputSamps;  // Tổng số mẫu bao gồm cả kênh trái và phải
+                    int mono_samples = stereo_samples / 2;  // Số mẫu đơn kênh thực tế
                     
-                    if (mp3_frame_info_.nChans == 2) {
-                        // Chuyển đổi stereo sang mono bằng cách lấy trung bình
-                        for (int i = 0, j = 0; i < final_sample_count; i += 2, j++) {
-                            pcm_buffer[j] = (pcm_buffer[i] + pcm_buffer[i+1]) / 2;
-                        }
-                        final_sample_count /= 2;
+                    mono_buffer.resize(mono_samples);
+                    
+                    for (int i = 0; i < mono_samples; ++i) {
+                        // Trộn kênh trái và phải (L + R) / 2
+                        int left = pcm_buffer[i * 2];      // Kênh trái
+                        int right = pcm_buffer[i * 2 + 1]; // Kênh phải
+                        mono_buffer[i] = (int16_t)((left + right) / 2);
                     }
                     
-                    // Tạo gói dữ liệu âm thanh để gửi đến dịch vụ âm thanh
-                    AudioStreamPacket packet;
-                    packet.sample_rate = mp3_frame_info_.samprate;
-                    packet.payload.resize(final_sample_count * sizeof(int16_t));
-                    memcpy(packet.payload.data(), pcm_buffer, final_sample_count * sizeof(int16_t));
-                    
-                    // Gửi đến hàng đợi giải mã âm thanh của Application
-                    auto& app = Application::GetInstance();
-                    app.AddAudioData(std::move(packet));
-                        total_frames_decoded_++;
-                    
-                    // Cập nhật thời gian phát hiện tại
-                    int frame_duration_ms = (mp3_frame_info_.outputSamps * 1000) / 
-                                          (mp3_frame_info_.samprate * mp3_frame_info_.nChans);
-                    current_play_time_ms_ += frame_duration_ms;
-                    total_played += final_sample_count * sizeof(int16_t);
-                    
-                    // Cập nhật hiển thị lời bài hát
-                    int buffer_latency_ms = 600; // Giá trị điều chỉnh thực tế
-                    UpdateLyricDisplay(current_play_time_ms_ + buffer_latency_ms);
-                    
-                    // In tiến độ phát
-                    if (total_played % (128 * 1024) == 0) {
-                        ESP_LOGI(TAG, "Played %d bytes, buffer size: %d", total_played, buffer_size_);
-                    }
-                }
-            } else {
-                // Giải mã thất bại
-                ESP_LOGW(TAG, "MP3 decode failed with error: %d (bytes_left=%d)", decode_result, bytes_left);
+                    final_pcm_data = mono_buffer.data();
+                    final_sample_count = mono_samples;
 
-                // Tăng bộ đếm lỗi liên tiếp
-                int errs = consecutive_decode_errors_.fetch_add(1) + 1;
-
-                // Cố gắng resync nếu có dữ liệu
-                bool resynced = false;
-                if (bytes_left > 1) {
-                    resynced = ResyncMp3Stream(mp3_input_buffer.get(), read_ptr, bytes_left);
-                }
-
-                if (resynced) {
-                    ESP_LOGI(TAG, "Resynced MP3 stream after decode error");
-                    // tiếp tục vòng lặp để thử decode lại
-                } else if (errs >= (int)Esp32Music::MAX_CONSECUTIVE_DECODE_ERRORS) {
-                    // Thử reset decoder
-                    if (decoder_reset_count_.load() < (int)Esp32Music::MAX_DECODER_RESETS) {
-                        ESP_LOGW(TAG, "Exceeded consecutive decode errors (%d), resetting decoder (attempt %d)", errs, decoder_reset_count_.load()+1);
-                        ResetMp3Decoder();
-                        decoder_reset_count_.fetch_add(1);
-                        consecutive_decode_errors_.store(0);
-                        // sau khi reset, tiếp tục vòng lặp
-                    } else {
-                        ESP_LOGE(TAG, "Too many decoder resets, aborting playback");
-                        // hỏng nặng, dừng phát
-                        is_playing_ = false;
-                        break;
-                    }
+                    ESP_LOGD(TAG, "Converted stereo to mono: %d -> %d samples", 
+                            stereo_samples, mono_samples);
+                } else if (mp3_frame_info_.nChans == 1) {
+                    // Đã là đơn kênh, không cần chuyển đổi
+                    ESP_LOGD(TAG, "Already mono audio: %d samples", final_sample_count);
                 } else {
-                    // Nếu không resynced và chưa đạt ngưỡng, bỏ qua 1 byte để thử lại
-                    if (bytes_left > 1) {
-                        read_ptr++;
-                        bytes_left--;
-                    } else {
-                        bytes_left = 0;
-                    }
+                    ESP_LOGW(TAG, "Unsupported channel count: %d, treating as mono", 
+                            mp3_frame_info_.nChans);
                 }
+                
+                // Tạo AudioStreamPacket
+                AudioStreamPacket packet;
+                packet.sample_rate = mp3_frame_info_.samprate;
+                packet.frame_duration = 60;  // Sử dụng độ dài khung mặc định của Application
+                packet.timestamp = 0;
+                
+                // Chuyển đổi dữ liệu PCM int16_t thành mảng byte uint8_t
+                size_t pcm_size_bytes = final_sample_count * sizeof(int16_t);
+                packet.payload.resize(pcm_size_bytes);
+                memcpy(packet.payload.data(), final_pcm_data, pcm_size_bytes);
+
+                if (final_pcm_data_fft == nullptr) {
+                    final_pcm_data_fft = (int16_t*)heap_caps_malloc(
+                        final_sample_count * sizeof(int16_t),
+                        MALLOC_CAP_SPIRAM
+                    );
+                }
+                
+                memcpy(
+                    final_pcm_data_fft,
+                    final_pcm_data,
+                    final_sample_count * sizeof(int16_t)
+                );
+                
+                ESP_LOGD(TAG, "Sending %d PCM samples (%d bytes, rate=%d, channels=%d->1) to Application", 
+                        final_sample_count, pcm_size_bytes, mp3_frame_info_.samprate, mp3_frame_info_.nChans);
+                
+                // Gửi đến hàng đợi giải mã âm thanh của Application
+                app.AddAudioData(std::move(packet));
+                total_played += pcm_size_bytes;
+                
+                // In tiến độ phát
+                if (total_played % (128 * 1024) == 0) {
+                    ESP_LOGI(TAG, "Played %d bytes, buffer size: %d", total_played, buffer_size_);
+                }
+            }
+            
+        } else {
+            // Giải mã thất bại
+            ESP_LOGW(TAG, "MP3 decode failed with error: %d", decode_result);
+            
+            // Bỏ qua một số byte và tiếp tục thử
+            if (bytes_left > 1) {
+                read_ptr++;
+                bytes_left--;
+            } else {
+                bytes_left = 0;
             }
         }
     }
     
     // Xóa hiển thị tên bài hát
     if (mp3_input_buffer) {
-        // Bộ nhớ sẽ được giải phóng tự động bởi unique_ptr
+        heap_caps_free(mp3_input_buffer);
     }
     
     // Thực hiện dọn dẹp cơ bản khi phát xong, nhưng không gọi StopStreaming để tránh luồng tự chờ
@@ -962,49 +1020,6 @@ void Esp32Music::PlayAudioStream() {
     }
 }
 
-// Thêm phương thức Pause
-bool Esp32Music::Pause() {
-    if (!is_playing_ || is_paused_) {
-        return false;
-    }
-    
-    ESP_LOGI(TAG, "Pausing music playback");
-    is_paused_ = true;
-    
-    // FFT visualization is not available in the base Display class
-    return true;
-}
-
-// Thêm phương thức Resume
-bool Esp32Music::Resume() {
-    if (!is_playing_ || !is_paused_) {
-        return false;
-    }
-    
-    ESP_LOGI(TAG, "Resuming music playback");
-    is_paused_ = false;
-    
-    // FFT visualization is not available in the base Display class
-    return true;
-}
-
-// Thêm phương thức SetVolume
-void Esp32Music::SetVolume(int volume) {
-    if (volume < 0) volume = 0;
-    if (volume > 100) volume = 100;
-    
-    volume_ = volume;
-    ESP_LOGI(TAG, "Volume set to %d", volume);
-    
-    // Áp dụng âm lượng cho codec nếu có
-    auto& board = Board::GetInstance();
-    auto codec = board.GetAudioCodec();
-    if (codec) {
-        codec->SetOutputVolume(volume);
-        ESP_LOGI(TAG, "Applied volume %d to audio codec", volume);
-    }
-}
-
 // Xóa sạch bộ đệm âm thanh
 void Esp32Music::ClearAudioBuffer() {
     std::lock_guard<std::mutex> lock(buffer_mutex_);
@@ -1012,7 +1027,9 @@ void Esp32Music::ClearAudioBuffer() {
     while (!audio_buffer_.empty()) {
         AudioChunk chunk = std::move(audio_buffer_.front());
         audio_buffer_.pop();
-        // unique_ptr sẽ tự động giải phóng bộ nhớ, không cần gọi heap_caps_free
+        if (chunk.data) {
+            heap_caps_free(chunk.data);
+        }
     }
     
     buffer_size_ = 0;
@@ -1423,49 +1440,4 @@ void Esp32Music::SetDisplayMode(DisplayMode mode) {
     ESP_LOGI(TAG, "Display mode changed from %s to %s", 
             (old_mode == DISPLAY_MODE_SPECTRUM) ? "SPECTRUM" : "LYRICS",
             (mode == DISPLAY_MODE_SPECTRUM) ? "SPECTRUM" : "LYRICS");
-}
-
-// Tìm từ đồng bộ MP3 (0xFFEx) và điều chỉnh con trỏ đọc
-bool Esp32Music::ResyncMp3Stream(uint8_t* base_buffer, uint8_t*& read_ptr, int& bytes_left) {
-    if (!base_buffer || bytes_left <= 0) return false;
-
-    uint8_t* buffer_start = base_buffer;
-    int offset = read_ptr - buffer_start;
-    int scan_len = bytes_left;
-
-    for (int i = offset; i < offset + scan_len - 1; ++i) {
-        uint8_t b = buffer_start[i];
-        uint8_t nb = buffer_start[i+1];
-        if (b == 0xFF && (nb & 0xE0) == 0xE0) {
-            // Tìm thấy sync
-            int new_offset = i;
-            read_ptr = buffer_start + new_offset;
-            bytes_left = offset + scan_len - new_offset;
-            // Nếu bytes_left âm, đặt 0
-            if (bytes_left < 0) bytes_left = 0;
-            return true;
-        }
-    }
-
-    // Nếu không tìm thấy, xóa toàn bộ dữ liệu
-    read_ptr = buffer_start + offset + scan_len;
-    bytes_left = 0;
-    return false;
-}
-
-void Esp32Music::ResetMp3Decoder() {
-    ESP_LOGI(TAG, "Resetting MP3 decoder");
-    // Dọn dẹp và khởi tạo lại
-    CleanupMp3Decoder();
-    // ngắn ngủi đợi
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    InitializeMp3Decoder();
-}
-
-void Esp32Music::RecoverFromStreamError() {
-    ESP_LOGW(TAG, "RecoverFromStreamError called - clearing buffer and resetting counters");
-    // Xóa buffer đầu vào
-    ClearAudioBuffer();
-    consecutive_decode_errors_.store(0);
-    decoder_reset_count_.store(0);
 }

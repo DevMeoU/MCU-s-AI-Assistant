@@ -39,7 +39,7 @@ public:
     virtual void SetIcon(const char* icon);
     virtual void SetPreviewImage(const lv_img_dsc_t* image);
     virtual void SetTheme(const Theme& theme_name);
-    virtual Theme* GetTheme() { return current_theme_name_; }
+    virtual Theme* GetTheme() { return current_theme_; }
     virtual void UpdateStatusBar(bool update_all = false);
     virtual void SetPowerSaveMode(bool on);
     virtual void start() {}
@@ -70,7 +70,6 @@ protected:
     const char* battery_icon_ = nullptr;
     const char* network_icon_ = nullptr;
     bool muted_ = false;
-    std::string current_theme_name_;
 
     std::chrono::system_clock::time_point last_status_update_time_;
     esp_timer_handle_t notification_timer_ = nullptr;

@@ -93,6 +93,7 @@ public:
     bool IsIdle();
     bool IsWakeWordRunning() const { return xEventGroupGetBits(event_group_) & AS_EVENT_WAKE_WORD_RUNNING; }
     bool IsAudioProcessorRunning() const { return xEventGroupGetBits(event_group_) & AS_EVENT_AUDIO_PROCESSOR_RUNNING; }
+    bool IsAfeWakeWord();
 
     void EnableWakeWordDetection(bool enable);
     void EnableVoiceProcessing(bool enable);
@@ -106,8 +107,7 @@ public:
     void PlaySound(const std::string_view& sound);
     bool ReadAudioData(std::vector<int16_t>& data, int sample_rate, int samples);
     void ResetDecoder();
-    
-    void UpdateOutputTimestamp();
+    void SetModelsList(srmodel_list_t* models_list);
 
 private:
     AudioCodec* codec_ = nullptr;
@@ -121,6 +121,7 @@ private:
     OpusResampler reference_resampler_;
     OpusResampler output_resampler_;
     DebugStatistics debug_statistics_;
+    srmodel_list_t* models_list_ = nullptr;
 
     EventGroupHandle_t event_group_;
 

@@ -8,7 +8,6 @@
 #include "display.h"
 #include "board.h"
 #include "application.h"
-#include "font_awesome_symbols.h"
 #include "audio_codec.h"
 #include "settings.h"
 #include "assets/lang_config.h"
@@ -106,7 +105,7 @@ void Display::UpdateStatusBar(bool update_all) {
         // Nếu trạng thái tắt tiếng thay đổi thì cập nhật biểu tượng
         if (codec->output_volume() == 0 && !muted_) {
             muted_ = true;
-            lv_label_set_text(mute_label_, FONT_AWESOME_VOLUME_MUTE);
+            lv_label_set_text(mute_label_, FONT_AWESOME_VOLUME_XMARK);
         } else if (codec->output_volume() > 0 && muted_) {
             muted_ = false;
             lv_label_set_text(mute_label_, "");
@@ -137,13 +136,13 @@ void Display::UpdateStatusBar(bool update_all) {
     const char* icon = nullptr;
     if (board.GetBatteryLevel(battery_level, charging, discharging)) {
         if (charging) {
-            icon = FONT_AWESOME_BATTERY_CHARGING;
+            icon = FONT_AWESOME_BATTERY_BOLT;
         } else {
             const char* levels[] = {
                 FONT_AWESOME_BATTERY_EMPTY, // 0-19%
-                FONT_AWESOME_BATTERY_1,    // 20-39%
-                FONT_AWESOME_BATTERY_2,    // 40-59%
-                FONT_AWESOME_BATTERY_3,    // 60-79%
+                FONT_AWESOME_BATTERY_QUARTER,    // 20-39%
+                FONT_AWESOME_BATTERY_HALF,    // 40-59%
+                FONT_AWESOME_BATTERY_THREE_QUARTERS,    // 60-79%
                 FONT_AWESOME_BATTERY_FULL, // 80-99%
                 FONT_AWESOME_BATTERY_FULL, // 100%
             };
@@ -159,7 +158,7 @@ void Display::UpdateStatusBar(bool update_all) {
             if (strcmp(icon, FONT_AWESOME_BATTERY_EMPTY) == 0 && discharging) {
                 if (lv_obj_has_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN)) { // Nếu hộp cảnh báo pin yếu ẩn thì hiển thị
                     lv_obj_clear_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN);
-                    app.PlaySound(Lang::Sounds::P3_LOW_BATTERY);
+                    app.PlaySound(Lang::Sounds::OGG_LOW_BATTERY);
                 }
             } else {
                 // Ẩn hộp cảnh báo pin yếu khi pin không còn yếu
@@ -203,27 +202,27 @@ void Display::SetEmotion(const char* emotion) {
     };
 
     static const std::vector<Emotion> emotions = {
-        {FONT_AWESOME_EMOJI_NEUTRAL, "neutral"},
-        {FONT_AWESOME_EMOJI_HAPPY, "happy"},
-        {FONT_AWESOME_EMOJI_LAUGHING, "laughing"},
-        {FONT_AWESOME_EMOJI_FUNNY, "funny"},
-        {FONT_AWESOME_EMOJI_SAD, "sad"},
-        {FONT_AWESOME_EMOJI_ANGRY, "angry"},
-        {FONT_AWESOME_EMOJI_CRYING, "crying"},
-        {FONT_AWESOME_EMOJI_LOVING, "loving"},
-        {FONT_AWESOME_EMOJI_EMBARRASSED, "embarrassed"},
-        {FONT_AWESOME_EMOJI_SURPRISED, "surprised"},
-        {FONT_AWESOME_EMOJI_SHOCKED, "shocked"},
-        {FONT_AWESOME_EMOJI_THINKING, "thinking"},
-        {FONT_AWESOME_EMOJI_WINKING, "winking"},
-        {FONT_AWESOME_EMOJI_COOL, "cool"},
-        {FONT_AWESOME_EMOJI_RELAXED, "relaxed"},
-        {FONT_AWESOME_EMOJI_DELICIOUS, "delicious"},
-        {FONT_AWESOME_EMOJI_KISSY, "kissy"},
-        {FONT_AWESOME_EMOJI_CONFIDENT, "confident"},
-        {FONT_AWESOME_EMOJI_SLEEPY, "sleepy"},
-        {FONT_AWESOME_EMOJI_SILLY, "silly"},
-        {FONT_AWESOME_EMOJI_CONFUSED, "confused"}
+        {FONT_AWESOME_NEUTRAL, "neutral"},
+        {FONT_AWESOME_HAPPY, "happy"},
+        {FONT_AWESOME_LAUGHING, "laughing"},
+        {FONT_AWESOME_FUNNY, "funny"},
+        {FONT_AWESOME_SAD, "sad"},
+        {FONT_AWESOME_ANGRY, "angry"},
+        {FONT_AWESOME_CRYING, "crying"},
+        {FONT_AWESOME_LOVING, "loving"},
+        {FONT_AWESOME_EMBARRASSED, "embarrassed"},
+        {FONT_AWESOME_SURPRISED, "surprised"},
+        {FONT_AWESOME_SHOCKED, "shocked"},
+        {FONT_AWESOME_THINKING, "thinking"},
+        {FONT_AWESOME_WINKING, "winking"},
+        {FONT_AWESOME_COOL, "cool"},
+        {FONT_AWESOME_RELAXED, "relaxed"},
+        {FONT_AWESOME_DELICIOUS, "delicious"},
+        {FONT_AWESOME_KISSY, "kissy"},
+        {FONT_AWESOME_CONFIDENT, "confident"},
+        {FONT_AWESOME_SLEEPY, "sleepy"},
+        {FONT_AWESOME_SILLY, "silly"},
+        {FONT_AWESOME_CONFUSED, "confused"}
     };
     
     // Tìm biểu cảm phù hợp
@@ -240,7 +239,7 @@ void Display::SetEmotion(const char* emotion) {
     if (it != emotions.end()) {
         lv_label_set_text(emotion_label_, it->icon);
     } else {
-        lv_label_set_text(emotion_label_, FONT_AWESOME_EMOJI_NEUTRAL);
+        lv_label_set_text(emotion_label_, FONT_AWESOME_NEUTRAL);
     }
 }
 
@@ -279,10 +278,10 @@ void Display::SetMusicInfo(const char* song_name) {
     }
 }
 
-void Display::SetTheme(const std::string& theme_name) {
-    current_theme_name_ = theme_name;
+void Display::SetTheme(const Theme& theme) {
+    current_theme_ = const_cast<Theme*>(&theme);
     Settings settings("display", true);
-    settings.SetString("theme", theme_name);
+    settings.SetString("theme", theme.name());
 }
 
 void Display::SetPowerSaveMode(bool on) {
