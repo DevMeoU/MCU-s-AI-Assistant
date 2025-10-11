@@ -5,6 +5,7 @@
 #include "audio_codec.h"
 #include "mqtt_protocol.h"
 #include "websocket_protocol.h"
+#include "font_awesome_symbols.h"
 #include "assets/lang_config.h"
 #include "mcp_server.h"
 #include "assets.h"
@@ -69,6 +70,7 @@ Application::~Application() {
     vEventGroupDelete(event_group_);
 }
 
+#ifdef CONFIG_USE_OTA
 void Application::CheckAssetsVersion() {
     auto& board = Board::GetInstance();
     auto display = board.GetDisplay();
@@ -123,7 +125,7 @@ void Application::CheckAssetsVersion() {
 void Application::CheckNewVersion(Ota& ota) {
     const int MAX_RETRY = 10;
     int retry_count = 0;
-    int retry_delay = 10; // 初始重试延迟为10秒
+    int retry_delay = 10; // Thời gian chờ thử lại ban đầu là 10 giây
 
     auto& board = Board::GetInstance();
     while (true) {
@@ -149,11 +151,11 @@ void Application::CheckNewVersion(Ota& ota) {
                     break;
                 }
             }
-            retry_delay *= 2; // 每次重试后延迟时间翻倍
+            retry_delay *= 2; // Gấp đôi thời gian chờ sau mỗi lần thử lại
             continue;
         }
         retry_count = 0;
-        retry_delay = 10; // 重置重试延迟时间
+        retry_delay = 10; // Đặt lại thời gian chờ thử lại
 
         if (ota.HasNewVersion()) {
             if (UpgradeFirmware(ota)) {
@@ -194,6 +196,7 @@ void Application::CheckNewVersion(Ota& ota) {
         }
     }
 }
+#endif
 
 void Application::ShowActivationCode(const std::string& code, const std::string& message) {
     struct digit_sound {
@@ -387,12 +390,14 @@ void Application::Start() {
     // Update the status bar immediately to show the network state
     display->UpdateStatusBar(true);
 
+#ifdef CONFIG_USE_OTA
     // Check for new assets version
     CheckAssetsVersion();
 
     // Check for new firmware version or get the MQTT broker address
     Ota ota;
     CheckNewVersion(ota);
+#endif
 
     // Initialize the protocol
     display->SetStatus(Lang::Strings::LOADING_PROTOCOL);
@@ -563,7 +568,6 @@ void Application::MainEventLoop() {
             MAIN_EVENT_VAD_CHANGE |
             MAIN_EVENT_CLOCK_TICK |
             MAIN_EVENT_ERROR, pdTRUE, pdFALSE, portMAX_DELAY);
-
         if (bits & MAIN_EVENT_ERROR) {
             SetDeviceState(kDeviceStateIdle);
             Alert(Lang::Strings::ERROR, last_error_message_.c_str(), "circle_xmark", Lang::Sounds::OGG_EXCLAMATION);
@@ -680,6 +684,17 @@ void Application::SetDeviceState(DeviceState state) {
     auto display = board.GetDisplay();
     auto led = board.GetLed();
     led->OnStateChanged();
+    
+    // Khi chuyển từ trạng thái idle sang bất kỳ trạng thái nào khác, dừng phát nhạc
+    if (previous_state == kDeviceStateIdle && state != kDeviceStateIdle) {
+        auto music = board.GetMusic();
+        if (music) {
+            ESP_LOGI(TAG, "Stopping music streaming due to state change: %s -> %s", 
+                    STATE_STRINGS[previous_state], STATE_STRINGS[state]);
+            music->StopStreaming();
+        }
+    }
+    
     switch (state) {
         case kDeviceStateUnknown:
         case kDeviceStateIdle:
@@ -865,6 +880,88 @@ void Application::SetAecMode(AecMode mode) {
             protocol_->CloseAudioChannel();
         }
     });
+}
+
+// Mới thêm: Nhận dữ liệu âm thanh bên ngoài (như phát nhạc)
+void Application::AddAudioData(AudioStreamPacket&& packet) {
+    auto codec = Board::GetInstance().GetAudioCodec();
+    if (device_state_ == kDeviceStateIdle && codec->output_enabled()) {
+        // packet.payload chứa dữ liệu PCM gốc (int16_t)
+        if (packet.payload.size() >= 2) {
+            size_t num_samples = packet.payload.size() / sizeof(int16_t);
+            std::vector<int16_t> pcm_data(num_samples);
+            memcpy(pcm_data.data(), packet.payload.data(), packet.payload.size());
+            
+            // Kiểm tra tỷ lệ lấy mẫu có khớp không, nếu không thì thực hiện lấy mẫu lại đơn giản
+            if (packet.sample_rate != codec->output_sample_rate()) {
+                // ESP_LOGI(TAG, "Resampling music audio from %d to %d Hz", 
+                //         packet.sample_rate, codec->output_sample_rate());
+                
+                // Xác minh tham số tỷ lệ lấy mẫu
+                if (packet.sample_rate <= 0 || codec->output_sample_rate() <= 0) {
+                    ESP_LOGE(TAG, "Invalid sample rates: %d -> %d", 
+                            packet.sample_rate, codec->output_sample_rate());
+                    return;
+                }
+                
+                std::vector<int16_t> resampled;
+                
+                if (packet.sample_rate > codec->output_sample_rate()) {
+                    ESP_LOGI(TAG, "Phát nhạc: Chuyển đổi tỷ lệ lấy mẫu từ %d Hz sang %d Hz", 
+                        codec->output_sample_rate(), packet.sample_rate);
+
+                    // Thử chuyển đổi tỷ lệ lấy mẫu động
+                    if (codec->SetOutputSampleRate(packet.sample_rate)) {
+                        ESP_LOGI(TAG, "Chuyển đổi thành công sang tỷ lệ lấy mẫu phát nhạc: %d Hz", packet.sample_rate);
+                    } else {
+                        ESP_LOGW(TAG, "Không thể chuyển đổi tỷ lệ lấy mẫu, tiếp tục sử dụng tỷ lệ hiện tại: %d Hz", codec->output_sample_rate());
+                    }
+                } else {
+                    // Lấy mẫu lên: Nội suy tuyến tính
+                    float upsample_ratio = codec->output_sample_rate() / static_cast<float>(packet.sample_rate);
+                    size_t expected_size = static_cast<size_t>(pcm_data.size() * upsample_ratio + 0.5f);
+                    resampled.reserve(expected_size);
+                    
+                    for (size_t i = 0; i < pcm_data.size(); ++i) {
+                        // Thêm mẫu gốc
+                        resampled.push_back(pcm_data[i]);
+                        
+                        // Tính toán số mẫu cần nội suy
+                        int interpolation_count = static_cast<int>(upsample_ratio) - 1;
+                        if (interpolation_count > 0 && i + 1 < pcm_data.size()) {
+                            int16_t current = pcm_data[i];
+                            int16_t next = pcm_data[i + 1];
+                            for (int j = 1; j <= interpolation_count; ++j) {
+                                float t = static_cast<float>(j) / (interpolation_count + 1);
+                                int16_t interpolated = static_cast<int16_t>(current + (next - current) * t);
+                                resampled.push_back(interpolated);
+                            }
+                        } else if (interpolation_count > 0) {
+                            // Mẫu cuối cùng, lặp lại trực tiếp
+                            for (int j = 1; j <= interpolation_count; ++j) {
+                                resampled.push_back(pcm_data[i]);
+                            }
+                        }
+                    }
+                    
+                    ESP_LOGI(TAG, "Upsampled %d -> %d samples (ratio: %.2f)", 
+                            pcm_data.size(), resampled.size(), upsample_ratio);
+                }
+                
+                pcm_data = std::move(resampled);
+            }
+            
+            // Đảm bảo đầu ra âm thanh đã được bật
+            if (!codec->output_enabled()) {
+                codec->EnableOutput(true);
+            }
+            
+            // Gửi dữ liệu PCM đến bộ mã hóa/giải mã âm thanh
+            codec->OutputData(pcm_data);
+            
+            audio_service_.UpdateOutputTimestamp();
+        }
+    }
 }
 
 void Application::PlaySound(const std::string_view& sound) {

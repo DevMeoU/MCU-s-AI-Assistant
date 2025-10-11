@@ -9,6 +9,7 @@
 #include <string>
 #include <mutex>
 #include <deque>
+#include <vector>
 #include <memory>
 
 #include "protocol.h"
@@ -16,15 +17,12 @@
 #include "audio_service.h"
 #include "device_state_event.h"
 
-
 #define MAIN_EVENT_SCHEDULE (1 << 0)
 #define MAIN_EVENT_SEND_AUDIO (1 << 1)
 #define MAIN_EVENT_WAKE_WORD_DETECTED (1 << 2)
 #define MAIN_EVENT_VAD_CHANGE (1 << 3)
 #define MAIN_EVENT_ERROR (1 << 4)
 #define MAIN_EVENT_CHECK_NEW_VERSION_DONE (1 << 5)
-#define MAIN_EVENT_CLOCK_TICK (1 << 6)
-
 
 enum AecMode {
     kAecOff,
@@ -61,6 +59,9 @@ public:
     void SendMcpMessage(const std::string& payload);
     void SetAecMode(AecMode mode);
     AecMode GetAecMode() const { return aec_mode_; }
+    
+    // Thêm mới: Nhận dữ liệu âm thanh bên ngoài (ví dụ: phát nhạc)
+    void AddAudioData(AudioStreamPacket&& packet);
     void PlaySound(const std::string_view& sound);
     AudioService& GetAudioService() { return audio_service_; }
 

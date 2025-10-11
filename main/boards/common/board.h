@@ -12,30 +12,32 @@
 #include "backlight.h"
 #include "camera.h"
 #include "assets.h"
-
+#include "music.h"
 
 void* create_board();
 class AudioCodec;
 class Display;
 class Board {
 private:
-    Board(const Board&) = delete; // 禁用拷贝构造函数
-    Board& operator=(const Board&) = delete; // 禁用赋值操作
+    Board(const Board&) = delete; // Vô hiệu hóa hàm tạo sao chép
+    Board& operator=(const Board&) = delete; // Vô hiệu hóa phép gán
 
 protected:
     Board();
     std::string GenerateUuid();
 
-    // 软件生成的设备唯一标识
+    // UUID phần mềm duy nhất của thiết bị
     std::string uuid_;
 
+    // Instance của trình phát nhạc
+    Music* music_;
 public:
     static Board& GetInstance() {
         static Board* instance = static_cast<Board*>(create_board());
         return *instance;
     }
 
-    virtual ~Board() = default;
+    virtual ~Board() = default;  // Chuyển thành hàm hủy không mặc định để dọn dẹp music_
     virtual std::string GetBoardType() = 0;
     virtual std::string GetUuid() { return uuid_; }
     virtual Backlight* GetBacklight() { return nullptr; }
@@ -44,6 +46,7 @@ public:
     virtual bool GetTemperature(float& esp32temp);
     virtual Display* GetDisplay();
     virtual Camera* GetCamera();
+    virtual Music* GetMusic();
     virtual NetworkInterface* GetNetwork() = 0;
     virtual void StartNetwork() = 0;
     virtual const char* GetNetworkStateIcon() = 0;

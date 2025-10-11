@@ -2,8 +2,8 @@
 #include "system_info.h"
 #include "settings.h"
 #include "display/display.h"
-#include "display/oled_display.h"
 #include "assets/lang_config.h"
+#include "esp32_music.h"
 
 #include <esp_log.h>
 #include <esp_ota_ops.h>
@@ -13,6 +13,8 @@
 #define TAG "Board"
 
 Board::Board() {
+    music_ = nullptr;  // Khởi tạo ban đầu là con trỏ null
+    
     Settings settings("board", true);
     uuid_ = settings.GetString("uuid");
     if (uuid_.empty()) {
@@ -20,20 +22,32 @@ Board::Board() {
         settings.SetString("uuid", uuid_);
     }
     ESP_LOGI(TAG, "UUID=%s SKU=%s", uuid_.c_str(), BOARD_NAME);
+    
+    // Khởi tạo trình phát nhạc
+    music_ = new Esp32Music();
+    ESP_LOGI(TAG, "Music player initialized for all boards");
+}
+
+Board::~Board() {
+    if (music_) {
+        delete music_;
+        music_ = nullptr;
+        ESP_LOGI(TAG, "Music player destroyed");
+    }
 }
 
 std::string Board::GenerateUuid() {
-    // UUID v4 需要 16 字节的随机数据
+    // UUID v4 cần 16 byte dữ liệu ngẫu nhiên
     uint8_t uuid[16];
     
-    // 使用 ESP32 的硬件随机数生成器
+    // Sử dụng bộ tạo số ngẫu nhiên phần cứng của ESP32
     esp_fill_random(uuid, sizeof(uuid));
     
-    // 设置版本 (版本 4) 和变体位
-    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // 版本 4
-    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // 变体 1
+    // Thiết lập phiên bản (phiên bản 4) và bit biến thể
+    uuid[6] = (uuid[6] & 0x0F) | 0x40;    // Phiên bản 4
+    uuid[8] = (uuid[8] & 0x3F) | 0x80;    // Biến thể 1
     
-    // 将字节转换为标准的 UUID 字符串格式
+    // Chuyển đổi byte thành định dạng chuỗi UUID tiêu chuẩn
     char uuid_str[37];
     snprintf(uuid_str, sizeof(uuid_str),
         "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
@@ -60,6 +74,10 @@ Display* Board::GetDisplay() {
 
 Camera* Board::GetCamera() {
     return nullptr;
+}
+
+Music* Board::GetMusic() {
+    return music_;
 }
 
 Led* Board::GetLed() {

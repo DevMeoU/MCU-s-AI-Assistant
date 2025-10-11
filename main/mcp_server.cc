@@ -8,6 +8,7 @@
 #include <esp_app_desc.h>
 #include <algorithm>
 #include <cstring>
+#include <cctype>
 #include <esp_pthread.h>
 
 #include "application.h"
@@ -31,16 +32,11 @@ McpServer::~McpServer() {
 }
 
 void McpServer::AddCommonTools() {
-    // *Important* To speed up the response time, we add the common tools to the beginning of
+    // To speed up the response time, we add the common tools to the beginning of
     // the tools list to utilize the prompt cache.
-    // **重要** 为了提升响应速度，我们把常用的工具放在前面，利用 prompt cache 的特性。
-
     // Backup the original tools list and restore it after adding the common tools.
     auto original_tools = std::move(tools_);
     auto& board = Board::GetInstance();
-
-    // Do not add custom tools here.
-    // Custom tools must be added in the board's InitializeTools function.
 
     AddTool("self.get_device_status",
         "Provides the real-time information of the device, including the current status of the audio speaker, screen, battery, network, etc.\n"
@@ -77,9 +73,8 @@ void McpServer::AddCommonTools() {
             });
     }
 
-#ifdef HAVE_LVGL
     auto display = board.GetDisplay();
-    if (display && display->GetTheme() != nullptr) {
+    if (display && !display->GetTheme().empty()) {
         AddTool("self.screen.set_theme",
             "Set the theme of the screen. The theme can be `light` or `dark`.",
             PropertyList({
@@ -120,6 +115,63 @@ void McpServer::AddCommonTools() {
             });
     }
 #endif
+    auto music = board.GetMusic();
+    if (music) {
+        AddTool("self.music.play_song",
+            "Phát bài hát được chỉ định. Khi người dùng yêu cầu phát nhạc, công cụ này sẽ tự động lấy thông tin chi tiết bài hát và bắt đầu phát trực tuyến.\n"
+            "Tham số:\n"
+            "  `song_name`: Tên bài hát cần phát (bắt buộc).\n"
+            "  `artist_name`: Tên nghệ sĩ của bài hát (tùy chọn, mặc định là chuỗi rỗng).\n"
+            "Trả về:\n"
+            "  Thông tin trạng thái phát, không cần xác nhận, phát bài hát ngay lập tức.",
+            PropertyList({
+                Property("song_name", kPropertyTypeString),//Tên bài hát (bắt buộc)
+                Property("artist_name", kPropertyTypeString, "")//Tên nghệ sĩ (tùy chọn, mặc định là chuỗi rỗng)
+            }),
+            [music](const PropertyList& properties) -> ReturnValue {
+                auto song_name = properties["song_name"].value<std::string>();
+                auto artist_name = properties["artist_name"].value<std::string>();
+                
+                if (!music->Download(song_name, artist_name)) {
+                    return "{\"success\": false, \"message\": \"获取音乐资源失败\"}";
+                }
+                auto download_result = music->GetDownloadResult();
+                ESP_LOGI(TAG, "Music details result: %s", download_result.c_str());
+                return "{\"success\": true, \"message\": \"音乐开始播放\"}";
+            });
+
+        AddTool("self.music.set_display_mode",
+            "Thiết lập chế độ hiển thị khi phát nhạc. Có thể chọn hiển thị phổ tần hoặc lời bài hát, ví dụ khi người dùng nói 'mở phổ tần' hoặc 'hiển thị phổ tần', 'mở lời bài hát' hoặc 'hiển thị lời bài hát' sẽ thiết lập chế độ hiển thị tương ứng.\n"
+            "Tham số:\n"
+            "  `mode`: Chế độ hiển thị, giá trị tùy chọn là 'spectrum' (phổ tần) hoặc 'lyrics' (lời bài hát).\n"
+            "Trả về:\n"
+            "  Thông tin kết quả thiết lập.",
+            PropertyList({
+                Property("mode", kPropertyTypeString)//Chế độ hiển thị: "spectrum" hoặc "lyrics"
+            }),
+            [music](const PropertyList& properties) -> ReturnValue {
+                auto mode_str = properties["mode"].value<std::string>();
+                
+                // Chuyển đổi thành chữ thường để so sánh
+                std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::tolower);
+                
+                if (mode_str == "spectrum" || mode_str == "频谱") {
+                    // Thiết lập chế độ hiển thị phổ tần
+                    auto esp32_music = static_cast<Esp32Music*>(music);
+                    esp32_music->SetDisplayMode(Esp32Music::DISPLAY_MODE_SPECTRUM);
+                    return "{\"success\": true, \"message\": \"Đã chuyển sang chế độ hiển thị phổ tần\"}";
+                } else if (mode_str == "lyrics" || mode_str == "歌词") {
+                    // Thiết lập chế độ hiển thị lời bài hát
+                    auto esp32_music = static_cast<Esp32Music*>(music);
+                    esp32_music->SetDisplayMode(Esp32Music::DISPLAY_MODE_LYRICS);
+                    return "{\"success\": true, \"message\": \"Đã chuyển sang chế độ hiển thị lời bài hát\"}";
+                } else {
+                    return "{\"success\": false, \"message\": \"Chế độ hiển thị không hợp lệ, vui lòng sử dụng 'spectrum' hoặc 'lyrics'\"}";
+                }
+                
+                return "{\"success\": false, \"message\": \"Thiết lập chế độ hiển thị thất bại\"}";
+            });
+    }
 
     // Restore the original tools list to the end of the tools list
     tools_.insert(tools_.end(), original_tools.begin(), original_tools.end());
@@ -463,7 +515,7 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     std::string next_cursor = "";
     
     while (it != tools_.end()) {
-        // 如果我们还没有找到起始位置，继续搜索
+        // Nếu chúng ta chưa tìm thấy vị trí bắt đầu, tiếp tục tìm kiếm
         if (!found_cursor) {
             if ((*it)->name() == cursor) {
                 found_cursor = true;
@@ -478,10 +530,10 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
             continue;
         }
         
-        // 添加tool前检查大小
+        // Kiểm tra kích thước trước khi thêm công cụ
         std::string tool_json = (*it)->to_json() + ",";
         if (json.length() + tool_json.length() + 30 > max_payload_size) {
-            // 如果添加这个tool会超出大小限制，设置next_cursor并退出循环
+            // Nếu thêm công cụ này sẽ vượt quá giới hạn kích thước, thiết lập next_cursor và thoát vòng lặp
             next_cursor = (*it)->name();
             break;
         }
@@ -495,9 +547,9 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     }
     
     if (json.back() == '[' && !tools_.empty()) {
-        // 如果没有添加任何tool，返回错误
-        ESP_LOGE(TAG, "tools/list: Failed to add tool %s because of payload size limit", next_cursor.c_str());
-        ReplyError(id, "Failed to add tool " + next_cursor + " because of payload size limit");
+        // Nếu không thêm được bất kỳ công cụ nào, trả về lỗi
+        ESP_LOGE(TAG, "tools/list: Không thể thêm công cụ %s do giới hạn kích thước payload", next_cursor.c_str());
+        ReplyError(id, "Không thể thêm công cụ " + next_cursor + " do giới hạn kích thước payload");
         return;
     }
 
