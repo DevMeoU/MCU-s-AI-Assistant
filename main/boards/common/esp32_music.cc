@@ -860,8 +860,8 @@ void Esp32Music::PlayAudioStream() {
                     id3_processed = true;
                 }
                 
-                // Giải phóng bộ nhớ chunk
-                heap_caps_free(chunk.data.get());
+                // Không cần giải phóng bộ nhớ chunk ở đây vì std::unique_ptr sẽ tự động giải phóng
+                // Khi chunk ra khỏi phạm vi, bộ nhớ sẽ được tự động giải phóng
             }
         }
         
@@ -1027,9 +1027,8 @@ void Esp32Music::ClearAudioBuffer() {
     while (!audio_buffer_.empty()) {
         AudioChunk chunk = std::move(audio_buffer_.front());
         audio_buffer_.pop();
-        if (chunk.data) {
-            heap_caps_free(chunk.data.get());
-        }
+        // Không cần giải phóng bộ nhớ chunk ở đây vì std::unique_ptr sẽ tự động giải phóng
+        // Khi chunk ra khỏi phạm vi, bộ nhớ sẽ được tự động giải phóng
     }
     
     buffer_size_ = 0;
