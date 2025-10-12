@@ -116,12 +116,7 @@ void Application::CheckAssetsVersion() {
     }
 
     // Apply assets
-    ESP_LOGI(TAG, "Applying assets...");
-    if (assets.Apply()) {
-        ESP_LOGI(TAG, "Assets applied successfully");
-    } else {
-        ESP_LOGE(TAG, "Failed to apply assets");
-    }
+    assets.Apply();
     display->SetChatMessage("system", "");
     display->SetEmotion("microchip_ai");
 }
@@ -611,7 +606,7 @@ void Application::MainEventLoop() {
             if (clock_ticks_ % 10 == 0) {
                 // SystemInfo::PrintTaskCpuUsage(pdMS_TO_TICKS(1000));
                 // SystemInfo::PrintTaskList();
-                // print_task_list();
+                print_task_list();
                 SystemInfo::PrintHeapStats();
             }
         }
@@ -619,8 +614,41 @@ void Application::MainEventLoop() {
 }
 
 void Application::OnWakeWordDetected() {
-    ESP_LOGI(TAG, "Wake word detected");
-    xEventGroupSetBits(event_group_, MAIN_EVENT_WAKE_WORD_DETECTED);
+    if (!protocol_) {
+        return;
+    }
+
+    if (device_state_ == kDeviceStateIdle) {
+        audio_service_.EncodeWakeWord();
+
+        if (!protocol_->IsAudioChannelOpened()) {
+            SetDeviceState(kDeviceStateConnecting);
+            if (!protocol_->OpenAudioChannel()) {
+                audio_service_.EnableWakeWordDetection(true);
+                return;
+            }
+        }
+
+        auto wake_word = audio_service_.GetLastWakeWord();
+        ESP_LOGI(TAG, "Wake word detected: %s", wake_word.c_str());
+#if CONFIG_SEND_WAKE_WORD_DATA
+        // Encode and send the wake word data to the server
+        while (auto packet = audio_service_.PopWakeWordPacket()) {
+            protocol_->SendAudio(std::move(packet));
+        }
+        // Set the chat state to wake word detected
+        protocol_->SendWakeWordDetected(wake_word);
+        SetListeningMode(aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
+#else
+        SetListeningMode(aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
+        // Play the pop up sound to indicate the wake word is detected
+        audio_service_.PlaySound(Lang::Sounds::OGG_POPUP);
+#endif
+    } else if (device_state_ == kDeviceStateSpeaking) {
+        AbortSpeaking(kAbortReasonWakeWordDetected);
+    } else if (device_state_ == kDeviceStateActivating) {
+        SetDeviceState(kDeviceStateIdle);
+    }
 }
 
 void Application::AbortSpeaking(AbortReason reason) {
@@ -670,7 +698,6 @@ void Application::SetDeviceState(DeviceState state) {
             display->SetStatus(Lang::Strings::STANDBY);
             display->SetEmotion("neutral");
             audio_service_.EnableVoiceProcessing(false);
-            ESP_LOGI(TAG, "Enabling wake word detection for idle state");
             audio_service_.EnableWakeWordDetection(true);
             break;
         case kDeviceStateConnecting:
@@ -687,7 +714,6 @@ void Application::SetDeviceState(DeviceState state) {
                 // Send the start listening command
                 protocol_->SendStartListening(listening_mode_);
                 audio_service_.EnableVoiceProcessing(true);
-                ESP_LOGI(TAG, "Disabling wake word detection for listening state");
                 audio_service_.EnableWakeWordDetection(false);
             }
             break;
@@ -697,9 +723,7 @@ void Application::SetDeviceState(DeviceState state) {
             if (listening_mode_ != kListeningModeRealtime) {
                 audio_service_.EnableVoiceProcessing(false);
                 // Only AFE wake word can be detected in speaking mode
-                bool useAfe = audio_service_.IsAfeWakeWord();
-                ESP_LOGI(TAG, "Setting wake word detection for speaking state, AFE: %s", useAfe ? "true" : "false");
-                audio_service_.EnableWakeWordDetection(useAfe);
+                audio_service_.EnableWakeWordDetection(audio_service_.IsAfeWakeWord());
             }
             audio_service_.ResetDecoder();
             break;

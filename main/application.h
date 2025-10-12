@@ -9,7 +9,6 @@
 #include <string>
 #include <mutex>
 #include <deque>
-#include <vector>
 #include <memory>
 
 #include "protocol.h"
@@ -37,7 +36,7 @@ public:
         static Application instance;
         return instance;
     }
-    // 删除拷贝构造函数和赋值运算符
+    // Xóa hàm tạo sao chép và toán tử gán
     Application(const Application&) = delete;
     Application& operator=(const Application&) = delete;
 

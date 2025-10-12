@@ -9,37 +9,31 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include <vector>
 
 void print_task_list() {
-    TaskStatus_t *task_list;
-    char *task_list_buffer;
-    uint32_t task_count;
+    constexpr size_t BUFFER_SIZE = 1024;
+    char task_list_buffer[BUFFER_SIZE];
 
-    task_list_buffer = (char *)malloc(1024);
-    if (task_list_buffer == NULL) {
-        ESP_LOGE("Task", "Failed to allocate memory for task list buffer");
-        return;
-    }
-
+    // In danh sách task dạng bảng
     vTaskList(task_list_buffer);
-    ESP_LOGW("Task", "Task name      State      Prio    Stack    Num");
+    ESP_LOGW("Task", "Task name      State   Prio   Stack   Num");
     ESP_LOGW("Task", "%s", task_list_buffer);
 
-    task_count = uxTaskGetNumberOfTasks();
-    task_list = (TaskStatus_t *)malloc(sizeof(TaskStatus_t) * task_count);
-    if (task_list == NULL) {
-        ESP_LOGE("Task", "Failed to allocate memory for task list");
-        free(task_list_buffer);
-        return;
-    }
+    // Lấy số lượng task hiện tại
+    UBaseType_t task_count = uxTaskGetNumberOfTasks();
+    std::vector<TaskStatus_t> task_list(task_count);
 
-    task_count = uxTaskGetSystemState(task_list, task_count, NULL);
-    for (uint32_t i = 0; i < task_count; i++) {
-        TaskStatus_t task = task_list[i];
-        ESP_LOGW("Task", "Task %s (%d) prio %d state %d", 
-                 task.pcTaskName, task.xTaskNumber, task.uxCurrentPriority, task.eCurrentState);
-    }
+    // Lấy trạng thái hệ thống
+    task_count = uxTaskGetSystemState(task_list.data(), task_count, nullptr);
 
-    free(task_list);
-    free(task_list_buffer);
+    for (UBaseType_t i = 0; i < task_count; i++) {
+        const TaskStatus_t& task = task_list[i];
+        ESP_LOGW("Task", "Task %-12s (ID=%d) prio=%d state=%d stack=%u",
+                 task.pcTaskName,
+                 task.xTaskNumber,
+                 task.uxCurrentPriority,
+                 task.eCurrentState,
+                 (unsigned)task.usStackHighWaterMark);
+    }
 }

@@ -49,12 +49,10 @@ void EspWakeWord::OnWakeWordDetected(std::function<void(const std::string& wake_
 }
 
 void EspWakeWord::Start() {
-    ESP_LOGI(TAG, "Starting wake word detection");
     running_ = true;
 }
 
 void EspWakeWord::Stop() {
-    ESP_LOGI(TAG, "Stopping wake word detection");
     running_ = false;
 }
 
@@ -66,7 +64,6 @@ void EspWakeWord::Feed(const std::vector<int16_t>& data) {
     int res = wakenet_iface_->detect(wakenet_data_, (int16_t *)data.data());
     if (res > 0) {
         last_detected_wake_word_ = wakenet_iface_->get_word_name(wakenet_data_, res);
-        ESP_LOGI(TAG, "Wake word detected: %s", last_detected_wake_word_.c_str());
         running_ = false;
 
         if (wake_word_detected_callback_) {

@@ -542,6 +542,7 @@ choice WAKE_WORD_TYPE
     config USE_AFE_WAKE_WORD
         bool "Wakenet model with AFE"
         depends on (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
+        default y
         help
             Support AEC if available, requires ESP32 S3 and PSRAM
 

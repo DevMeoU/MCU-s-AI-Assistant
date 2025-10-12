@@ -126,19 +126,13 @@ bool Assets::Apply() {
     cJSON* srmodels = cJSON_GetObjectItem(root, "srmodels");
     if (cJSON_IsString(srmodels)) {
         std::string srmodels_file = srmodels->valuestring;
-        ESP_LOGI(TAG, "Loading SR models from file: %s", srmodels_file.c_str());
         if (GetAssetData(srmodels_file, ptr, size)) {
-            ESP_LOGI(TAG, "SR models file found, size: %d bytes", size);
             if (models_list_ != nullptr) {
                 esp_srmodel_deinit(models_list_);
                 models_list_ = nullptr;
             }
             models_list_ = srmodel_load(static_cast<uint8_t*>(ptr));
             if (models_list_ != nullptr) {
-                ESP_LOGI(TAG, "SR models loaded successfully, number of models: %d", models_list_->num);
-                for (int i = 0; i < models_list_->num; i++) {
-                    ESP_LOGI(TAG, "Model %d: %s", i, models_list_->model_name[i]);
-                }
                 auto& app = Application::GetInstance();
                 app.GetAudioService().SetModelsList(models_list_);
             } else {
@@ -147,8 +141,6 @@ bool Assets::Apply() {
         } else {
             ESP_LOGE(TAG, "The srmodels file %s is not found", srmodels_file.c_str());
         }
-    } else {
-        ESP_LOGW(TAG, "No SR models specified in index.json");
     }
 
 #ifdef HAVE_LVGL
