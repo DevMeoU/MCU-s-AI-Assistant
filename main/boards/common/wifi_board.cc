@@ -41,17 +41,17 @@ void WifiBoard::EnterWifiConfigMode() {
     wifi_ap.SetSsidPrefix("Xiaozhi");
     wifi_ap.Start();
 
-    // 等待 1.5 秒显示开发板信息
+    // Đợi 1.5 giây để hiển thị thông tin bảng mạch
     vTaskDelay(pdMS_TO_TICKS(1500));
 
-    // 显示 WiFi 配置 AP 的 SSID 和 Web 服务器 URL
+    // Hiển thị SSID của AP cấu hình WiFi và URL của máy chủ web
     std::string hint = Lang::Strings::CONNECT_TO_HOTSPOT;
     hint += wifi_ap.GetSsid();
     hint += Lang::Strings::ACCESS_VIA_BROWSER;
     hint += wifi_ap.GetWebServerUrl();
     hint += "\n\n";
     
-    // 播报配置 WiFi 的提示
+    // Phát âm thanh hướng dẫn cấu hình WiFi
     application.Alert(Lang::Strings::WIFI_CONFIG_MODE, hint.c_str(), "gear", Lang::Sounds::OGG_WIFICONFIG);
 
     #if CONFIG_USE_ACOUSTIC_WIFI_PROVISIONING

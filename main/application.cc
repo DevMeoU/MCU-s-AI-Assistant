@@ -9,6 +9,7 @@
 #include "mcp_server.h"
 #include "assets.h"
 #include "settings.h"
+#include "debug.h"
 
 #include <cstring>
 #include <esp_log.h>
@@ -69,7 +70,6 @@ Application::~Application() {
     vEventGroupDelete(event_group_);
 }
 
-#ifdef CONFIG_USE_OTA
 void Application::CheckAssetsVersion() {
     auto& board = Board::GetInstance();
     auto display = board.GetDisplay();
@@ -116,7 +116,12 @@ void Application::CheckAssetsVersion() {
     }
 
     // Apply assets
-    assets.Apply();
+    ESP_LOGI(TAG, "Applying assets...");
+    if (assets.Apply()) {
+        ESP_LOGI(TAG, "Assets applied successfully");
+    } else {
+        ESP_LOGE(TAG, "Failed to apply assets");
+    }
     display->SetChatMessage("system", "");
     display->SetEmotion("microchip_ai");
 }
@@ -195,7 +200,6 @@ void Application::CheckNewVersion(Ota& ota) {
         }
     }
 }
-#endif
 
 void Application::ShowActivationCode(const std::string& code, const std::string& message) {
     struct digit_sound {
@@ -607,6 +611,7 @@ void Application::MainEventLoop() {
             if (clock_ticks_ % 10 == 0) {
                 // SystemInfo::PrintTaskCpuUsage(pdMS_TO_TICKS(1000));
                 // SystemInfo::PrintTaskList();
+                // print_task_list();
                 SystemInfo::PrintHeapStats();
             }
         }
@@ -665,6 +670,7 @@ void Application::SetDeviceState(DeviceState state) {
             display->SetStatus(Lang::Strings::STANDBY);
             display->SetEmotion("neutral");
             audio_service_.EnableVoiceProcessing(false);
+            ESP_LOGI(TAG, "Enabling wake word detection for idle state");
             audio_service_.EnableWakeWordDetection(true);
             break;
         case kDeviceStateConnecting:
@@ -681,6 +687,7 @@ void Application::SetDeviceState(DeviceState state) {
                 // Send the start listening command
                 protocol_->SendStartListening(listening_mode_);
                 audio_service_.EnableVoiceProcessing(true);
+                ESP_LOGI(TAG, "Disabling wake word detection for listening state");
                 audio_service_.EnableWakeWordDetection(false);
             }
             break;
@@ -690,7 +697,9 @@ void Application::SetDeviceState(DeviceState state) {
             if (listening_mode_ != kListeningModeRealtime) {
                 audio_service_.EnableVoiceProcessing(false);
                 // Only AFE wake word can be detected in speaking mode
-                audio_service_.EnableWakeWordDetection(audio_service_.IsAfeWakeWord());
+                bool useAfe = audio_service_.IsAfeWakeWord();
+                ESP_LOGI(TAG, "Setting wake word detection for speaking state, AFE: %s", useAfe ? "true" : "false");
+                audio_service_.EnableWakeWordDetection(useAfe);
             }
             audio_service_.ResetDecoder();
             break;
@@ -930,17 +939,4 @@ void Application::AddAudioData(AudioStreamPacket&& packet) {
 
 void Application::PlaySound(const std::string_view& sound) {
     audio_service_.PlaySound(sound);
-}
-
-// Implement the missing functions
-void Application::CheckNewVersion(Ota& ota) {
-    // TODO: Implement version checking logic
-    // For now, we'll just log that this function was called
-    ESP_LOGI(TAG, "CheckNewVersion called");
-}
-
-void Application::CheckAssetsVersion() {
-    // TODO: Implement assets version checking logic
-    // For now, we'll just log that this function was called
-    ESP_LOGI(TAG, "CheckAssetsVersion called");
 }

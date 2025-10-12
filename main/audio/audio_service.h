@@ -11,6 +11,7 @@
 #include <freertos/task.h>
 #include <freertos/event_groups.h>
 #include <esp_timer.h>
+#include <model_path.h>
 
 #include <opus_encoder.h>
 #include <opus_decoder.h>

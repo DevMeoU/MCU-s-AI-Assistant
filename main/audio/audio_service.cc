@@ -454,21 +454,25 @@ std::unique_ptr<AudioStreamPacket> AudioService::PopWakeWordPacket() {
 
 void AudioService::EnableWakeWordDetection(bool enable) {
     if (!wake_word_) {
+        ESP_LOGE(TAG, "Wake word not initialized");
         return;
     }
 
-    ESP_LOGD(TAG, "%s wake word detection", enable ? "Enabling" : "Disabling");
+    ESP_LOGW(TAG, "%s wake word detection", enable ? "Enabling" : "Disabling");
     if (enable) {
         if (!wake_word_initialized_) {
+            ESP_LOGI(TAG, "Initializing wake word detection");
             if (!wake_word_->Initialize(codec_, models_list_)) {
                 ESP_LOGE(TAG, "Failed to initialize wake word");
                 return;
             }
             wake_word_initialized_ = true;
         }
+        ESP_LOGI(TAG, "Starting wake word detection");
         wake_word_->Start();
         xEventGroupSetBits(event_group_, AS_EVENT_WAKE_WORD_RUNNING);
     } else {
+        ESP_LOGI(TAG, "Stopping wake word detection");
         wake_word_->Stop();
         xEventGroupClearBits(event_group_, AS_EVENT_WAKE_WORD_RUNNING);
     }
@@ -540,7 +544,7 @@ void AudioService::PlaySound(const std::string_view& ogg) {
 
     bool seen_head = false;
     bool seen_tags = false;
-    int sample_rate = 16000; // 默认值
+    int sample_rate = 16000; // Giá trị mặc định
 
     while (true) {
         size_t pos = find_page(offset);
@@ -577,18 +581,18 @@ void AudioService::PlaySound(const std::string_view& ogg) {
             const uint8_t* pkt_ptr = buf + pkt_start;
 
             if (!seen_head) {
-                // 解析OpusHead包
+                // Phân tích gói OpusHead
                 if (pkt_len >= 19 && std::memcmp(pkt_ptr, "OpusHead", 8) == 0) {
                     seen_head = true;
                     
-                    // OpusHead结构：[0-7] "OpusHead", [8] version, [9] channel_count, [10-11] pre_skip
+                    // Cấu trúc OpusHead: [0-7] "OpusHead", [8] phiên bản, [9] số kênh, [10-11] pre_skip
                     // [12-15] input_sample_rate, [16-17] output_gain, [18] mapping_family
                     if (pkt_len >= 12) {
                         uint8_t version = pkt_ptr[8];
                         uint8_t channel_count = pkt_ptr[9];
                         
                         if (pkt_len >= 16) {
-                            // 读取输入采样率 (little-endian)
+                            // Đọc tần số lấy mẫu đầu vào (little-endian)
                             sample_rate = pkt_ptr[12] | (pkt_ptr[13] << 8) | 
                                         (pkt_ptr[14] << 16) | (pkt_ptr[15] << 24);
                             ESP_LOGI(TAG, "OpusHead: version=%d, channels=%d, sample_rate=%d", 
@@ -657,6 +661,7 @@ void AudioService::SetModelsList(srmodel_list_t* models_list) {
     models_list_ = models_list;
 
 #if CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+    ESP_LOGW(TAG, "Using custom wake word model");
     if (esp_srmodel_filter(models_list_, ESP_MN_PREFIX, NULL) != nullptr) {
         wake_word_ = std::make_unique<CustomWakeWord>();
     } else if (esp_srmodel_filter(models_list_, ESP_WN_PREFIX, NULL) != nullptr) {
@@ -683,10 +688,7 @@ void AudioService::SetModelsList(srmodel_list_t* models_list) {
 
 bool AudioService::IsAfeWakeWord() {
 #if CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
-    // Since RTTI is disabled, we can't use dynamic_cast
-    // Instead, we'll check the type by comparing the class name or using other identifying features
-    // For now, we'll assume if wake_word_ exists and we're on the right platform, it's AFE
-    return wake_word_ != nullptr;
+    return wake_word_ != nullptr && dynamic_cast<AfeWakeWord*>(wake_word_.get()) != nullptr;
 #else
     return false;
 #endif
