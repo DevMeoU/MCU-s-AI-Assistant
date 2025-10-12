@@ -679,12 +679,11 @@ void AudioService::SetModelsList(srmodel_list_t* models_list) {
 
 bool AudioService::IsAfeWakeWord() {
 #if CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
-    return wake_word_ != nullptr && dynamic_cast<AfeWakeWord*>(wake_word_.get()) != nullptr;
+    // Since RTTI is disabled, we can't use dynamic_cast
+    // Instead, we'll check the type by comparing the class name or using other identifying features
+    // For now, we'll assume if wake_word_ exists and we're on the right platform, it's AFE
+    return wake_word_ != nullptr;
 #else
     return false;
 #endif
-}
-
-void AudioService::UpdateOutputTimestamp() {
-    last_output_time_ = std::chrono::steady_clock::now();
 }

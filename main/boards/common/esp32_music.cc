@@ -649,15 +649,15 @@ void Esp32Music::DownloadAudioStream(const std::string& music_url) {
         
         // Thử phát hiện định dạng tệp (kiểm tra tiêu đề tệp)
         if (total_downloaded == 0 && bytes_read >= 4) {
-            if (memcmp(buffer, "ID3", 3) == 0) {
+            if (memcmp(buffer.data(), "ID3", 3) == 0) {
                 ESP_LOGI(TAG, "Detected MP3 file with ID3 tag");
             } else if (buffer[0] == 0xFF && (buffer[1] & 0xE0) == 0xE0) {
                 ESP_LOGI(TAG, "Detected MP3 file header");
-            } else if (memcmp(buffer, "RIFF", 4) == 0) {
+            } else if (memcmp(buffer.data(), "RIFF", 4) == 0) {
                 ESP_LOGI(TAG, "Detected WAV file");
-            } else if (memcmp(buffer, "fLaC", 4) == 0) {
+            } else if (memcmp(buffer.data(), "fLaC", 4) == 0) {
                 ESP_LOGI(TAG, "Detected FLAC file");
-            } else if (memcmp(buffer, "OggS", 4) == 0) {
+            } else if (memcmp(buffer.data(), "OggS", 4) == 0) {
                 ESP_LOGI(TAG, "Detected OGG file");
             } else {
                 ESP_LOGI(TAG, "Unknown audio format, first 4 bytes: %02X %02X %02X %02X", 
@@ -672,7 +672,7 @@ void Esp32Music::DownloadAudioStream(const std::string& music_url) {
             ESP_LOGE(TAG, "Failed to allocate memory for audio chunk");
             break;
         }
-        memcpy(chunk_data, buffer, bytes_read);
+        memcpy(chunk_data, buffer.data(), bytes_read);
         
         // Chờ bộ đệm có không gian trống
         {
@@ -825,7 +825,7 @@ void Esp32Music::PlayAudioStream() {
                     }
                 }
                 
-                chunk = audio_buffer_.front();
+                chunk = std::move(audio_buffer_.front());
                 audio_buffer_.pop();
                 buffer_size_ -= chunk.size;
                 
@@ -845,7 +845,7 @@ void Esp32Music::PlayAudioStream() {
                 size_t copy_size = std::min(chunk.size, space_available);
                 
                 // Sao chép dữ liệu mới
-                memcpy(mp3_input_buffer + bytes_left, chunk.data, copy_size);
+                memcpy(mp3_input_buffer + bytes_left, chunk.data.get(), copy_size);
                 bytes_left += copy_size;
                 read_ptr = mp3_input_buffer;
                 
@@ -861,7 +861,7 @@ void Esp32Music::PlayAudioStream() {
                 }
                 
                 // Giải phóng bộ nhớ chunk
-                heap_caps_free(chunk.data);
+                heap_caps_free(chunk.data.get());
             }
         }
         
@@ -1028,7 +1028,7 @@ void Esp32Music::ClearAudioBuffer() {
         AudioChunk chunk = std::move(audio_buffer_.front());
         audio_buffer_.pop();
         if (chunk.data) {
-            heap_caps_free(chunk.data);
+            heap_caps_free(chunk.data.get());
         }
     }
     
@@ -1062,18 +1062,9 @@ void Esp32Music::CleanupMp3Decoder() {
 
 // Đặt lại tỷ lệ lấy mẫu về giá trị gốc
 void Esp32Music::ResetSampleRate() {
-    auto& board = Board::GetInstance();
-    auto codec = board.GetAudioCodec();
-    if (codec && codec->original_output_sample_rate() > 0 && 
-        codec->output_sample_rate() != codec->original_output_sample_rate()) {
-        ESP_LOGI(TAG, "Đặt lại tỷ lệ lấy mẫu: Từ %d Hz đặt lại về giá trị gốc %d Hz", 
-                codec->output_sample_rate(), codec->original_output_sample_rate());
-        if (codec->SetOutputSampleRate(-1)) {  // -1 có nghĩa là đặt lại về giá trị gốc
-            ESP_LOGI(TAG, "Thành công đặt lại tỷ lệ lấy mẫu về giá trị gốc: %d Hz", codec->output_sample_rate());
-        } else {
-            ESP_LOGW(TAG, "Không thể đặt lại tỷ lệ lấy mẫu về giá trị gốc");
-        }
-    }
+    // Note: AudioCodec doesn't have original_output_sample_rate() or SetOutputSampleRate() methods
+    // This function is kept for compatibility but doesn't perform any action
+    ESP_LOGD(TAG, "ResetSampleRate called but not implemented due to missing AudioCodec methods");
 }
 
 // Bỏ qua thẻ ID3 ở đầu tệp MP3

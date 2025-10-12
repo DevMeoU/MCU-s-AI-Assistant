@@ -23,6 +23,7 @@
 #define MAIN_EVENT_VAD_CHANGE (1 << 3)
 #define MAIN_EVENT_ERROR (1 << 4)
 #define MAIN_EVENT_CHECK_NEW_VERSION_DONE (1 << 5)
+#define MAIN_EVENT_CLOCK_TICK (1 << 6)
 
 enum AecMode {
     kAecOff,

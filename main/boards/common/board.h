@@ -37,7 +37,7 @@ public:
         return *instance;
     }
 
-    virtual ~Board() = default;  // Chuyển thành hàm hủy không mặc định để dọn dẹp music_
+    virtual ~Board();
     virtual std::string GetBoardType() = 0;
     virtual std::string GetUuid() { return uuid_; }
     virtual Backlight* GetBacklight() { return nullptr; }

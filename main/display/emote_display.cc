@@ -519,7 +519,7 @@ void EmoteDisplay::SetPreviewImage(const void* image)
     }
 }
 
-void EmoteDisplay::SetTheme(Theme* const theme)
+void EmoteDisplay::SetTheme(const Theme& theme)
 {
     ESP_LOGI(TAG, "SetTheme: %p", theme);
 

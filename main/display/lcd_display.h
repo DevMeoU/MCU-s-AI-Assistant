@@ -49,7 +49,7 @@ public:
     virtual void SetPreviewImage(std::unique_ptr<LvglImage> image) override;
 
     // Add theme switching function
-    virtual void SetTheme(Theme& theme) override;
+    virtual void SetTheme(const Theme& theme) override;
 };
 
 // Màn hình LCD SPI

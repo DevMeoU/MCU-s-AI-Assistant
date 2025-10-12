@@ -173,9 +173,9 @@ void OledDisplay::SetupUI_128x64() {
     lv_obj_set_flex_flow(content_, LV_FLEX_FLOW_ROW);
     lv_obj_set_style_flex_main_place(content_, LV_FLEX_ALIGN_CENTER, 0);
 
-    // 创建左侧固定宽度的容器
+    // Tạo container bên trái với độ rộng cố định
     content_left_ = lv_obj_create(content_);
-    lv_obj_set_size(content_left_, 32, LV_SIZE_CONTENT);  // 固定宽度32像素
+    lv_obj_set_size(content_left_, 32, LV_SIZE_CONTENT);  // Độ rộng cố định 32 pixel
     lv_obj_set_style_pad_all(content_left_, 0, 0);
     lv_obj_set_style_border_width(content_left_, 0, 0);
 
@@ -185,7 +185,7 @@ void OledDisplay::SetupUI_128x64() {
     lv_obj_center(emotion_label_);
     lv_obj_set_style_pad_top(emotion_label_, 8, 0);
 
-    // 创建右侧可扩展的容器
+    // Tạo container bên phải có thể mở rộng
     content_right_ = lv_obj_create(content_);
     lv_obj_set_size(content_right_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_style_pad_all(content_right_, 0, 0);
@@ -200,7 +200,7 @@ void OledDisplay::SetupUI_128x64() {
     lv_obj_set_width(chat_message_label_, width_ - 32);
     lv_obj_set_style_pad_top(chat_message_label_, 14, 0);
 
-    // 延迟一定的时间后开始滚动字幕
+    // Bắt đầu cuộn chữ sau khi delay một khoảng thời gian nhất định
     static lv_anim_t a;
     lv_anim_init(&a);
     lv_anim_set_delay(&a, 1000);
@@ -328,7 +328,7 @@ void OledDisplay::SetupUI_128x32() {
     lv_label_set_long_mode(chat_message_label_, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_label_set_text(chat_message_label_, "");
 
-    // 延迟一定的时间后开始滚动字幕
+    // Bắt đầu cuộn chữ sau khi delay một khoảng thời gian nhất định
     static lv_anim_t a;
     lv_anim_init(&a);
     lv_anim_set_delay(&a, 1000);
@@ -350,10 +350,10 @@ void OledDisplay::SetEmotion(const char* emotion) {
     }
 }
 
-void OledDisplay::SetTheme(Theme& theme) {
+void OledDisplay::SetTheme(const Theme& theme) {
     DisplayLockGuard lock(this);
 
-    auto lvgl_theme = static_cast<LvglTheme*>(&theme);
+    auto lvgl_theme = static_cast<const LvglTheme*>(&theme);
     auto text_font = lvgl_theme->text_font()->font();
 
     auto screen = lv_screen_active();

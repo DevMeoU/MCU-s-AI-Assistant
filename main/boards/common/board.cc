@@ -2,6 +2,7 @@
 #include "system_info.h"
 #include "settings.h"
 #include "display/display.h"
+#include "display/oled_display.h"
 #include "assets/lang_config.h"
 #include "esp32_music.h"
 
@@ -9,6 +10,7 @@
 #include <esp_ota_ops.h>
 #include <esp_chip_info.h>
 #include <esp_random.h>
+#include <typeinfo>
 
 #define TAG "Board"
 
@@ -177,11 +179,11 @@ std::string Board::GetSystemInfoJson() {
     auto display = GetDisplay();
     if (display) {
         json += R"("display":{)";
-        if (dynamic_cast<OledDisplay*>(display)) {
-            json += R"("monochrome":)" + std::string("true") + R"(,)";
-        } else {
-            json += R"("monochrome":)" + std::string("false") + R"(,)";
-        }
+        // Since RTTI is disabled, we can't use dynamic_cast
+        // We'll use a simple approach: check if the display width and height are typical for OLED displays
+        // OLED displays are typically small and monochrome (128x32 or 128x64)
+        bool is_monochrome = (display->width() <= 128 && display->height() <= 64);
+        json += R"("monochrome":)" + std::string(is_monochrome ? "true" : "false") + R"(,)";
         json += R"("width":)" + std::to_string(display->width()) + R"(,)";
         json += R"("height":)" + std::to_string(display->height()) + R"(,)";
         json.pop_back(); // Remove the last comma

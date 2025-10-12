@@ -978,10 +978,10 @@ void LcdDisplay::SetEmotion(const char* emotion) {
 #endif
 }
 
-void LcdDisplay::SetTheme(Theme& theme) {
+void LcdDisplay::SetTheme(const Theme& theme) {
     DisplayLockGuard lock(this);
     
-    auto lvgl_theme = static_cast<LvglTheme*>(&theme);
+    auto lvgl_theme = static_cast<const LvglTheme*>(&theme);
     
     // Get the active screen
     lv_obj_t* screen = lv_screen_active();
@@ -1109,5 +1109,5 @@ void LcdDisplay::SetTheme(Theme& theme) {
     lv_obj_set_style_bg_color(low_battery_popup_, lvgl_theme->low_battery_color(), 0);
 
     // No errors occurred. Save theme to settings
-    Display::SetTheme(lvgl_theme);
+    Display::SetTheme(theme);
 }
