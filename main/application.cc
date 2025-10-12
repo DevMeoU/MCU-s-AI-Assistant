@@ -874,11 +874,14 @@ void Application::AddAudioData(AudioStreamPacket&& packet) {
                     ESP_LOGI(TAG, "Phát nhạc: Chuyển đổi tỷ lệ lấy mẫu từ %d Hz sang %d Hz", 
                         codec->output_sample_rate(), packet.sample_rate);
 
-                    // Thử chuyển đổi tỷ lệ lấy mẫu động
-                    // codec->SetOutputSampleRate(packet.sample_rate); // Method not available in AudioCodec
-                    ESP_LOGW(TAG, "Không thể chuyển đổi tỷ lệ lấy mẫu, tiếp tục sử dụng tỷ lệ hiện tại: %d Hz", codec->output_sample_rate());
+                    // Thử đổi tỷ lệ lấy mẫu động
+                    if (codec->SetOutputSampleRate(packet.sample_rate)) {
+                        ESP_LOGI(TAG, "Đã chuyển sang tỷ lệ lấy mẫu phát nhạc: %d Hz", packet.sample_rate);
+                    } else {
+                        ESP_LOGW(TAG, "Không thể thay đổi tỷ lệ lấy mẫu, tiếp tục dùng tỷ lệ hiện tại: %d Hz", codec->output_sample_rate());
+                    }
                 } else {
-                    // Lấy mẫu lên: Nội suy tuyến tính
+                    // Lấy mẫu lại: nội suy tuyến tính
                     float upsample_ratio = codec->output_sample_rate() / static_cast<float>(packet.sample_rate);
                     size_t expected_size = static_cast<size_t>(pcm_data.size() * upsample_ratio + 0.5f);
                     resampled.reserve(expected_size);
@@ -920,7 +923,7 @@ void Application::AddAudioData(AudioStreamPacket&& packet) {
             // Gửi dữ liệu PCM đến bộ mã hóa/giải mã âm thanh
             codec->OutputData(pcm_data);
             
-            // audio_service_.UpdateOutputTimestamp(); // Method not available in AudioService
+            audio_service_.UpdateOutputTimestamp();
         }
     }
 }
